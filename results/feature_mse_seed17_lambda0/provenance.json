@@ -1,0 +1,31 @@
+{
+  "method": "Feature MSE + DER++ (random AugMix views)",
+  "seed": 17,
+  "epochs_per_task": 10,
+  "images_per_class": 5000,
+  "batch": 32,
+  "lambda_feat": 0.0,
+  "normalization_mean": [
+    0.4914,
+    0.4822,
+    0.4465
+  ],
+  "normalization_std": [
+    0.247,
+    0.243,
+    0.261
+  ],
+  "source_hashes": {
+    "feature_mse_cifar10.py": "66f461f29670c609baf7704dd2fe0768f178ec8a2c117b780cc58639c4685932",
+    "report_feature_mse.py": "0b382ce63f07f2d785851d754f274b66a5617ca140cab2d4979c3ed3d1773338",
+    "augmix_operations.py": "34682c8abacea54e79d9a67491a18c839a828fda44662b7815f10ac9b4a210f5",
+    "AUGMIX_LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "download_cifar100_benchmark.py": "ef67249f442be6be8642ee7ce265a3ecf71f9884464296f5ef1e2cb8477d1cd6",
+    "download_cifar10_benchmark.py": "4bfa3e156615223c13dcaa8b3c2b8f26dfebfe7a7755e2957832be360878e49c"
+  },
+  "torch": "2.10.0+cu128",
+  "torchvision": "0.25.0+cu128",
+  "numpy": "2.4.2",
+  "pillow": "12.1.1",
+  "provenance_note": "Selected fields from original config; no configuration values modified."
+}

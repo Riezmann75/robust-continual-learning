@@ -1,0 +1,32 @@
+{
+  "method": "InfoNCE + DER++ (random AugMix views)",
+  "seed": 17,
+  "epochs_per_task": 10,
+  "images_per_class": 5000,
+  "batch": 32,
+  "lambda_nce": 1.0,
+  "temperature": 0.1,
+  "normalization_mean": [
+    0.4914,
+    0.4822,
+    0.4465
+  ],
+  "normalization_std": [
+    0.247,
+    0.243,
+    0.261
+  ],
+  "source_hashes": {
+    "infonce_cifar10.py": "82ce04743132100dedf4dcd8a3ab20917b42fd03ceaa26b5de982e1ccc13bf56",
+    "report_infonce.py": "052fc22d14ba4bb52ec5db5f6c954243e80e8627db43aaf8655918dda8f6e224",
+    "augmix_operations.py": "34682c8abacea54e79d9a67491a18c839a828fda44662b7815f10ac9b4a210f5",
+    "AUGMIX_LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "download_cifar100_benchmark.py": "ef67249f442be6be8642ee7ce265a3ecf71f9884464296f5ef1e2cb8477d1cd6",
+    "download_cifar10_benchmark.py": "4bfa3e156615223c13dcaa8b3c2b8f26dfebfe7a7755e2957832be360878e49c"
+  },
+  "torch": "2.10.0+cu128",
+  "torchvision": "0.25.0+cu128",
+  "numpy": "2.4.2",
+  "pillow": "12.1.1",
+  "provenance_note": "Selected fields from original config; no configuration values modified."
+}

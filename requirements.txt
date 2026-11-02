@@ -1,0 +1,5 @@
+torch==2.10.0
+torchvision==0.25.0
+numpy==2.4.2
+Pillow==12.1.1
+matplotlib==3.10.8

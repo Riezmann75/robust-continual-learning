@@ -1,0 +1,13 @@
+{
+  "runner": "augce_cifar10.py",
+  "args": {
+    "device": "cuda",
+    "seed": 17,
+    "epochs_per_task": 10,
+    "root": "experiments/metamix_cifar10/data",
+    "output": "experiments/augce/seed17",
+    "lambda_aug": 1.0,
+    "decoder": false,
+    "lambda_recon": 0.0
+  }
+}

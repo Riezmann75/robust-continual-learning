@@ -1,0 +1,138 @@
+{
+  "seeds": [
+    17,
+    18,
+    19
+  ],
+  "runs": [
+    {
+      "seed": 17,
+      "accuracy": {
+        "1": {
+          "clean_class_il": 0.4529,
+          "clean_task_il": 0.8849,
+          "corrupted_class_il": 0.398752,
+          "corrupted_task_il": 0.8376306666666667
+        },
+        "0": {
+          "clean_class_il": 0.3827,
+          "clean_task_il": 0.8866,
+          "corrupted_class_il": 0.345896,
+          "corrupted_task_il": 0.8233893333333333
+        }
+      },
+      "paired_difference": {
+        "clean_class_il": 0.07020000000000004,
+        "clean_task_il": -0.0017000000000000348,
+        "corrupted_class_il": 0.052856000000000014,
+        "corrupted_task_il": 0.014241333333333439
+      }
+    },
+    {
+      "seed": 18,
+      "accuracy": {
+        "1": {
+          "clean_class_il": 0.4804,
+          "clean_task_il": 0.9018,
+          "corrupted_class_il": 0.42002133333333336,
+          "corrupted_task_il": 0.8574666666666667
+        },
+        "0": {
+          "clean_class_il": 0.493,
+          "clean_task_il": 0.8898,
+          "corrupted_class_il": 0.41091733333333336,
+          "corrupted_task_il": 0.8301986666666668
+        }
+      },
+      "paired_difference": {
+        "clean_class_il": -0.0126,
+        "clean_task_il": 0.01200000000000001,
+        "corrupted_class_il": 0.009104000000000001,
+        "corrupted_task_il": 0.02726799999999996
+      }
+    },
+    {
+      "seed": 19,
+      "accuracy": {
+        "1": {
+          "clean_class_il": 0.4705,
+          "clean_task_il": 0.898,
+          "corrupted_class_il": 0.41090133333333334,
+          "corrupted_task_il": 0.8417106666666668
+        },
+        "0": {
+          "clean_class_il": 0.43,
+          "clean_task_il": 0.8995,
+          "corrupted_class_il": 0.36967866666666666,
+          "corrupted_task_il": 0.8271573333333334
+        }
+      },
+      "paired_difference": {
+        "clean_class_il": 0.04049999999999998,
+        "clean_task_il": -0.0014999999999999458,
+        "corrupted_class_il": 0.041222666666666685,
+        "corrupted_task_il": 0.014553333333333418
+      }
+    }
+  ],
+  "aggregate": {
+    "clean_class_il": {
+      "lambda1": {
+        "mean": 0.4679333333333333,
+        "sample_std": 0.013928507936363205
+      },
+      "lambda0": {
+        "mean": 0.4352333333333333,
+        "sample_std": 0.05533591359445811
+      },
+      "paired_difference": {
+        "mean": 0.03270000000000001,
+        "sample_std": 0.04194746714642019
+      }
+    },
+    "clean_task_il": {
+      "lambda1": {
+        "mean": 0.8949,
+        "sample_std": 0.008866228059327156
+      },
+      "lambda0": {
+        "mean": 0.8919666666666667,
+        "sample_std": 0.006717390366305408
+      },
+      "paired_difference": {
+        "mean": 0.0029333333333333433,
+        "sample_std": 0.007852600418545016
+      }
+    },
+    "corrupted_class_il": {
+      "lambda1": {
+        "mean": 0.40989155555555556,
+        "sample_std": 0.010670561066855003
+      },
+      "lambda0": {
+        "mean": 0.37549733333333335,
+        "sample_std": 0.032898877008865304
+      },
+      "paired_difference": {
+        "mean": 0.034394222222222236,
+        "sample_std": 0.022661202883963342
+      }
+    },
+    "corrupted_task_il": {
+      "lambda1": {
+        "mean": 0.8456026666666667,
+        "sample_std": 0.01047508816192013
+      },
+      "lambda0": {
+        "mean": 0.8269151111111112,
+        "sample_std": 0.0034111228085214416
+      },
+      "paired_difference": {
+        "mean": 0.018687555555555607,
+        "sample_std": 0.0074325201747554625
+      }
+    }
+  },
+  "units": "accuracy fractions; multiply by100 for percent/percentage-point differences",
+  "note": "Three matched seed pairs. Mean and sample SD; no general significance claim."
+}

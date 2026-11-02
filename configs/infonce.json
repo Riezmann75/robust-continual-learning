@@ -1,0 +1,12 @@
+{
+  "runner": "infonce_cifar10.py",
+  "args": {
+    "device": "cuda",
+    "seed": 17,
+    "epochs_per_task": 10,
+    "root": "experiments/metamix_cifar10/data",
+    "output": "experiments/infonce/seed17",
+    "lambda_nce": 1.0,
+    "temperature": 0.1
+  }
+}

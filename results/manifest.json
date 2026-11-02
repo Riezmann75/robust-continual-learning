@@ -1,0 +1,57 @@
+[
+  {
+    "run": "metamix_seed17",
+    "evaluation": "metamix_seed17/evaluation.json",
+    "provenance": "metamix_seed17/provenance.json"
+  },
+  {
+    "run": "feature_mse_seed17",
+    "evaluation": "feature_mse_seed17/evaluation.json",
+    "provenance": "feature_mse_seed17/provenance.json"
+  },
+  {
+    "run": "feature_mse_seed17_lambda0",
+    "evaluation": "feature_mse_seed17_lambda0/evaluation.json",
+    "provenance": "feature_mse_seed17_lambda0/provenance.json"
+  },
+  {
+    "run": "feature_mse_seed18",
+    "evaluation": "feature_mse_seed18/evaluation.json",
+    "provenance": "feature_mse_seed18/provenance.json"
+  },
+  {
+    "run": "feature_mse_seed18_lambda0",
+    "evaluation": "feature_mse_seed18_lambda0/evaluation.json",
+    "provenance": "feature_mse_seed18_lambda0/provenance.json"
+  },
+  {
+    "run": "feature_mse_seed19",
+    "evaluation": "feature_mse_seed19/evaluation.json",
+    "provenance": "feature_mse_seed19/provenance.json"
+  },
+  {
+    "run": "feature_mse_seed19_lambda0",
+    "evaluation": "feature_mse_seed19_lambda0/evaluation.json",
+    "provenance": "feature_mse_seed19_lambda0/provenance.json"
+  },
+  {
+    "run": "infonce_seed17",
+    "evaluation": "infonce_seed17/evaluation.json",
+    "provenance": "infonce_seed17/provenance.json"
+  },
+  {
+    "run": "classaware_infonce_seed17",
+    "evaluation": "classaware_infonce_seed17/evaluation.json",
+    "provenance": "classaware_infonce_seed17/provenance.json"
+  },
+  {
+    "run": "mse05_nce05_seed17",
+    "evaluation": "mse05_nce05_seed17/evaluation.json",
+    "provenance": "mse05_nce05_seed17/provenance.json"
+  },
+  {
+    "run": "mse02_nce1_seed17",
+    "evaluation": "mse02_nce1_seed17/evaluation.json",
+    "provenance": "mse02_nce1_seed17/provenance.json"
+  }
+]

@@ -1,0 +1,13 @@
+{
+  "runner": "mse_infonce_cifar10.py",
+  "args": {
+    "device": "cuda",
+    "seed": 17,
+    "epochs_per_task": 10,
+    "root": "experiments/metamix_cifar10/data",
+    "output": "experiments/mse05_nce05/seed17",
+    "lambda_mse": 0.5,
+    "lambda_nce": 0.5,
+    "temperature": 0.1
+  }
+}

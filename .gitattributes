@@ -1,0 +1,3 @@
+* text=auto eol=lf
+# Preserve exact historical source bytes for SHA256 provenance checks.
+results/**/source/** -text
