@@ -1,4 +1,9 @@
 """First-order, batch-context MetaMix reconstructed from the user's handoff."""
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from libs.trainer import BiLevelTrainer
+from libs import library_source_hashes, snapshot_source
 import argparse
 import hashlib
 import json
@@ -6,7 +11,6 @@ import os
 import platform
 import random
 import time
-from pathlib import Path
 import numpy as np
 from PIL import Image
 import PIL
@@ -20,37 +24,9 @@ import augmix_operations as ops
 from download_cifar100_benchmark import CORRUPTIONS, verify_arrays
 from report_metamix_long import report
 
-class SmallCNN(nn.Module):
-    def __init__(self):
-        super().__init__()
-        layers = []
-        prev = 3
-        for stage, width in enumerate((32, 64, 128)):
-            for _ in range(2):
-                layers += [nn.Conv2d(prev, width, 3, padding=1, bias=False),
-                           nn.BatchNorm2d(width), nn.ReLU()]
-                prev = width
-            if stage < 2:
-                layers.append(nn.AvgPool2d(2))
-        self.net = nn.Sequential(*layers)
-        self.head = nn.Linear(128, 10)
+from libs.models import SmallCNN
 
-    def forward(self, x):
-        f = self.net(x).mean((2, 3))
-        return self.head(f), f
-
-class Controller(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.cell = nn.LSTMCell(258, 5)
-        self.head = nn.Linear(5, 4)
-        nn.init.zeros_(self.head.weight)
-        nn.init.zeros_(self.head.bias)
-
-    def forward(self, context, state):
-        state = self.cell(context, state)
-        out = self.head(state[0])[0]
-        return out[3].sigmoid(), out[:3].softmax(0), state
+from libs.models import BatchController as Controller
 
 class Reservoir:
     def __init__(self, capacity=500):
@@ -84,11 +60,7 @@ def norm(x):
     std = x.new_tensor((.2470, .2435, .2616))[None, :, None, None]
     return (x-mean)/std
 
-def js(*logits):
-    logps = [F.log_softmax(z, dim=1) for z in logits]
-    ps = [p.exp() for p in logps]
-    mean = torch.stack(ps).mean(0).clamp_min(1e-8).log()
-    return sum((p*(lp-mean)).sum(1).mean() for p, lp in zip(ps, logps))/len(ps)
+from libs.loss import js
 
 def chains(raw, pool, device):
     views = []
@@ -136,69 +108,7 @@ def context_for(model, x, y, replay):
                       f.detach().mean(0), rf)).unsqueeze(0)
 
 def step(model, controller, optimizer, mixer_optimizer, memory, state, raw, labels, device, j=3):
-    x = tensor(raw, device)
-    y = torch.as_tensor(labels, device=device)
-    replay = memory.sample(32, device) if memory.size else None
-    distill = memory.sample(32, device) if memory.size else None
-    context = context_for(model, x, y, replay)
-    incoming = tuple(s.detach() for s in state)
-    with torch.no_grad():
-        m, w, _ = controller(context, incoming)
-    before_m, before_w = m.item(), w.cpu().tolist()
-    perm = np.random.permutation(9)
-    q = int(np.random.randint(5, 8))
-    seen_pool = [ops.augmentations[i] for i in perm[:q]]
-    unseen_pool = [ops.augmentations[i] for i in perm[q:]]
-    seen = chains(raw, seen_pool, device)
-    unseen = chains(raw, unseen_pool, device)
-    model.train()
-    optimizer.zero_grad(set_to_none=True)
-    logits, _ = forward(model, x)
-    old_logits = logits.detach().clone()
-    ce = F.cross_entropy(logits, y)
-    zero = ce.new_zeros(())
-    replay_ce = F.cross_entropy(forward(model, replay[0])[0], replay[1]) if replay else zero
-    replay_mse = F.mse_loss(forward(model, distill[0])[0], distill[2]) if distill else zero
-    seen_js = js(logits, *(forward(model, blend(x, branch, m, w))[0] for branch in seen))
-    loss = ce + .5*replay_ce + .2*replay_mse + seen_js
-    loss.backward()
-    if not all(p.grad is None or torch.isfinite(p.grad).all() for p in model.parameters()):
-        raise RuntimeError('Nonfinite classifier gradients')
-    optimizer.step()
-    optimizer.zero_grad(set_to_none=True)
-    # Updated classifier is frozen; gradients propagate only through blending/controller.
-    model.eval()
-    params = {k: v.detach() for k, v in model.named_parameters()}
-    buffers = clone_buffers(model)
-    with torch.no_grad():
-        outer_logits = forward(model, x, params, buffers)[0]
-        outer_ce = F.cross_entropy(outer_logits, y)
-    outer_rows = []
-    for _ in range(j):
-        mixer_optimizer.zero_grad(set_to_none=True)
-        om, ow, _ = controller(context, incoming)
-        outer_js = js(outer_logits, *(forward(model, blend(x, b, om, ow), params, buffers)[0] for b in unseen))
-        outer_loss = outer_ce + outer_js
-        outer_loss.backward()
-        grads = [p.grad for p in controller.parameters() if p.grad is not None]
-        if not grads or not all(torch.isfinite(g).all() for g in grads):
-            raise RuntimeError('Missing/nonfinite mixer gradients')
-        grad_norm = torch.stack([g.square().sum() for g in grads]).sum().sqrt().item()
-        outer_rows.append(dict(m=om.item(), w=ow.detach().cpu().tolist(),
-                               js=outer_js.item(), grad_norm=grad_norm))
-        mixer_optimizer.step()
-    with torch.no_grad():
-        after_m, after_w, state = controller(context, incoming)
-        # Evaluate the same pseudo-unseen chains after the final mixer update.
-        after_js = js(outer_logits, *(forward(model, blend(x, b, after_m, after_w), params, buffers)[0] for b in unseen))
-    memory.add(raw, labels, old_logits)
-    row = dict(m_before=before_m, m_after=after_m.item(), w_before=before_w,
-               w_after=after_w.cpu().tolist(), seen_js=seen_js.item(),
-               outer_js=outer_rows[-1]['js'], outer_js_after=after_js.item(),
-               current_ce=ce.item(), replay_ce=replay_ce.item(), replay_mse=replay_mse.item(),
-               classifier_loss=loss.item(), outer_ce=outer_ce.item(), mixer_updates=outer_rows,
-               q=q, batch_size=len(raw), memory_size=memory.size, presentations=memory.seen)
-    return tuple(s.detach() for s in state), row
+    return BiLevelTrainer.update_metamix_long(model, controller, optimizer, mixer_optimizer, memory, state, raw, labels, device, j, blend=blend, chains=chains, clone_buffers=clone_buffers, context_for=context_for, forward=forward, js=js, ops=ops, tensor=tensor)
 
 def atomic_json(path, value):
     temp = path.with_suffix(path.suffix+'.tmp')
@@ -208,7 +118,7 @@ def atomic_json(path, value):
 def source_hashes():
     base = Path(__file__).parent
     return {p.name: hashlib.sha256(p.read_bytes()).hexdigest()
-            for p in sorted(base.glob('*.py'))}
+            for p in sorted(base.glob('*.py'))} | library_source_hashes()
 
 def rng_state():
     return dict(python=random.getstate(), numpy=np.random.get_state(),
@@ -391,6 +301,7 @@ def main():
         next_epoch=next_epoch, updates=updates, config=config)), flush=True)
     atomic_json(a.output/'process.json', dict(pid=os.getpid(), host=platform.node(),
         started=time.time(), command=' '.join(__import__('sys').argv)))
+    trainer = BiLevelTrainer(model, controller, optimizer, mixer_optimizer, memory, state, a.device, update=step)
     for task in range(next_task, 5):
         first = next_epoch if task == next_task else 0
         for epoch in range(first, epochs):
@@ -399,8 +310,8 @@ def main():
             with trace_path.open('a', buffering=1) as trace:
                 for batch, pos in enumerate(range(0, len(order), 32)):
                     ix = order[pos:pos+32]
-                    state, row = step(model, controller, optimizer, mixer_optimizer, memory,
-                                      state, raw[ix], labels[ix], a.device, 3)
+                    row = trainer.step(raw[ix], labels[ix], j=3)
+                    state = trainer.state
                     updates += 1
                     row.update(task=task+1, epoch=epoch+1, global_epoch=task*epochs+epoch+1,
                                batch=batch, update=updates, time=time.time())

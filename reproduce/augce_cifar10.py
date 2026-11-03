@@ -1,10 +1,14 @@
 """Augmented CE + DER++ (random AugMix views), independent of MetaMix training."""
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from libs.trainer import SingleLevelTrainer
+from libs import library_source_hashes, snapshot_source
 import argparse
 from contextlib import contextmanager
 import hashlib
 import json
 import os
-from pathlib import Path
 import platform
 import random
 import shutil
@@ -23,48 +27,11 @@ from report_augce import report
 
 METHOD = 'Augmented CE + DER++ (random AugMix views)'
 # Copied unchanged from SmallCNN in metamix_long.py (architecture provenance in config).
-class SmallCNN(nn.Module):
-    def __init__(self):
-        super().__init__()
-        layers = []
-        prev = 3
-        for stage, width in enumerate((32, 64, 128)):
-            for _ in range(2):
-                layers += [nn.Conv2d(prev, width, 3, padding=1, bias=False),
-                           nn.BatchNorm2d(width), nn.ReLU()]
-                prev = width
-            if stage < 2:
-                layers.append(nn.AvgPool2d(2))
-        self.net = nn.Sequential(*layers)
-        self.head = nn.Linear(128, 10)
+from libs.models import SmallCNN
 
-    def forward(self, x):
-        f = self.net(x).mean((2, 3))
-        return self.head(f), f
+from libs.models import ImageDecoder
 
-class ImageDecoder(nn.Module):
-    """Shared decoder: raw pooled128 feature -> RGB32x32 in [0,1]."""
-    def __init__(self):
-        super().__init__()
-        self.net = nn.Sequential(
-            nn.Linear(128,128*4*4),nn.ReLU(),nn.Unflatten(1,(128,4,4)),
-            nn.ConvTranspose2d(128,64,4,stride=2,padding=1),nn.ReLU(),
-            nn.ConvTranspose2d(64,32,4,stride=2,padding=1),nn.ReLU(),
-            nn.ConvTranspose2d(32,3,4,stride=2,padding=1),nn.Sigmoid())
-
-    def forward(self,features):
-        return self.net(features)
-
-class Network(SmallCNN):
-    def __init__(self,decoder=False):
-        super().__init__()
-        self.register_buffer('pixel_mean', torch.tensor([.4914,.4822,.4465]).view(1,3,1,1))
-        self.register_buffer('pixel_std', torch.tensor([.247,.243,.261]).view(1,3,1,1))
-        self.decoder = ImageDecoder() if decoder else None
-
-    def forward(self, x, features=False):
-        logits, pooled = super().forward((x-self.pixel_mean)/self.pixel_std)
-        return (logits, pooled) if features else logits
+from libs.models import ReconstructionNetwork as Network
 
 class Streams:
     names = ('insertion', 'replay_ce', 'replay_logit', 'shuffle', 'mixture')
@@ -156,63 +123,7 @@ def random_augmix_views(raw, streams):
 
 
 def step(model,optimizer,memory,streams,raw,labels,device,debug=False,lambda_aug=1.,lambda_recon=1.):
-    start = time.monotonic()
-    ce_sample = memory.sample(streams.replay_ce) if memory.size else None
-    logit_sample = memory.sample(streams.replay_logit) if memory.size else None
-    raw_a = np.concatenate((raw,ce_sample[0])) if ce_sample is not None else raw
-    labels_a = np.concatenate((labels,ce_sample[1])) if ce_sample is not None else labels
-    y = torch.as_tensor(labels_a,dtype=torch.long,device=device)
-    x0 = tensor(raw_a,device)
-    views,m,w = random_augmix_views(raw_a,streams)
-    model.train()
-    optimizer.zero_grad(set_to_none=True)
-    joint_inputs = torch.cat((x0,views[0].to(device),views[1].to(device)))
-    z,h = model(joint_inputs,features=True)
-    z0,z1,z2 = z.chunk(3)
-    h0,h1,h2 = h.chunk(3)
-    augmented_ce = .5*(F.cross_entropy(z1,y)+F.cross_entropy(z2,y))
-    reconstruction = F.mse_loss(model.decoder(h),joint_inputs) if model.decoder is not None else z0.new_zeros(())
-    current_ce = F.cross_entropy(z0[:len(raw)],y[:len(raw)])
-    replay_ce = F.cross_entropy(z0[len(raw):],y[len(raw):]) if ce_sample is not None else z0.new_zeros(())
-    replay_mse = z0.new_zeros(())
-    if logit_sample is not None:
-        replay_logits = model(tensor(logit_sample[0],device))
-        replay_mse = F.mse_loss(replay_logits,logit_sample[2].to(device))
-    stored = z0[:len(raw)].detach().cpu().clone()
-    loss = current_ce+.5*replay_ce+.2*replay_mse+lambda_aug*augmented_ce+lambda_recon*reconstruction
-    loss.backward()
-    if not torch.isfinite(loss) or not all(p.grad is None or torch.isfinite(p.grad).all() for p in model.parameters()):
-        raise RuntimeError('Nonfinite loss or gradients')
-    encoder_grad = torch.stack([p.grad.square().sum() for p in model.net.parameters()]).sum().sqrt().item()
-    head_grad = torch.stack([p.grad.square().sum() for p in model.head.parameters()]).sum().sqrt().item()
-    decoder_grad = (torch.stack([p.grad.square().sum() for p in model.decoder.parameters()
-                    if p.grad is not None]).sum().sqrt().item() if model.decoder is not None else 0.)
-    optimizer.step()
-    memory.add(raw,labels,stored,streams.insertion)
-    with torch.no_grad():
-        normalized = [F.normalize(a,p=2,dim=1,eps=1e-8) for a in (h0,h1,h2)]
-        row = dict(current_ce=current_ce.item(),replay_ce=replay_ce.item(),replay_logit_mse=replay_mse.item(),
-            augmented_ce=augmented_ce.item(),reconstruction_loss=reconstruction.item(),
-            weighted_augmented_ce=(lambda_aug*augmented_ce).item(),
-            weighted_reconstruction=(lambda_recon*reconstruction).item(),
-            decoder_grad_norm=decoder_grad,total_loss=loss.item(),
-            current_clean_accuracy=(z0[:len(raw)].argmax(1)==y[:len(raw)]).float().mean().item(),
-            clean_accuracy=(z0.argmax(1)==y).float().mean().item(),
-            augmented_accuracy=((z1.argmax(1)==y).float().mean()+(z2.argmax(1)==y).float().mean()).item()/2,
-            cosine_view1=(normalized[0]*normalized[1]).sum(1).mean().item(),
-            cosine_view2=(normalized[0]*normalized[2]).sum(1).mean().item(),
-            raw_feature_norms=[a.norm(dim=1).mean().item() for a in (h0,h1,h2)],
-            raw_feature_variance=[a.var(dim=0,unbiased=False).mean().item() for a in (h0,h1,h2)],
-            normalized_feature_variance=[a.var(dim=0,unbiased=False).mean().item() for a in normalized],
-            encoder_grad_norm=encoder_grad,head_grad_norm=head_grad,
-            m_mean=m.mean().item(),m_std=m.std(unbiased=False).item(),m_min=m.min().item(),m_max=m.max().item(),
-            m_view_means=m.mean(1).tolist(),w_mean=w.mean((0,1)).tolist(),
-            w_std=w.std((0,1),unbiased=False).tolist(),w_view_means=w.mean(1).tolist(),
-            current_batch=len(raw),paired_examples=len(raw_a),replay_batch=0 if ce_sample is None else len(ce_sample[0]),
-            presentations=memory.seen,memory_size=memory.size,step_seconds=time.monotonic()-start)
-    if debug:
-        return row,dict(stored=stored,raw_a=raw_a,m=m,w=w)
-    return row
+    return SingleLevelTrainer.update_augce_cifar10(model, optimizer, memory, streams, raw, labels, device, debug, lambda_aug, lambda_recon, random_augmix_views=random_augmix_views, tensor=tensor)
 
 def atomic_json(path,value):
     temp = path.with_suffix(path.suffix+'.tmp')
@@ -231,7 +142,7 @@ def source_hashes():
     base = Path(__file__).parent
     names = ['augce_cifar10.py','report_augce.py','augmix_operations.py',
              'AUGMIX_LICENSE','download_cifar100_benchmark.py','download_cifar10_benchmark.py']
-    return {name:hashlib.sha256((base/name).read_bytes()).hexdigest() for name in names}
+    return {name:hashlib.sha256((base/name).read_bytes()).hexdigest() for name in names} | library_source_hashes()
 
 def setup(seed,device):
     if device=='cuda' and not torch.cuda.is_available():
@@ -382,7 +293,7 @@ def main():
         snapshot=a.output/'source'
         snapshot.mkdir(exist_ok=True)
         for name in config['source_hashes']:
-            shutil.copy2(Path(__file__).parent/name,snapshot/name)
+            snapshot_source(Path(__file__).parent, snapshot, name)
     if a.pipeline_test:
         raw=np.random.default_rng(900).integers(0,256,(170,32,32,3),dtype=np.uint8)
         labels=np.repeat(np.arange(10),17)
@@ -430,6 +341,7 @@ def main():
     print(json.dumps(dict(event='start_or_resume',pid=os.getpid(),updates=updates,config=config)),flush=True)
     run_start=time.monotonic()
     per_task=config['epochs_per_task']
+    trainer = SingleLevelTrainer(model, optimizer, memory, streams, a.device, update=step)
     for task in range(next_task,5):
         for epoch in range(next_epoch if task==next_task else 0,per_task):
             start=time.monotonic()
@@ -438,7 +350,7 @@ def main():
             with trace.open('a',buffering=1) as f:
                 for batch,pos in enumerate(range(0,len(order),32)):
                     idx=order[pos:pos+32]
-                    row=step(model,optimizer,memory,streams,raw[idx],labels[idx],a.device,lambda_aug=a.lambda_aug,lambda_recon=config["lambda_recon"])
+                    row = trainer.step(raw[idx], labels[idx], lambda_aug=a.lambda_aug, lambda_recon=config['lambda_recon'])
                     updates+=1
                     row.update(task=task+1,epoch=epoch+1,global_epoch=task*per_task+epoch+1,
                         batch=batch,update=updates,time=time.time(),elapsed_session_seconds=time.monotonic()-run_start)

@@ -10,6 +10,8 @@ are documented separately; their objectives and results should not be conflated.
 
 ## Repository layout
 
+- libs/: shared model architectures (`models.py`), objectives (`loss.py`), and
+  batch updates (`trainer.py`: `SingleLevelTrainer` and `BiLevelTrainer`).
 - reproduce/: runnable experiment trainers, reporting, verified data downloader,
   and licensed AugMix operations.
 - configs/: explicit experiment settings; the current budget is10 epochs/task.
@@ -21,6 +23,41 @@ are documented separately; their objectives and results should not be conflated.
 
 Historical runners are preserved separately to avoid silently changing established
 experiments. The new work is in [augce_cifar10.py](reproduce/augce_cifar10.py).
+
+### Shared training library
+
+The runners keep their command-line options, data preparation, augmentation RNGs,
+replay buffers, reporting, and checkpoint formats. They import model and loss
+implementations from `libs` and use its trainers for batch updates. Existing
+runner imports such as `Network`, `Controller`, and `step` remain supported.
+Different objective masks and controller architectures retain separate definitions.
+
+`SingleLevelTrainer` holds a classifier, optimizer, replay buffer, and random
+streams. `BiLevelTrainer` also holds the controller, its optimizer, and recurrent
+state. Both expose `step(raw, labels, **options)`; the bi-level trainer updates
+its `state` after a successful batch and returns the metrics (plus debug data
+when requested). For example, with resources initialized as in an existing runner:
+
+```python
+from libs.trainer import SingleLevelTrainer, BiLevelTrainer
+
+trainer = SingleLevelTrainer(model, optimizer, memory, streams, device,
+                             update=augce.step, lambda_aug=1., lambda_recon=0.)
+metrics = trainer.step(raw, labels)
+
+trainer = BiLevelTrainer(model, controller, optimizer, mixer_optimizer,
+                         memory, state, device, update=matched_mixing.step,
+                         mixer="learned", kind="js")
+metrics = trainer.step(raw, labels)
+state = trainer.state  # Save with the existing checkpoint payload.
+```
+
+The `update_*` methods in `libs/trainer.py` contain the experiment-specific update
+implementations. Data, augmentation, and objective functions are explicit hooks,
+supplied by the compatibility `step` functions. New source snapshots include
+`libs/` and its hashes; archived result snapshots remain unchanged. Existing run
+directories still enforce exact source/configuration matching, so use a new output
+directory for runs made with refactored code.
 
 ## Corrected mixing comparison (seed 17)
 

@@ -1,10 +1,14 @@
 """Label-aware InfoNCE + DER++ (random AugMix views), independent of MetaMix training."""
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from libs.trainer import SingleLevelTrainer
+from libs import library_source_hashes, snapshot_source
 import argparse
 from contextlib import contextmanager
 import hashlib
 import json
 import os
-from pathlib import Path
 import platform
 import random
 import shutil
@@ -23,34 +27,9 @@ from report_infonce_classneg import report
 
 METHOD = 'Label-aware InfoNCE + DER++ (random AugMix views)'
 # Copied unchanged from SmallCNN in metamix_long.py (architecture provenance in config).
-class SmallCNN(nn.Module):
-    def __init__(self):
-        super().__init__()
-        layers = []
-        prev = 3
-        for stage, width in enumerate((32, 64, 128)):
-            for _ in range(2):
-                layers += [nn.Conv2d(prev, width, 3, padding=1, bias=False),
-                           nn.BatchNorm2d(width), nn.ReLU()]
-                prev = width
-            if stage < 2:
-                layers.append(nn.AvgPool2d(2))
-        self.net = nn.Sequential(*layers)
-        self.head = nn.Linear(128, 10)
+from libs.models import SmallCNN
 
-    def forward(self, x):
-        f = self.net(x).mean((2, 3))
-        return self.head(f), f
-
-class Network(SmallCNN):
-    def __init__(self):
-        super().__init__()
-        self.register_buffer('pixel_mean', torch.tensor([.4914,.4822,.4465]).view(1,3,1,1))
-        self.register_buffer('pixel_std', torch.tensor([.247,.243,.261]).view(1,3,1,1))
-
-    def forward(self, x, features=False):
-        logits, pooled = super().forward((x-self.pixel_mean)/self.pixel_std)
-        return (logits, pooled) if features else logits
+from libs.models import Network as Network
 
 class Streams:
     names = ('insertion', 'replay_ce', 'replay_logit', 'shuffle', 'mixture')
@@ -140,95 +119,13 @@ def random_augmix_views(raw, streams):
             views.append(blend(x,branch_tensor,weights_m[view],weights_w[view]).contiguous())
     return views, weights_m, weights_w
 
-def contrastive_scores(h0,h1,h2,temperature=.1,labels=None):
-    if temperature <= 0:
-        raise ValueError('Temperature must be positive')
-    n = len(h0)
-    if n < 1 or h1.shape != h0.shape or h2.shape != h0.shape:
-        raise ValueError('Expected three nonempty aligned feature matrices')
-    u = F.normalize(torch.cat((h0,h1,h2)),p=2,dim=1,eps=1e-8)
-    scores = u @ u.T / temperature
-    ids = torch.arange(n,device=u.device).repeat(3)
-    diagonal = torch.eye(3*n,dtype=torch.bool,device=u.device)
-    positives = ids[:,None].eq(ids[None,:]) & ~diagonal
-    if labels is None or labels.ndim != 1 or len(labels) != n:
-        raise ValueError('One class label per original batch entry is required')
-    classes = labels.to(u.device).repeat(3)
-    different_class = classes[:,None].ne(classes[None,:])
-    allowed = positives | different_class
-    return scores.masked_fill(~allowed,-torch.inf), positives
+from libs.loss import contrastive_scores
 
-def infonce_loss(h0,h1,h2,temperature=.1,labels=None):
-    # All 3N anchors, two positives each. Average individual positive log probabilities.
-    scores, positives = contrastive_scores(h0,h1,h2,temperature,labels)
-    normalizer = torch.logsumexp(scores,dim=1)
-    positive_score = scores[positives].view(len(scores),2).mean(1)
-    return (normalizer-positive_score).mean()
+from libs.loss import infonce_loss
 
 
 def step(model,optimizer,memory,streams,raw,labels,device,debug=False,lambda_nce=1.,temperature=.1):
-    start = time.monotonic()
-    ce_sample = memory.sample(streams.replay_ce) if memory.size else None
-    logit_sample = memory.sample(streams.replay_logit) if memory.size else None
-    raw_a = np.concatenate((raw,ce_sample[0])) if ce_sample is not None else raw
-    labels_a = np.concatenate((labels,ce_sample[1])) if ce_sample is not None else labels
-    y = torch.as_tensor(labels_a,dtype=torch.long,device=device)
-    x0 = tensor(raw_a,device)
-    views,m,w = random_augmix_views(raw_a,streams)
-    model.train()
-    optimizer.zero_grad(set_to_none=True)
-    z,h = model(torch.cat((x0,views[0].to(device),views[1].to(device))),features=True)
-    z0,z1,z2 = z.chunk(3)
-    h0,h1,h2 = h.chunk(3)
-    nce = infonce_loss(h0,h1,h2,temperature,y)
-    current_ce = F.cross_entropy(z0[:len(raw)],y[:len(raw)])
-    replay_ce = F.cross_entropy(z0[len(raw):],y[len(raw):]) if ce_sample is not None else z0.new_zeros(())
-    replay_mse = z0.new_zeros(())
-    if logit_sample is not None:
-        replay_logits = model(tensor(logit_sample[0],device))
-        replay_mse = F.mse_loss(replay_logits,logit_sample[2].to(device))
-    stored = z0[:len(raw)].detach().cpu().clone()
-    loss = current_ce+.5*replay_ce+.2*replay_mse+lambda_nce*nce
-    loss.backward()
-    if not torch.isfinite(loss) or not all(p.grad is None or torch.isfinite(p.grad).all() for p in model.parameters()):
-        raise RuntimeError('Nonfinite loss or gradients')
-    encoder_grad = torch.stack([p.grad.square().sum() for p in model.net.parameters()]).sum().sqrt().item()
-    head_grad = torch.stack([p.grad.square().sum() for p in model.head.parameters()]).sum().sqrt().item()
-    optimizer.step()
-    memory.add(raw,labels,stored,streams.insertion)
-    with torch.no_grad():
-        scores, positives = contrastive_scores(h0,h1,h2,temperature,y)
-        negatives = torch.isfinite(scores) & ~positives
-        negative_counts = negatives.sum(1)
-        retrieval = positives[torch.arange(len(scores),device=device),scores.argmax(1)].float().mean().item()
-        normalized = [F.normalize(a,p=2,dim=1,eps=1e-8) for a in (h0,h1,h2)]
-        row = dict(current_ce=current_ce.item(),replay_ce=replay_ce.item(),replay_logit_mse=replay_mse.item(),
-            infonce_loss=nce.item(),total_loss=loss.item(),
-            current_clean_accuracy=(z0[:len(raw)].argmax(1)==y[:len(raw)]).float().mean().item(),
-            clean_accuracy=(z0.argmax(1)==y).float().mean().item(),
-            augmented_accuracy=((z1.argmax(1)==y).float().mean()+(z2.argmax(1)==y).float().mean()).item()/2,
-            cosine_view1=(normalized[0]*normalized[1]).sum(1).mean().item(),
-            cosine_view2=(normalized[0]*normalized[2]).sum(1).mean().item(),
-            raw_feature_norms=[a.norm(dim=1).mean().item() for a in (h0,h1,h2)],
-            raw_feature_variance=[a.var(dim=0,unbiased=False).mean().item() for a in (h0,h1,h2)],
-            normalized_feature_variance=[a.var(dim=0,unbiased=False).mean().item() for a in normalized],
-            encoder_grad_norm=encoder_grad,head_grad_norm=head_grad,
-            contrastive_retrieval_accuracy=retrieval,
-            positive_cosine=(scores[positives]*temperature).mean().item(),
-            negative_cosine=(scores[negatives]*temperature).mean().item() if negatives.any() else 0.,
-            candidates_per_anchor=negative_counts.float().mean().item()+2,positives_per_anchor=2,
-            negatives_per_anchor=negative_counts.float().mean().item(),
-            negatives_per_anchor_min=negative_counts.min().item(),
-            negatives_per_anchor_max=negative_counts.max().item(),
-            fraction_anchors_without_negatives=(negative_counts==0).float().mean().item(),
-            m_mean=m.mean().item(),m_std=m.std(unbiased=False).item(),m_min=m.min().item(),m_max=m.max().item(),
-            m_view_means=m.mean(1).tolist(),w_mean=w.mean((0,1)).tolist(),
-            w_std=w.std((0,1),unbiased=False).tolist(),w_view_means=w.mean(1).tolist(),
-            current_batch=len(raw),paired_examples=len(raw_a),replay_batch=0 if ce_sample is None else len(ce_sample[0]),
-            presentations=memory.seen,memory_size=memory.size,step_seconds=time.monotonic()-start)
-    if debug:
-        return row,dict(stored=stored,raw_a=raw_a,m=m,w=w)
-    return row
+    return SingleLevelTrainer.update_infonce_classneg_cifar10(model, optimizer, memory, streams, raw, labels, device, debug, lambda_nce, temperature, contrastive_scores=contrastive_scores, infonce_loss=infonce_loss, random_augmix_views=random_augmix_views, tensor=tensor)
 
 def atomic_json(path,value):
     temp = path.with_suffix(path.suffix+'.tmp')
@@ -247,7 +144,7 @@ def source_hashes():
     base = Path(__file__).parent
     names = ['infonce_classneg_cifar10.py','report_infonce_classneg.py','augmix_operations.py',
              'AUGMIX_LICENSE','download_cifar100_benchmark.py','download_cifar10_benchmark.py']
-    return {name:hashlib.sha256((base/name).read_bytes()).hexdigest() for name in names}
+    return {name:hashlib.sha256((base/name).read_bytes()).hexdigest() for name in names} | library_source_hashes()
 
 def setup(seed,device):
     if device=='cuda' and not torch.cuda.is_available():
@@ -397,7 +294,7 @@ def main():
         snapshot=a.output/'source'
         snapshot.mkdir(exist_ok=True)
         for name in config['source_hashes']:
-            shutil.copy2(Path(__file__).parent/name,snapshot/name)
+            snapshot_source(Path(__file__).parent, snapshot, name)
     if a.pipeline_test:
         raw=np.random.default_rng(900).integers(0,256,(170,32,32,3),dtype=np.uint8)
         labels=np.repeat(np.arange(10),17)
@@ -445,6 +342,7 @@ def main():
     print(json.dumps(dict(event='start_or_resume',pid=os.getpid(),updates=updates,config=config)),flush=True)
     run_start=time.monotonic()
     per_task=config['epochs_per_task']
+    trainer = SingleLevelTrainer(model, optimizer, memory, streams, a.device, update=step)
     for task in range(next_task,5):
         for epoch in range(next_epoch if task==next_task else 0,per_task):
             start=time.monotonic()
@@ -453,7 +351,7 @@ def main():
             with trace.open('a',buffering=1) as f:
                 for batch,pos in enumerate(range(0,len(order),32)):
                     idx=order[pos:pos+32]
-                    row=step(model,optimizer,memory,streams,raw[idx],labels[idx],a.device,lambda_nce=a.lambda_nce,temperature=a.temperature)
+                    row = trainer.step(raw[idx], labels[idx], lambda_nce=a.lambda_nce, temperature=a.temperature)
                     updates+=1
                     row.update(task=task+1,epoch=epoch+1,global_epoch=task*per_task+epoch+1,
                         batch=batch,update=updates,time=time.time(),elapsed_session_seconds=time.monotonic()-run_start)

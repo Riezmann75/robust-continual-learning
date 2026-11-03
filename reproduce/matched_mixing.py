@@ -1,4 +1,9 @@
 """Matched joint-view JS/InfoNCE and random/learned mixing experiments."""
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from libs.trainer import BiLevelTrainer
+from libs import library_source_hashes, snapshot_source
 import argparse
 import hashlib
 import json
@@ -6,7 +11,6 @@ import os
 import platform
 import random
 import time
-from pathlib import Path
 import numpy as np
 from PIL import Image
 import PIL
@@ -21,37 +25,9 @@ from download_cifar100_benchmark import CORRUPTIONS, verify_arrays
 from report_matched_mixing import report
 import shutil
 
-class SmallCNN(nn.Module):
-    def __init__(self):
-        super().__init__()
-        layers = []
-        prev = 3
-        for stage, width in enumerate((32, 64, 128)):
-            for _ in range(2):
-                layers += [nn.Conv2d(prev, width, 3, padding=1, bias=False),
-                           nn.BatchNorm2d(width), nn.ReLU()]
-                prev = width
-            if stage < 2:
-                layers.append(nn.AvgPool2d(2))
-        self.net = nn.Sequential(*layers)
-        self.head = nn.Linear(128, 10)
+from libs.models import SmallCNN
 
-    def forward(self, x):
-        f = self.net(x).mean((2, 3))
-        return self.head(f), f
-
-class Controller(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.cell = nn.LSTMCell(258, 5)
-        self.head = nn.Linear(5, 4)
-        nn.init.zeros_(self.head.weight)
-        nn.init.zeros_(self.head.bias)
-
-    def forward(self, context, state):
-        state = self.cell(context, state)
-        out = self.head(state[0])
-        return out[:,3].sigmoid(), out[:,:3].softmax(1), state
+from libs.models import Controller as Controller
 
 class Reservoir:
     def __init__(self, capacity=500):
@@ -86,41 +62,14 @@ def norm(x):
     std = x.new_tensor((.2470, .2435, .2616))[None, :, None, None]
     return (x-mean)/std
 
-def js(*logits):
-    logps = [F.log_softmax(z, dim=1) for z in logits]
-    ps = [p.exp() for p in logps]
-    mean = torch.stack(ps).mean(0).clamp_min(1e-8).log()
-    return sum((p*(lp-mean)).sum(1).mean() for p, lp in zip(ps, logps))/len(ps)
+from libs.loss import js
 
-def contrastive_scores(h0,h1,h2,temperature=.1,labels=None):
-    if temperature <= 0:
-        raise ValueError('Temperature must be positive')
-    n = len(h0)
-    if n < 1 or h1.shape != h0.shape or h2.shape != h0.shape:
-        raise ValueError('Expected three nonempty aligned feature matrices')
-    u = F.normalize(torch.cat((h0,h1,h2)),p=2,dim=1,eps=1e-8)
-    scores = u @ u.T / temperature
-    ids = torch.arange(n,device=u.device).repeat(3)
-    diagonal = torch.eye(3*n,dtype=torch.bool,device=u.device)
-    positives = ids[:,None].eq(ids[None,:]) & ~diagonal
-    if labels is None or labels.ndim != 1 or len(labels) != n:
-        raise ValueError('One class label per original batch entry is required')
-    classes = labels.to(u.device).repeat(3)
-    different_class = classes[:,None].ne(classes[None,:])
-    allowed = positives | different_class
-    return scores.masked_fill(~allowed,-torch.inf), positives
+from libs.loss import contrastive_scores
 
-def infonce_loss(h0,h1,h2,temperature=.1,labels=None):
-    # All 3N anchors, two positives each. Average individual positive log probabilities.
-    scores, positives = contrastive_scores(h0,h1,h2,temperature,labels)
-    normalizer = torch.logsumexp(scores,dim=1)
-    positive_score = scores[positives].view(len(scores),2).mean(1)
-    return (normalizer-positive_score).mean()
+from libs.loss import infonce_loss
 
 
-def consistency_loss(logits,features,labels,kind,temperature):
-    if kind=='js':return js(*logits)
-    return infonce_loss(*features,temperature=temperature,labels=labels)
+from libs.loss import consistency_loss
 
 # Extra random mixture draws never consume the historical shuffle/operator RNG.
 MIXTURE_RNG = np.random.default_rng(170501)
@@ -203,70 +152,7 @@ def outer_objective(model,controller,context,incoming,x,branches,params,buffers,
     return ce+penalty,penalty,om,ow,ce
 
 def step(model,controller,optimizer,mixer_optimizer,memory,state,raw,labels,device,j=3,debug=False,mixer='learned',kind='js',temperature=.1):
-    x=tensor(raw,device);y=torch.as_tensor(labels,device=device)
-    ce_raw=memory.sample(32,device,raw=True) if memory.size else None
-    replay=(tensor(ce_raw[0],device),ce_raw[1],ce_raw[2]) if ce_raw is not None else None
-    distill=memory.sample(32,device) if memory.size else None
-    raw_a=np.concatenate((raw,ce_raw[0])) if ce_raw is not None else raw
-    xa=tensor(raw_a,device);ya=torch.cat((y,ce_raw[1])) if ce_raw is not None else y
-    b,r=len(raw),0 if ce_raw is None else len(ce_raw[0])
-    slots=active_slots(b,r,device)
-    context=context_for(model,x,y,replay) if mixer=='learned' else None
-    incoming=tuple(v[slots].detach() for v in state)
-    next_state=tuple(v.detach().clone() for v in state)
-    with torch.no_grad():
-        if mixer=='learned':
-            m,w,advanced=controller(context,incoming)
-            for target,value in zip(next_state,advanced):target[slots]=value
-        else:m,w=random_weights(b+r,device)
-    perm=np.random.permutation(9);q=int(np.random.randint(5,8))
-    seen=chains(raw_a,[ops.augmentations[i] for i in perm[:q]],device)
-    # Generate unseen even for random-mixer controls to preserve RNG consumption.
-    unseen=chains(raw_a,[ops.augmentations[i] for i in perm[q:]],device)
-    digest=hashlib.sha256(raw_a.tobytes()+ya.cpu().numpy().tobytes()+perm.tobytes())
-    for v in seen+unseen:digest.update(v.cpu().numpy().tobytes())
-    model.train();optimizer.zero_grad(set_to_none=True)
-    joined=torch.cat((xa,*mixed_views(xa,seen,m,w)))
-    z,h=forward(model,joined);zs=z.chunk(3);hs=h.chunk(3);logits=zs[0]
-    old_logits=logits[:b].detach().clone()
-    ce=F.cross_entropy(logits[:b],y)
-    replay_ce=F.cross_entropy(logits[b:],replay[1]) if r else ce.new_zeros(())
-    replay_mse=F.mse_loss(forward(model,distill[0])[0],distill[2]) if distill else ce.new_zeros(())
-    penalty=consistency_loss(zs,hs,ya,kind,temperature)
-    loss=ce+.5*replay_ce+.2*replay_mse+penalty
-    loss.backward()
-    if not torch.isfinite(loss) or not all(p.grad is None or torch.isfinite(p.grad).all() for p in model.parameters()):raise RuntimeError('Nonfinite classifier loss/gradient')
-    optimizer.step();optimizer.zero_grad(set_to_none=True)
-    model.eval();params={k:v.detach() for k,v in model.named_parameters()};buffers=clone_buffers(model)
-    outer_rows=[]
-    if mixer=='learned':
-        for _ in range(j):
-            mixer_optimizer.zero_grad(set_to_none=True)
-            outer_loss,outer_penalty,om,ow,outer_ce=outer_objective(model,controller,context,incoming,xa,unseen,params,buffers,ya,kind,temperature)
-            outer_loss.backward()
-            grads=[p.grad for p in controller.parameters() if p.grad is not None]
-            if not torch.isfinite(outer_loss) or not grads or not all(torch.isfinite(g).all() for g in grads):raise RuntimeError('Nonfinite mixer loss/gradient')
-            grad_norm=torch.stack([g.square().sum() for g in grads]).sum().sqrt().item()
-            outer_rows.append(dict(m=om.mean().item(),m_per_example=om.detach().cpu().tolist(),w=ow.detach().cpu().tolist(),consistency_loss=outer_penalty.item(),grad_norm=grad_norm))
-            mixer_optimizer.step()
-        with torch.no_grad():
-            _,after_penalty,after_m,after_w,_=outer_objective(model,controller,context,incoming,xa,unseen,params,buffers,ya,kind,temperature)
-    else:
-        with torch.no_grad():
-            uz,uh=forward(model,torch.cat((xa,*mixed_views(xa,unseen,m,w))),params,buffers)
-            after_penalty=consistency_loss(uz.chunk(3),uh.chunk(3),ya,kind,temperature)
-            outer_ce=F.cross_entropy(uz.chunk(3)[0],ya)
-        after_m,after_w=m,w
-    memory.add(raw,labels,old_logits)
-    row=dict(m_before=m.mean().item(),m_after=after_m.mean().item(),
-        m_before_per_example=m.flatten().cpu().tolist(),m_after_per_example=after_m.flatten().cpu().tolist(),
-        w_before=w.cpu().tolist(),w_after=after_w.cpu().tolist(),mixer=mixer,consistency=kind,
-        sampling_sha256=digest.hexdigest(),seen_consistency=penalty.item(),outer_consistency_after=after_penalty.item(),
-        current_ce=ce.item(),replay_ce=replay_ce.item(),replay_mse=replay_mse.item(),classifier_loss=loss.item(),
-        outer_ce=outer_ce.item(),mixer_updates=outer_rows,q=q,batch_size=b,replay_batch=r,augmented_batch=b+r,
-        memory_size=memory.size,presentations=memory.seen)
-    if debug:return next_state,row,dict(stored=old_logits,m=m,w=w,context=context)
-    return next_state,row
+    return BiLevelTrainer.update_matched_mixing(model, controller, optimizer, mixer_optimizer, memory, state, raw, labels, device, j, debug, mixer, kind, temperature, active_slots=active_slots, chains=chains, clone_buffers=clone_buffers, consistency_loss=consistency_loss, context_for=context_for, forward=forward, mixed_views=mixed_views, ops=ops, outer_objective=outer_objective, random_weights=random_weights, tensor=tensor)
 
 def atomic_json(path, value):
     temp = path.with_suffix(path.suffix+'.tmp')
@@ -277,7 +163,7 @@ def source_hashes():
     base=Path(__file__).parent
     names=['matched_mixing.py','report_matched_mixing.py','augmix_operations.py','AUGMIX_LICENSE',
            'download_cifar100_benchmark.py','download_cifar10_benchmark.py']
-    return {name:hashlib.sha256((base/name).read_bytes()).hexdigest() for name in names}
+    return {name:hashlib.sha256((base/name).read_bytes()).hexdigest() for name in names} | library_source_hashes()
 
 def rng_state():
     return dict(python=random.getstate(), numpy=np.random.get_state(),
@@ -394,7 +280,7 @@ def main():
         atomic_json(config_path, config)
         snapshot=a.output/'source';snapshot.mkdir(exist_ok=True)
         for name in config['source_hashes']:
-            shutil.copy2(Path(__file__).parent/name,snapshot/name)
+            snapshot_source(Path(__file__).parent, snapshot, name)
     if a.pipeline_test:
         raw = np.random.randint(0, 256, (170,32,32,3), dtype=np.uint8)
         labels = np.repeat(np.arange(10), 17)
@@ -447,6 +333,7 @@ def main():
         next_epoch=next_epoch, updates=updates, config=config)), flush=True)
     atomic_json(a.output/'process.json', dict(pid=os.getpid(), host=platform.node(),
         started=time.time(), command=' '.join(__import__('sys').argv)))
+    trainer = BiLevelTrainer(model, controller, optimizer, mixer_optimizer, memory, state, a.device, update=step)
     for task in range(next_task, 5):
         first = next_epoch if task == next_task else 0
         for epoch in range(first, epochs):
@@ -455,8 +342,8 @@ def main():
             with trace_path.open('a', buffering=1) as trace:
                 for batch, pos in enumerate(range(0, len(order), 32)):
                     ix = order[pos:pos+32]
-                    state, row = step(model, controller, optimizer, mixer_optimizer, memory,
-                                      state, raw[ix], labels[ix], a.device, 3,mixer=a.mixer,kind=a.consistency,temperature=a.temperature)
+                    row = trainer.step(raw[ix], labels[ix], mixer=a.mixer, kind=a.consistency, temperature=a.temperature, j=3)
+                    state = trainer.state
                     updates += 1
                     row.update(task=task+1, epoch=epoch+1, global_epoch=task*epochs+epoch+1,
                                batch=batch, update=updates, time=time.time())
