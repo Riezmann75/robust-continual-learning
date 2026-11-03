@@ -66,6 +66,22 @@
       "classifier_consistency": "infonce",
       "mixer_consistency": "js",
       "artifact_directory": "learned_infonce_js"
+    },
+    "chain_aware_fixed_m": {
+      "clean": {
+        "n": 10000,
+        "class_il": 0.5622,
+        "task_il": 0.9102
+      },
+      "corrupted_mean": {
+        "class_il": 0.47165333333333337,
+        "task_il": 0.8624266666666667
+      },
+      "final_epoch_m_mean": 0.5,
+      "classifier_consistency": "infonce",
+      "mixer_consistency": "js",
+      "artifact_directory": "chain_aware_fixed_m",
+      "caveat": "Additional chain feature/probability inputs and per-view weights; fixed m=.5. Not an isolated outer-loss ablation."
     }
   },
   "sampling_verification": {

@@ -10,7 +10,7 @@ p.add_argument('--output',type=Path)
 p.add_argument('--device',choices=['cuda','cpu','mps'])
 a=p.parse_args()
 cfg=json.loads(a.config.read_text())
-allowed={'matched_infonce_js.py','matched_mixing.py','metamix_jointbn.py','augce_cifar10.py','feature_mse_cifar10.py','infonce_cifar10.py',
+allowed={'chain_aware_mixing.py','matched_infonce_js.py','matched_mixing.py','metamix_jointbn.py','augce_cifar10.py','feature_mse_cifar10.py','infonce_cifar10.py',
          'infonce_classneg_cifar10.py','mse_infonce_cifar10.py'}
 if cfg['runner'] not in allowed:raise ValueError('Unknown runner')
 args=cfg['args'].copy()

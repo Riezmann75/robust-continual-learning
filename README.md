@@ -4,7 +4,8 @@ Controlled Split-CIFAR10 experiments using a small CNN, DER++ replay, and
 clean/augmented-view objectives. Includes completed historical results, corrected
 random/learned mixing comparisons, and augmented-CE/reconstruction runners.
 
-The corrected comparison below includes five completed runs. Other experiment families
+The comparison below includes five corrected-controller/control runs and one
+separate chain-aware extension, all completed. Other experiment families
 are documented separately; their objectives and results should not be conflated.
 
 ## Repository layout
@@ -25,7 +26,7 @@ experiments. The new work is in [augce_cifar10.py](reproduce/augce_cifar10.py).
 
 For a restatement of our implementation, see [MetaMix paper-to-code guide](docs/metamix_implementation.md): controller inputs, training order, paper-to-code mapping, and remaining differences.
 
-All five runs completed **10 epochs per task across five tasks**, using all
+All six runs completed **10 epochs per task across five tasks**, using all
 50,000 clean training images, the same 288,746-parameter CNN, and CE + DER++.
 Each run performed 15,650 classifier updates and 500,000 current-image presentations.
 
@@ -33,9 +34,10 @@ Each run performed 15,650 classifier updates and 500,000 current-image presentat
 |---|---|---|---:|---:|---:|---:|
 | Learned (paper-guided MetaMix) | JS | JS | 46.22% | 37.58% | 89.17% | 83.33% |
 | Random | JS | None | 48.80% | 42.11% | 89.71% | 85.41% |
-| Random | Class-aware InfoNCE | None | **54.30%** | **48.27%** | **91.20%** | **87.19%** |
+| Random | Class-aware InfoNCE | None | 54.30% | **48.27%** | **91.20%** | **87.19%** |
 | Learned | Class-aware InfoNCE | Class-aware InfoNCE | 49.42% | 39.68% | 90.08% | 83.24% |
 | Learned (unchanged controller) | Class-aware InfoNCE | JS | 48.26% | 38.55% | 89.25% | 82.69% |
+| Chain-aware, fixed m=0.5 | Class-aware InfoNCE | JS | **56.22%** | 47.17% | 91.02% | 86.24% |
 
 Evaluation uses the final checkpoint on **10,000 clean test images** and
 **750,000 CIFAR-10-C images** (15 corruptions x 5 severities x 10,000 images).
@@ -50,7 +52,7 @@ resampled each batch; both use training images, never CIFAR-10-C test data.
 
 Class-aware InfoNCE uses two same-image positive views and different-class
 negatives; other same-class examples are excluded. Classifier consistency uses
-pseudo-seen views; mixer objectives use pseudo-unseen views. The last row changes
+pseudo-seen views; mixer objectives use pseudo-unseen views. The unchanged-controller InfoNCE/JS row changes
 only the outer consistency objective from InfoNCE to JS relative to learned InfoNCE.
 The corrected LSTM controller is unchanged: m and w remain learned, with no chain inputs.
 Random mixers have no outer optimization. All consistency coefficients are 1;
@@ -88,8 +90,27 @@ python scripts/run_experiment.py configs/matched_learned_infonce.json --data-roo
 python scripts/run_experiment.py configs/matched_infonce_js.json --data-root /path/to/data --run
 ```
 
-The later chain-aware fixed-m controller is a separate experiment and is not
-included in this corrected-controller comparison.
+The chain-aware row additionally changes controller inputs, fixes m=0.5, and
+assigns separate weights per view. It is not an isolated outer-objective ablation.
+See [its implementation](docs/chain_aware_mixing.md).
+
+### Class-IL and Task-IL by corruption category
+
+[Category and per-corruption tables](docs/corruption_category_results.md) report
+both evaluation modes for all six runs, grouped as in MetaMix Tables 6-7:
+Noise (Gaussian, shot, impulse), Blur (defocus, glass, motion, zoom), Weather
+(snow, frost, fog, brightness), and Digital (contrast, elastic, pixelate, JPEG).
+Each corruption averages severities 1-5. Overall averages all 15 corruptions,
+so the four category means are weighted by their sizes (3,4,4,4).
+
+Our fixed class pairs are (0,1), (2,3), (4,5), (6,7), (8,9). The five two-class
+task structure matches the paper, but its exact class order is not verified.
+Task-IL is given the correct pair; Class-IL is not. These results come from the
+existing full evaluations, not retraining or paper-equivalent accuracy claims.
+
+```sh
+python scripts/summarize_corruption_categories.py
+```
 
 ## Setup
 

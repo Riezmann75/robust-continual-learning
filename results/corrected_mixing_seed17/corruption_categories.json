@@ -1,0 +1,389 @@
+{
+  "groups": {
+    "Noise": [
+      "gaussian_noise",
+      "shot_noise",
+      "impulse_noise"
+    ],
+    "Blur": [
+      "defocus_blur",
+      "glass_blur",
+      "motion_blur",
+      "zoom_blur"
+    ],
+    "Weather": [
+      "snow",
+      "frost",
+      "fog",
+      "brightness"
+    ],
+    "Digital": [
+      "contrast",
+      "elastic_transform",
+      "pixelate",
+      "jpeg_compression"
+    ]
+  },
+  "units": "fraction; Markdown tables show percentages",
+  "aggregation": "average five severities per corruption, then average corruptions within category; overall gives each of the 15 corruptions equal weight",
+  "task_pairs": [
+    [
+      0,
+      1
+    ],
+    [
+      2,
+      3
+    ],
+    [
+      4,
+      5
+    ],
+    [
+      6,
+      7
+    ],
+    [
+      8,
+      9
+    ]
+  ],
+  "results": {
+    "learned_js": {
+      "class_il": {
+        "clean": 0.4622,
+        "per_corruption": {
+          "gaussian_noise": 0.34118,
+          "shot_noise": 0.35886,
+          "impulse_noise": 0.28252,
+          "defocus_blur": 0.4332,
+          "glass_blur": 0.35150000000000003,
+          "motion_blur": 0.36268,
+          "zoom_blur": 0.42576,
+          "snow": 0.37639999999999996,
+          "frost": 0.34708,
+          "fog": 0.38533999999999996,
+          "brightness": 0.43620000000000003,
+          "contrast": 0.31778,
+          "elastic_transform": 0.42219999999999996,
+          "pixelate": 0.36458,
+          "jpeg_compression": 0.43126
+        },
+        "categories": {
+          "Noise": 0.32752,
+          "Blur": 0.393285,
+          "Weather": 0.386255,
+          "Digital": 0.383955
+        },
+        "overall": 0.37576933333333334
+      },
+      "task_il": {
+        "clean": 0.8917,
+        "per_corruption": {
+          "gaussian_noise": 0.81516,
+          "shot_noise": 0.83008,
+          "impulse_noise": 0.7881199999999999,
+          "defocus_blur": 0.8567199999999999,
+          "glass_blur": 0.7714399999999999,
+          "motion_blur": 0.83396,
+          "zoom_blur": 0.84824,
+          "snow": 0.8373200000000001,
+          "frost": 0.83622,
+          "fog": 0.84816,
+          "brightness": 0.8809000000000001,
+          "contrast": 0.76378,
+          "elastic_transform": 0.8565799999999999,
+          "pixelate": 0.86266,
+          "jpeg_compression": 0.8708400000000001
+        },
+        "categories": {
+          "Noise": 0.81112,
+          "Blur": 0.8275899999999999,
+          "Weather": 0.85065,
+          "Digital": 0.838465
+        },
+        "overall": 0.8333453333333334
+      }
+    },
+    "random_js": {
+      "class_il": {
+        "clean": 0.488,
+        "per_corruption": {
+          "gaussian_noise": 0.40774,
+          "shot_noise": 0.42538,
+          "impulse_noise": 0.37834,
+          "defocus_blur": 0.47973999999999994,
+          "glass_blur": 0.38161999999999996,
+          "motion_blur": 0.42824,
+          "zoom_blur": 0.47048000000000006,
+          "snow": 0.41022,
+          "frost": 0.37454,
+          "fog": 0.42088000000000003,
+          "brightness": 0.46212,
+          "contrast": 0.36304,
+          "elastic_transform": 0.45944,
+          "pixelate": 0.3971,
+          "jpeg_compression": 0.45827999999999997
+        },
+        "categories": {
+          "Noise": 0.40382,
+          "Blur": 0.44001999999999997,
+          "Weather": 0.41694,
+          "Digital": 0.419465
+        },
+        "overall": 0.42114399999999996
+      },
+      "task_il": {
+        "clean": 0.8971,
+        "per_corruption": {
+          "gaussian_noise": 0.8313,
+          "shot_noise": 0.8492599999999999,
+          "impulse_noise": 0.81598,
+          "defocus_blur": 0.8888,
+          "glass_blur": 0.79206,
+          "motion_blur": 0.86494,
+          "zoom_blur": 0.87826,
+          "snow": 0.85078,
+          "frost": 0.85028,
+          "fog": 0.8648199999999999,
+          "brightness": 0.89176,
+          "contrast": 0.8072800000000001,
+          "elastic_transform": 0.8755600000000001,
+          "pixelate": 0.87098,
+          "jpeg_compression": 0.8798
+        },
+        "categories": {
+          "Noise": 0.83218,
+          "Blur": 0.856015,
+          "Weather": 0.86441,
+          "Digital": 0.8584050000000001
+        },
+        "overall": 0.854124
+      }
+    },
+    "random_infonce": {
+      "class_il": {
+        "clean": 0.543,
+        "per_corruption": {
+          "gaussian_noise": 0.48495999999999995,
+          "shot_noise": 0.5078199999999999,
+          "impulse_noise": 0.47058,
+          "defocus_blur": 0.5311600000000001,
+          "glass_blur": 0.44618,
+          "motion_blur": 0.49176000000000003,
+          "zoom_blur": 0.5292399999999999,
+          "snow": 0.46840000000000004,
+          "frost": 0.43518,
+          "fog": 0.48422,
+          "brightness": 0.51132,
+          "contrast": 0.3944,
+          "elastic_transform": 0.50798,
+          "pixelate": 0.46852,
+          "jpeg_compression": 0.5085
+        },
+        "categories": {
+          "Noise": 0.4877866666666666,
+          "Blur": 0.499585,
+          "Weather": 0.47478,
+          "Digital": 0.46985
+        },
+        "overall": 0.48268133333333335
+      },
+      "task_il": {
+        "clean": 0.912,
+        "per_corruption": {
+          "gaussian_noise": 0.8616199999999999,
+          "shot_noise": 0.87538,
+          "impulse_noise": 0.85,
+          "defocus_blur": 0.8974,
+          "glass_blur": 0.8244400000000001,
+          "motion_blur": 0.8704000000000001,
+          "zoom_blur": 0.8889799999999999,
+          "snow": 0.87388,
+          "frost": 0.86998,
+          "fog": 0.87964,
+          "brightness": 0.9057600000000001,
+          "contrast": 0.80942,
+          "elastic_transform": 0.88416,
+          "pixelate": 0.89192,
+          "jpeg_compression": 0.8958999999999999
+        },
+        "categories": {
+          "Noise": 0.8623333333333333,
+          "Blur": 0.870305,
+          "Weather": 0.882315,
+          "Digital": 0.87035
+        },
+        "overall": 0.8719253333333333
+      }
+    },
+    "learned_infonce": {
+      "class_il": {
+        "clean": 0.4942,
+        "per_corruption": {
+          "gaussian_noise": 0.3725,
+          "shot_noise": 0.395,
+          "impulse_noise": 0.32511999999999996,
+          "defocus_blur": 0.44934,
+          "glass_blur": 0.35864,
+          "motion_blur": 0.37246,
+          "zoom_blur": 0.43338,
+          "snow": 0.40215999999999996,
+          "frost": 0.36494,
+          "fog": 0.39476,
+          "brightness": 0.45978,
+          "contrast": 0.31826,
+          "elastic_transform": 0.44814,
+          "pixelate": 0.40228,
+          "jpeg_compression": 0.45498000000000005
+        },
+        "categories": {
+          "Noise": 0.3642066666666666,
+          "Blur": 0.403455,
+          "Weather": 0.40541,
+          "Digital": 0.405915
+        },
+        "overall": 0.3967826666666667
+      },
+      "task_il": {
+        "clean": 0.9008,
+        "per_corruption": {
+          "gaussian_noise": 0.81412,
+          "shot_noise": 0.83452,
+          "impulse_noise": 0.79728,
+          "defocus_blur": 0.8675,
+          "glass_blur": 0.7651600000000001,
+          "motion_blur": 0.8254400000000001,
+          "zoom_blur": 0.8495799999999999,
+          "snow": 0.84658,
+          "frost": 0.82858,
+          "fog": 0.8321799999999999,
+          "brightness": 0.88256,
+          "contrast": 0.72638,
+          "elastic_transform": 0.86624,
+          "pixelate": 0.87012,
+          "jpeg_compression": 0.88016
+        },
+        "categories": {
+          "Noise": 0.8153066666666667,
+          "Blur": 0.82692,
+          "Weather": 0.847475,
+          "Digital": 0.835725
+        },
+        "overall": 0.8324266666666666
+      }
+    },
+    "learned_infonce_js": {
+      "class_il": {
+        "clean": 0.4826,
+        "per_corruption": {
+          "gaussian_noise": 0.35032,
+          "shot_noise": 0.3773,
+          "impulse_noise": 0.31376,
+          "defocus_blur": 0.44123999999999997,
+          "glass_blur": 0.34965999999999997,
+          "motion_blur": 0.37668,
+          "zoom_blur": 0.43479999999999996,
+          "snow": 0.38254,
+          "frost": 0.34886,
+          "fog": 0.40198,
+          "brightness": 0.43284,
+          "contrast": 0.31976,
+          "elastic_transform": 0.43822,
+          "pixelate": 0.37229999999999996,
+          "jpeg_compression": 0.44222
+        },
+        "categories": {
+          "Noise": 0.34712666666666664,
+          "Blur": 0.400595,
+          "Weather": 0.391555,
+          "Digital": 0.393125
+        },
+        "overall": 0.38549866666666666
+      },
+      "task_il": {
+        "clean": 0.8925,
+        "per_corruption": {
+          "gaussian_noise": 0.78434,
+          "shot_noise": 0.8148799999999999,
+          "impulse_noise": 0.77108,
+          "defocus_blur": 0.8585200000000001,
+          "glass_blur": 0.7752800000000001,
+          "motion_blur": 0.8229200000000001,
+          "zoom_blur": 0.84612,
+          "snow": 0.8321400000000001,
+          "frost": 0.82986,
+          "fog": 0.84712,
+          "brightness": 0.8805799999999999,
+          "contrast": 0.76472,
+          "elastic_transform": 0.85684,
+          "pixelate": 0.85328,
+          "jpeg_compression": 0.8659800000000001
+        },
+        "categories": {
+          "Noise": 0.7900999999999999,
+          "Blur": 0.82571,
+          "Weather": 0.847425,
+          "Digital": 0.835205
+        },
+        "overall": 0.8269106666666667
+      }
+    },
+    "chain_aware_fixed_m": {
+      "class_il": {
+        "clean": 0.5622,
+        "per_corruption": {
+          "gaussian_noise": 0.4516,
+          "shot_noise": 0.47924,
+          "impulse_noise": 0.42084,
+          "defocus_blur": 0.52442,
+          "glass_blur": 0.40984,
+          "motion_blur": 0.45348,
+          "zoom_blur": 0.50266,
+          "snow": 0.47501999999999994,
+          "frost": 0.42611999999999994,
+          "fog": 0.48491999999999996,
+          "brightness": 0.51436,
+          "contrast": 0.38748,
+          "elastic_transform": 0.50646,
+          "pixelate": 0.51214,
+          "jpeg_compression": 0.52622
+        },
+        "categories": {
+          "Noise": 0.45056,
+          "Blur": 0.4726,
+          "Weather": 0.475105,
+          "Digital": 0.48307500000000003
+        },
+        "overall": 0.4716533333333333
+      },
+      "task_il": {
+        "clean": 0.9102,
+        "per_corruption": {
+          "gaussian_noise": 0.8558,
+          "shot_noise": 0.8718999999999999,
+          "impulse_noise": 0.84602,
+          "defocus_blur": 0.8835000000000001,
+          "glass_blur": 0.80992,
+          "motion_blur": 0.85394,
+          "zoom_blur": 0.8710000000000001,
+          "snow": 0.8667199999999999,
+          "frost": 0.8635400000000001,
+          "fog": 0.86872,
+          "brightness": 0.90098,
+          "contrast": 0.7925000000000001,
+          "elastic_transform": 0.87432,
+          "pixelate": 0.8896200000000001,
+          "jpeg_compression": 0.88792
+        },
+        "categories": {
+          "Noise": 0.8579066666666666,
+          "Blur": 0.8545900000000001,
+          "Weather": 0.87499,
+          "Digital": 0.86109
+        },
+        "overall": 0.8624266666666667
+      }
+    }
+  }
+}
