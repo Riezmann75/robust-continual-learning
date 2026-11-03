@@ -1,11 +1,13 @@
 # CIFAR-10-C results by category: Class-IL and Task-IL
 
-These tables aggregate the saved full evaluations of six completed seed-17 runs;
+These tables aggregate the saved full evaluations of seven completed seed-17 runs;
 no model was retrained and no new inference or substitute corruptions were needed.
 Method labels show **classifier consistency / mixer objective**; all include CE + DER++.
 MetaMix-guided denotes our paper-guided implementation, not verified author code.
 The chain-aware model also fixes m=0.5 and changes controller inputs and per-view
 weighting, so it is not an isolated outer-objective ablation.
+The two chain-aware runs differ only in classifier consistency (InfoNCE versus JS);
+their controller, fixed m, and outer JS objective remain the same.
 
 ## Splits and interpretation
 
@@ -51,6 +53,7 @@ All values below are **percent accuracy**; calculations use unrounded values.
 | MetaMix-guided mixer: InfoNCE / InfoNCE | 90.08 | 81.53 | 82.69 | 84.75 | 83.57 | 83.24 |
 | MetaMix-guided mixer: InfoNCE / JS | 89.25 | 79.01 | 82.57 | 84.74 | 83.52 | 82.69 |
 | Chain-aware mixer (m=0.5): InfoNCE / JS | 91.02 | 85.79 | 85.46 | 87.50 | 86.11 | 86.24 |
+| Chain-aware mixer (m=0.5): JS / JS | 90.50 | 82.96 | 85.78 | 86.92 | 86.30 | 85.66 |
 
 ### Task-IL per-corruption results
 
@@ -64,6 +67,7 @@ All values below are **percent accuracy**; calculations use unrounded values.
 | MetaMix-guided mixer: InfoNCE / InfoNCE | 81.41 | 83.45 | 79.73 |
 | MetaMix-guided mixer: InfoNCE / JS | 78.43 | 81.49 | 77.11 |
 | Chain-aware mixer (m=0.5): InfoNCE / JS | 85.58 | 87.19 | 84.60 |
+| Chain-aware mixer (m=0.5): JS / JS | 83.11 | 84.97 | 80.79 |
 
 #### Blur
 
@@ -75,6 +79,7 @@ All values below are **percent accuracy**; calculations use unrounded values.
 | MetaMix-guided mixer: InfoNCE / InfoNCE | 86.75 | 76.52 | 82.54 | 84.96 |
 | MetaMix-guided mixer: InfoNCE / JS | 85.85 | 77.53 | 82.29 | 84.61 |
 | Chain-aware mixer (m=0.5): InfoNCE / JS | 88.35 | 80.99 | 85.39 | 87.10 |
+| Chain-aware mixer (m=0.5): JS / JS | 88.88 | 79.55 | 86.79 | 87.89 |
 
 #### Weather
 
@@ -86,6 +91,7 @@ All values below are **percent accuracy**; calculations use unrounded values.
 | MetaMix-guided mixer: InfoNCE / InfoNCE | 84.66 | 82.86 | 83.22 | 88.26 |
 | MetaMix-guided mixer: InfoNCE / JS | 83.21 | 82.99 | 84.71 | 88.06 |
 | Chain-aware mixer (m=0.5): InfoNCE / JS | 86.67 | 86.35 | 86.87 | 90.10 |
+| Chain-aware mixer (m=0.5): JS / JS | 85.32 | 85.75 | 86.98 | 89.63 |
 
 #### Digital
 
@@ -97,6 +103,7 @@ All values below are **percent accuracy**; calculations use unrounded values.
 | MetaMix-guided mixer: InfoNCE / InfoNCE | 72.64 | 86.62 | 87.01 | 88.02 |
 | MetaMix-guided mixer: InfoNCE / JS | 76.47 | 85.68 | 85.33 | 86.60 |
 | Chain-aware mixer (m=0.5): InfoNCE / JS | 79.25 | 87.43 | 88.96 | 88.79 |
+| Chain-aware mixer (m=0.5): JS / JS | 81.13 | 87.84 | 87.47 | 88.77 |
 
 ## Class-IL category summary
 
@@ -108,6 +115,7 @@ All values below are **percent accuracy**; calculations use unrounded values.
 | MetaMix-guided mixer: InfoNCE / InfoNCE | 49.42 | 36.42 | 40.35 | 40.54 | 40.59 | 39.68 |
 | MetaMix-guided mixer: InfoNCE / JS | 48.26 | 34.71 | 40.06 | 39.16 | 39.31 | 38.55 |
 | Chain-aware mixer (m=0.5): InfoNCE / JS | 56.22 | 45.06 | 47.26 | 47.51 | 48.31 | 47.17 |
+| Chain-aware mixer (m=0.5): JS / JS | 50.33 | 36.79 | 45.67 | 42.39 | 43.25 | 42.37 |
 
 ### Class-IL per-corruption results
 
@@ -121,6 +129,7 @@ All values below are **percent accuracy**; calculations use unrounded values.
 | MetaMix-guided mixer: InfoNCE / InfoNCE | 37.25 | 39.50 | 32.51 |
 | MetaMix-guided mixer: InfoNCE / JS | 35.03 | 37.73 | 31.38 |
 | Chain-aware mixer (m=0.5): InfoNCE / JS | 45.16 | 47.92 | 42.08 |
+| Chain-aware mixer (m=0.5): JS / JS | 37.75 | 39.82 | 32.79 |
 
 #### Blur
 
@@ -132,6 +141,7 @@ All values below are **percent accuracy**; calculations use unrounded values.
 | MetaMix-guided mixer: InfoNCE / InfoNCE | 44.93 | 35.86 | 37.25 | 43.34 |
 | MetaMix-guided mixer: InfoNCE / JS | 44.12 | 34.97 | 37.67 | 43.48 |
 | Chain-aware mixer (m=0.5): InfoNCE / JS | 52.44 | 40.98 | 45.35 | 50.27 |
+| Chain-aware mixer (m=0.5): JS / JS | 50.77 | 36.39 | 45.93 | 49.59 |
 
 #### Weather
 
@@ -143,6 +153,7 @@ All values below are **percent accuracy**; calculations use unrounded values.
 | MetaMix-guided mixer: InfoNCE / InfoNCE | 40.22 | 36.49 | 39.48 | 45.98 |
 | MetaMix-guided mixer: InfoNCE / JS | 38.25 | 34.89 | 40.20 | 43.28 |
 | Chain-aware mixer (m=0.5): InfoNCE / JS | 47.50 | 42.61 | 48.49 | 51.44 |
+| Chain-aware mixer (m=0.5): JS / JS | 39.77 | 37.84 | 44.17 | 47.76 |
 
 #### Digital
 
@@ -154,6 +165,7 @@ All values below are **percent accuracy**; calculations use unrounded values.
 | MetaMix-guided mixer: InfoNCE / InfoNCE | 31.83 | 44.81 | 40.23 | 45.50 |
 | MetaMix-guided mixer: InfoNCE / JS | 31.98 | 43.82 | 37.23 | 44.22 |
 | Chain-aware mixer (m=0.5): InfoNCE / JS | 38.75 | 50.65 | 51.21 | 52.62 |
+| Chain-aware mixer (m=0.5): JS / JS | 37.94 | 48.22 | 39.21 | 47.62 |
 
 ## Reproduce the report
 

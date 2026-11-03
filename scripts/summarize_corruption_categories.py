@@ -1,5 +1,5 @@
 """Aggregate already completed CIFAR-10-C evaluations; no training or inference."""
-import json,math
+import json,math,re
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 BASE=ROOT/'results/corrected_mixing_seed17'
@@ -16,6 +16,7 @@ RUNS={
     'learned_infonce':'MetaMix-guided mixer: InfoNCE / InfoNCE',
     'learned_infonce_js':'MetaMix-guided mixer: InfoNCE / JS',
     'chain_aware_fixed_m':'Chain-aware mixer (m=0.5): InfoNCE / JS',
+    'chain_aware_js':'Chain-aware mixer (m=0.5): JS / JS',
 }
 LABELS={'gaussian_noise':'Gauss','shot_noise':'Shot','impulse_noise':'Impulse','defocus_blur':'Defocus','glass_blur':'Glass','motion_blur':'Motion','zoom_blur':'Zoom','snow':'Snow','frost':'Frost','fog':'Fog','brightness':'Bright','contrast':'Contrast','elastic_transform':'Elastic','pixelate':'Pixel','jpeg_compression':'JPEG'}
 
@@ -37,8 +38,46 @@ def aggregate(e):
         result[metric]={'clean':e['clean'][metric],'per_corruption':per,'categories':categories,'overall':overall}
     return result
 
-def table(headers,rows):
-    return '\n'.join(['| '+' | '.join(headers)+' |','| '+' | '.join(['---']+['---:']*(len(headers)-1))+' |']+['| '+' | '.join(row)+' |' for row in rows])
+def table(headers,rows,text_columns=1):
+    return '\n'.join(['| '+' | '.join(headers)+' |','| '+' | '.join(['---']*text_columns+['---:']*(len(headers)-text_columns))+' |']+['| '+' | '.join(row)+' |' for row in rows])
+
+
+def ranked(values, columns, suffix='', second=False):
+    cells=[]
+    for value,column in zip(values,columns):
+        order=sorted(set(column),reverse=True)
+        cell=f'{100*value:.2f}{suffix}'
+        if math.isclose(value,order[0],abs_tol=1e-12):cell=f'**{cell}**'
+        elif second and len(order)>1 and math.isclose(value,order[1],abs_tol=1e-12):cell=f'<ins>{cell}</ins>'
+        cells.append(cell)
+    return cells
+
+
+def update_readme(results):
+    path=ROOT/'README.md'
+    text=path.read_text()
+    labels=[label.split(': ',1) for label in RUNS.values()]
+    labels=[(mixer.replace('(m=0.5)','(`m = 0.5`)'),objective) for mixer,objective in labels]
+    values=[[a['class_il']['clean'],a['class_il']['overall'],a['task_il']['clean'],a['task_il']['overall']] for a in results.values()]
+    columns=list(zip(*values))
+    rows=[]
+    for (mixer,objective),v in zip(labels,values):
+        classifier,outer=objective.split(' / ')
+        rows.append([mixer,classifier.replace('InfoNCE','Class-aware InfoNCE'),outer.replace('InfoNCE','Class-aware InfoNCE').replace('none','None'),*ranked(v,columns,'%')])
+    main=table(['Mixer','Classifier consistency','Mixer objective','Clean class-IL','CIFAR-10-C class-IL','Clean task-IL','CIFAR-10-C task-IL'],rows,text_columns=3)
+    text,count=re.subn(r'\| Mixer \| Classifier consistency[^\n]*\n(?:\|[^\n]*\n)+',lambda _:main+'\n',text)
+    assert count==1
+    core='All values are **accuracy (%)**, averaged over severities 1-5. **Bold** marks the best and <ins>underline</ins> marks the second-best score in each column, ranked using unrounded values. Objectives are **classifier consistency / mixer objective**; all methods include CE + DER++.\n'
+    for metric,title in [('class_il','Class-IL — all ten classes'),('task_il','Task-IL — correct class pair supplied')]:
+        values=[[*a[metric]['categories'].values(),a[metric]['overall']] for a in results.values()]
+        columns=list(zip(*values))
+        rows=[[mixer,objective,*ranked(v,columns,second=True)] for (mixer,objective),v in zip(labels,values)]
+        core+='\n#### '+title+'\n\n'+table(['Mixer','Objectives',*GROUPS,'Overall'],rows,text_columns=2)+'\n'
+    start='<!-- core-corruption-ranked-tables -->'
+    end='<!-- /core-corruption-ranked-tables -->'
+    before,rest=text.split(start,1)
+    _,after=rest.split(end,1)
+    path.write_text(before+start+'\n'+core+'\n'+end+after)
 
 def main():
     results={}
@@ -52,12 +91,14 @@ def main():
     (BASE/'corruption_categories.json').write_text(json.dumps(output,indent=2)+'\n')
     text="""# CIFAR-10-C results by category: Class-IL and Task-IL
 
-These tables aggregate the saved full evaluations of six completed seed-17 runs;
+These tables aggregate the saved full evaluations of seven completed seed-17 runs;
 no model was retrained and no new inference or substitute corruptions were needed.
 Method labels show **classifier consistency / mixer objective**; all include CE + DER++.
 MetaMix-guided denotes our paper-guided implementation, not verified author code.
 The chain-aware model also fixes m=0.5 and changes controller inputs and per-view
 weighting, so it is not an isolated outer-objective ablation.
+The two chain-aware runs differ only in classifier consistency (InfoNCE versus JS);
+their controller, fixed m, and outer JS objective remain the same.
 
 ## Splits and interpretation
 
@@ -107,6 +148,7 @@ All values below are **percent accuracy**; calculations use unrounded values.
             text+=table(['Method',*[LABELS[c] for c in names]],rows)+'\n'
     text+='\n## Reproduce the report\n\n```sh\npython scripts/summarize_corruption_categories.py\n```\n\n[Machine-readable category results](../results/corrected_mixing_seed17/corruption_categories.json) retain fractional accuracies. Original evaluation.json files retain all 75 corruption/severity combinations for both evaluation modes.\n'
     (ROOT/'docs/corruption_category_results.md').write_text(text)
+    update_readme(results)
     print(json.dumps({run:{metric:a['categories'] for metric,a in values.items()} for run,values in results.items()},indent=2))
 
 if __name__=='__main__':main()

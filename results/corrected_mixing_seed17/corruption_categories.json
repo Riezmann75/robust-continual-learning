@@ -384,6 +384,62 @@
         },
         "overall": 0.8624266666666667
       }
+    },
+    "chain_aware_js": {
+      "class_il": {
+        "clean": 0.5033,
+        "per_corruption": {
+          "gaussian_noise": 0.37748,
+          "shot_noise": 0.3982,
+          "impulse_noise": 0.32792,
+          "defocus_blur": 0.50774,
+          "glass_blur": 0.36386,
+          "motion_blur": 0.4593,
+          "zoom_blur": 0.49592,
+          "snow": 0.39770000000000005,
+          "frost": 0.37839999999999996,
+          "fog": 0.44172,
+          "brightness": 0.47759999999999997,
+          "contrast": 0.37942,
+          "elastic_transform": 0.48222,
+          "pixelate": 0.39208,
+          "jpeg_compression": 0.47618
+        },
+        "categories": {
+          "Noise": 0.3678666666666666,
+          "Blur": 0.456705,
+          "Weather": 0.423855,
+          "Digital": 0.432475
+        },
+        "overall": 0.423716
+      },
+      "task_il": {
+        "clean": 0.905,
+        "per_corruption": {
+          "gaussian_noise": 0.83112,
+          "shot_noise": 0.8496599999999999,
+          "impulse_noise": 0.8079000000000001,
+          "defocus_blur": 0.88878,
+          "glass_blur": 0.79548,
+          "motion_blur": 0.8679,
+          "zoom_blur": 0.8789200000000001,
+          "snow": 0.8532,
+          "frost": 0.85754,
+          "fog": 0.8697800000000001,
+          "brightness": 0.8962600000000001,
+          "contrast": 0.8113400000000001,
+          "elastic_transform": 0.8783799999999999,
+          "pixelate": 0.8747199999999999,
+          "jpeg_compression": 0.8877200000000001
+        },
+        "categories": {
+          "Noise": 0.82956,
+          "Blur": 0.85777,
+          "Weather": 0.869195,
+          "Digital": 0.86304
+        },
+        "overall": 0.85658
+      }
     }
   }
 }

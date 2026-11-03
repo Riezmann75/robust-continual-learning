@@ -32,7 +32,10 @@ This configuration uses `experiments/chain_aware_js/seed17`. It changes only the
 classifier consistency from InfoNCE to JS; seed 17, fixed m=0.5, controller,
 CE + DER++, outer JS, and the 10-epoch/task budget stay the same. Temperature is
 retained in the configuration for comparability but is unused by JS. This is a
-new comparison, with no full-budget results reported yet. Use a fresh output
+completed comparison: JS / JS reaches 50.33% clean and 42.37% corrupted class-IL,
+versus 56.22% and 47.17% for InfoNCE / JS at seed 17. See the
+[category and per-corruption results](corruption_category_results.md).
+Use a fresh output
 directory because source/configuration checks prevent cross-version resume.
 
 Validation:
