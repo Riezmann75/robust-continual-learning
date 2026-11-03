@@ -23,6 +23,8 @@ experiments. The new work is in [augce_cifar10.py](reproduce/augce_cifar10.py).
 
 ## Corrected mixing comparison (seed 17)
 
+For a restatement of our implementation, see [MetaMix paper-to-code guide](docs/metamix_implementation.md): controller inputs, training order, paper-to-code mapping, and remaining differences.
+
 All four runs completed **10 epochs per task across five tasks**, using all
 50,000 clean training images, the same 288,746-parameter CNN, and CE + DER++.
 Each run performed 15,650 classifier updates and 500,000 current-image presentations.
