@@ -618,7 +618,8 @@ class BiLevelTrainer:
 
     @staticmethod
     def update_chain_aware_mixing(model,controller,optimizer,mixer_optimizer,memory,state,raw,labels,device,j=3,debug=False,mixer='learned',kind='infonce',temperature=.1, *, active_slots, candidate_descriptors, chains, clone_buffers, consistency_loss, context_for, forward, mixed_views, ops, outer_objective, tensor):
-        if mixer!='learned' or kind!='infonce':raise ValueError('This variant requires learned mixer and seen InfoNCE')
+        if mixer!='learned' or kind not in ('infonce','js'):
+            raise ValueError('This variant requires a learned mixer and seen InfoNCE or JS')
         x=tensor(raw,device);y=torch.as_tensor(labels,device=device)
         ce_raw=memory.sample(32,device,raw=True) if memory.size else None
         replay=(tensor(ce_raw[0],device),ce_raw[1],ce_raw[2]) if ce_raw is not None else None

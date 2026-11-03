@@ -2,7 +2,7 @@
 
 New method, not an author-code reproduction of MetaMix. Start fresh; do not resume older mixers.
 
-The classifier objective remains clean current CE + 0.5 replay CE + 0.2 replay-logit MSE + class-aware InfoNCE (weight 1, temperature 0.1) on original and two pseudo-seen mixed views. The outer mixer objective is pseudo-unseen three-view JS, weight 1, with a fixed updated classifier. Outer clean CE is reported but has zero mixer gradient. There is no hypergradient through the classifier update and no explicit post-update replay-retention objective.
+The classifier objective is clean current CE + 0.5 replay CE + 0.2 replay-logit MSE + consistency on original and two pseudo-seen mixed views. Classifier consistency is either class-aware InfoNCE (the default, weight 1, temperature 0.1) or JS (weight 1, `--consistency js`). The outer mixer objective remains pseudo-unseen three-view JS, weight 1, with a fixed updated classifier. Outer clean CE is reported but has zero mixer gradient. There is no hypergradient through the classifier update and no explicit post-update replay-retention objective.
 
 For each batch, independently sample two views of three chains from each disjoint pseudo-seen/unseen pool, as in the previous matched runner. Each candidate descriptor concatenates its raw pooled feature minus original feature (128 coordinates) and softmax probabilities minus original probabilities (10 coordinates). Descriptors are detached. Seen descriptors use the classifier before its update; unseen descriptors use it afterward and remain fixed during J=3 mixer steps.
 
@@ -14,13 +14,26 @@ Configuration: CUDA float32; seed 17; native 32x32 six-convolution CNN (288,746 
 
 Final evaluation: all 10,000 clean test images and all 750,000 CIFAR-10-C images (15 corruptions, five severities); class-IL and true-pair task-IL. No test-driven checkpoint selection.
 
-Epoch-boundary checkpoints preserve model/controller/optimizers/replay/RNG/recurrent state; source/config mismatches are refused. Logs record per-example/view weights before/after, fixed m, classifier InfoNCE, outer JS and mixer gradient norms. Reports include chain-weight entropy and maximum weight. Additional candidate forwards increase runtime. This changes controller inputs, per-view weighting, m and outer objective together, so it is not an isolated ablation of any single change.
+Epoch-boundary checkpoints preserve model/controller/optimizers/replay/RNG/recurrent state; source/config mismatches are refused. Logs record per-example/view weights before/after, fixed m, the selected classifier consistency, outer JS and mixer gradient norms. Reports include chain-weight entropy and maximum weight. Additional candidate forwards increase runtime. Compared with the earlier non-chain-aware mixer, this changes controller inputs, per-view weighting, m and outer objective together, so that comparison is not an isolated ablation. Within the chain-aware method, the new JS configuration isolates the classifier consistency objective.
 
 Run from the standalone repository using the workspace Python:
 
 ```sh
 ../.venv-nlp/bin/python scripts/run_experiment.py configs/chain_aware_mixing.json --run
 ```
+
+Run the JS classifier comparison in its own output directory:
+
+```sh
+python scripts/run_experiment.py configs/chain_aware_js.json --run
+```
+
+This configuration uses `experiments/chain_aware_js/seed17`. It changes only the
+classifier consistency from InfoNCE to JS; seed 17, fixed m=0.5, controller,
+CE + DER++, outer JS, and the 10-epoch/task budget stay the same. Temperature is
+retained in the configuration for comparability but is unused by JS. This is a
+new comparison, with no full-budget results reported yet. Use a fresh output
+directory because source/configuration checks prevent cross-version resume.
 
 Validation:
 

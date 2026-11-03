@@ -1,4 +1,4 @@
-"""Chain-aware weights: fixed m=.5, seen class-aware InfoNCE, unseen JS."""
+"""Chain-aware weights: fixed m=.5, seen class-aware InfoNCE or JS, unseen JS."""
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -249,7 +249,7 @@ def evaluate(model, root, output, device, synthetic=None):
 def main():
     p = argparse.ArgumentParser()
     p.add_argument('--mixer',choices=['learned'],default='learned')
-    p.add_argument('--consistency',choices=['infonce'],default='infonce')
+    p.add_argument('--consistency',choices=['infonce','js'],default='infonce')
     p.add_argument('--temperature',type=float,default=.1)
     p.add_argument('--device', choices=['cuda'], default='cuda')
     p.add_argument('--root', type=Path, default=Path('experiments/metamix_cifar10/data'))
@@ -267,7 +267,8 @@ def main():
     a.output.mkdir(parents=True, exist_ok=True)
     checkpoint_path = a.output/'MetaMix'/'checkpoint.pt'
     checkpoint_path.parent.mkdir(exist_ok=True)
-    config = dict(method='Chain-aware fixed-m mixer: seen class-aware InfoNCE + unseen JS + DER++',mixer=a.mixer,consistency=a.consistency,temperature=a.temperature,consistency_coefficient=1.,
+    classifier_objective = 'class-aware InfoNCE' if a.consistency == 'infonce' else 'JS'
+    config = dict(method=f'Chain-aware fixed-m mixer: seen {classifier_objective} + unseen JS + DER++',mixer=a.mixer,consistency=a.consistency,temperature=a.temperature,consistency_coefficient=1.,
         fixed_m=.5,outer_consistency='js',outer_coefficient=1.,candidate_features='128 raw feature deltas and 10 softmax probability deltas; detached eval joint7N forward',scorer='shared Linear(143,32),ReLU,Linear(32,1); zero final layer; softmax per image/view',random_mixture='none',
         sampling='preserve legacy global shuffle/ops and reservoir RNG; isolate mixture draws; generate both seen/unseen in all variants',
         matching_limit='new method: fixed m, candidate-conditioned per-view weights, unseen JS instead of InfoNCE, extra eval descriptor passes', implementation='joint three-view forwards; replay augmentation; per-example slot state; pre-solver state advance',

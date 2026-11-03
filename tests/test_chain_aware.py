@@ -71,9 +71,33 @@ class ChainAwareTests(unittest.TestCase):
         mem.add(np.tile(raw,(130,1,1,1)),np.tile(y,130),torch.zeros(520,10))
         self.assertEqual(mem.size,500)
 
+    def test_js_classifier_formula(self):
+        net,ctl,opt,mo,mem,state=self.build();raw,y=self.data()
+        captured=[]
+        def capture(model,args,result):
+            if model.training and len(args[0])==3*len(raw):
+                captured.append(result[0].detach().clone())
+        handle=net.register_forward_hook(capture)
+        try:
+            state,row=m.step(net,ctl,opt,mo,mem,state,raw,y,'cuda',kind='js')
+        finally:
+            handle.remove()
+        self.assertEqual(len(captured),1)
+        self.assertAlmostEqual(row['seen_consistency'],m.js(*captured[0].chunk(3)).item(),places=7)
+        self.assertAlmostEqual(row['classifier_loss'],row['current_ce']+row['seen_consistency'],places=6)
+        self.assertEqual(row['consistency'],'js')
+        self.assertEqual(row['outer_consistency'],'js')
+        self.assertEqual(row['m_after'],.5)
+        self.assertTrue(all(u['grad_norm']>0 for u in row['mixer_updates']))
+
     def test_pipeline_resume(self):
+        for kind in ('infonce','js'):
+            with self.subTest(consistency=kind):
+                self.check_pipeline_resume(kind)
+
+    def check_pipeline_resume(self,kind):
         with tempfile.TemporaryDirectory() as d:
-            cmd=[sys.executable,str(ROOT/'reproduce/chain_aware_mixing.py'),'--pipeline-test','--output',d]
+            cmd=[sys.executable,str(ROOT/'reproduce/chain_aware_mixing.py'),'--pipeline-test','--consistency',kind,'--output',d]
             for extra in (['--stop-after-epochs','2'],[]):
                 p=subprocess.run(cmd+extra,capture_output=True,text=True);self.assertEqual(p.returncode,0,p.stdout+p.stderr)
             trace=(Path(d)/'trace.jsonl').read_bytes()
@@ -81,6 +105,14 @@ class ChainAwareTests(unittest.TestCase):
             self.assertEqual(trace,(Path(d)/'trace.jsonl').read_bytes());self.assertEqual(len(trace.splitlines()),10)
             self.assertTrue((Path(d)/'weights_progress.png').exists())
             self.assertEqual(json.loads((Path(d)/'complete.json').read_text())['presentations'],170)
+            config=json.loads((Path(d)/'config.json').read_text())
+            self.assertEqual(config['consistency'],kind)
+            self.assertEqual(config['outer_consistency'],'js')
+            self.assertIn('seen JS' if kind=='js' else 'seen class-aware InfoNCE',config['method'])
+            progress=json.loads((Path(d)/'progress.json').read_text())
+            self.assertEqual(progress['classifier_consistency'],kind)
             for line in trace.splitlines():
                 row=json.loads(line);self.assertEqual(row['m_after'],.5)
+                self.assertEqual(row['consistency'],kind)
+                self.assertEqual(row['outer_consistency'],'js')
 if __name__=='__main__':unittest.main()

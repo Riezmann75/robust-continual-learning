@@ -133,6 +133,10 @@ The chain-aware row additionally changes controller inputs, fixes m=0.5, and
 assigns separate weights per view. It is not an isolated outer-objective ablation.
 See [its implementation](docs/chain_aware_mixing.md).
 
+The JS classifier comparison keeps the chain-aware controller and outer JS fixed:
+`python scripts/run_experiment.py configs/chain_aware_js.json --run`.
+It writes to `experiments/chain_aware_js/seed17`; full-budget results are pending.
+
 ### Class-IL and Task-IL by corruption category
 
 [Category and per-corruption tables](docs/corruption_category_results.md) report
