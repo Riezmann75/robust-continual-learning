@@ -4,7 +4,7 @@ Controlled Split-CIFAR10 experiments using a small CNN, DER++ replay, and
 clean/augmented-view objectives. Includes completed historical results, corrected
 random/learned mixing comparisons, and augmented-CE/reconstruction runners.
 
-The comparison below includes five corrected-controller/control runs and two
+The comparison below includes five corrected-controller/control runs and three
 chain-aware variants, all completed. Other experiment families
 are documented separately; their objectives and results should not be conflated.
 
@@ -65,7 +65,7 @@ For a restatement of our implementation, see [MetaMix paper-to-code guide](docs/
 
 **MetaMix-guided** denotes our paper-guided implementation, not verified author code.
 
-All seven runs completed **10 epochs per task across five tasks**, using all
+All eight runs completed **10 epochs per task across five tasks**, using all
 50,000 clean training images, the same 288,746-parameter CNN, and CE + DER++.
 Each run performed 15,650 classifier updates and 500,000 current-image presentations.
 
@@ -78,6 +78,7 @@ Each run performed 15,650 classifier updates and 500,000 current-image presentat
 | MetaMix-guided mixer | Class-aware InfoNCE | JS | 48.26% | 38.55% | 89.25% | 82.69% |
 | Chain-aware mixer (`m = 0.5`) | Class-aware InfoNCE | JS | **56.22%** | 47.17% | 91.02% | 86.24% |
 | Chain-aware mixer (`m = 0.5`) | JS | JS | 50.33% | 42.37% | 90.50% | 85.66% |
+| Chain-aware mixer (`m = 0.5`) | Class-aware InfoNCE | Class-aware InfoNCE | 50.15% | 42.79% | 90.99% | 86.01% |
 
 Evaluation uses the final checkpoint on **10,000 clean test images** and
 **750,000 CIFAR-10-C images** (15 corruptions x 5 severities x 10,000 images).
@@ -130,9 +131,9 @@ python scripts/run_experiment.py configs/matched_learned_infonce.json --data-roo
 python scripts/run_experiment.py configs/matched_infonce_js.json --data-root /path/to/data --run
 ```
 
-The chain-aware row additionally changes controller inputs, fixes m=0.5, and
-assigns separate weights per view. It is not an isolated outer-objective ablation.
-See [its implementation](docs/chain_aware_mixing.md).
+The chain-aware variants additionally change controller inputs, fix m=0.5, and
+assign separate weights per view. Comparing them with the earlier mixer is not
+an isolated outer-objective ablation. See [the implementation](docs/chain_aware_mixing.md).
 
 The JS classifier comparison keeps the chain-aware controller and outer JS fixed:
 `python scripts/run_experiment.py configs/chain_aware_js.json --run`.
@@ -140,10 +141,15 @@ It writes to `experiments/chain_aware_js/seed17`. The completed JS / JS run reac
 50.33% clean and 42.37% corrupted class-IL, respectively 5.89 and 4.80 percentage
 points below the chain-aware InfoNCE / JS run. These are single-seed results.
 
+The InfoNCE / InfoNCE comparison changes only the mixer objective relative to
+chain-aware InfoNCE / JS. It reaches 50.15% clean and 42.79% corrupted class-IL,
+respectively 6.07 and 4.38 percentage points lower. Reproduce it with
+`python scripts/run_experiment.py configs/chain_aware_infonce_infonce.json --run`.
+
 ### Class-IL and Task-IL by corruption category
 
 [Category and per-corruption tables](docs/corruption_category_results.md) report
-both evaluation modes for all seven runs, grouped as in MetaMix Tables 6-7:
+both evaluation modes for all eight runs, grouped as in MetaMix Tables 6-7:
 Noise (Gaussian, shot, impulse), Blur (defocus, glass, motion, zoom), Weather
 (snow, frost, fog, brightness), and Digital (contrast, elastic, pixelate, JPEG).
 Each corruption averages severities 1-5. Overall averages all 15 corruptions,
@@ -172,6 +178,7 @@ All values are **accuracy (%)**, averaged over severities 1-5. **Bold** marks th
 | MetaMix-guided mixer | InfoNCE / JS | 34.71 | 40.06 | 39.16 | 39.31 | 38.55 |
 | Chain-aware mixer (`m = 0.5`) | InfoNCE / JS | <ins>45.06</ins> | <ins>47.26</ins> | **47.51** | **48.31** | <ins>47.17</ins> |
 | Chain-aware mixer (`m = 0.5`) | JS / JS | 36.79 | 45.67 | 42.39 | 43.25 | 42.37 |
+| Chain-aware mixer (`m = 0.5`) | InfoNCE / InfoNCE | 39.84 | 44.79 | 42.53 | 43.26 | 42.79 |
 
 #### Task-IL — correct class pair supplied
 
@@ -184,6 +191,7 @@ All values are **accuracy (%)**, averaged over severities 1-5. **Bold** marks th
 | MetaMix-guided mixer | InfoNCE / JS | 79.01 | 82.57 | 84.74 | 83.52 | 82.69 |
 | Chain-aware mixer (`m = 0.5`) | InfoNCE / JS | <ins>85.79</ins> | 85.46 | <ins>87.50</ins> | 86.11 | <ins>86.24</ins> |
 | Chain-aware mixer (`m = 0.5`) | JS / JS | 82.96 | <ins>85.78</ins> | 86.92 | <ins>86.30</ins> | 85.66 |
+| Chain-aware mixer (`m = 0.5`) | InfoNCE / InfoNCE | 84.69 | 85.54 | 87.42 | 86.04 | 86.01 |
 
 <!-- /core-corruption-ranked-tables -->
 

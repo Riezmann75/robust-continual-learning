@@ -17,6 +17,7 @@ RUNS={
     'learned_infonce_js':'MetaMix-guided mixer: InfoNCE / JS',
     'chain_aware_fixed_m':'Chain-aware mixer (m=0.5): InfoNCE / JS',
     'chain_aware_js':'Chain-aware mixer (m=0.5): JS / JS',
+    'chain_aware_infonce_infonce':'Chain-aware mixer (m=0.5): InfoNCE / InfoNCE',
 }
 LABELS={'gaussian_noise':'Gauss','shot_noise':'Shot','impulse_noise':'Impulse','defocus_blur':'Defocus','glass_blur':'Glass','motion_blur':'Motion','zoom_blur':'Zoom','snow':'Snow','frost':'Frost','fog':'Fog','brightness':'Bright','contrast':'Contrast','elastic_transform':'Elastic','pixelate':'Pixel','jpeg_compression':'JPEG'}
 
@@ -91,14 +92,15 @@ def main():
     (BASE/'corruption_categories.json').write_text(json.dumps(output,indent=2)+'\n')
     text="""# CIFAR-10-C results by category: Class-IL and Task-IL
 
-These tables aggregate the saved full evaluations of seven completed seed-17 runs;
+These tables aggregate the saved full evaluations of eight completed seed-17 runs;
 no model was retrained and no new inference or substitute corruptions were needed.
 Method labels show **classifier consistency / mixer objective**; all include CE + DER++.
 MetaMix-guided denotes our paper-guided implementation, not verified author code.
 The chain-aware model also fixes m=0.5 and changes controller inputs and per-view
 weighting, so it is not an isolated outer-objective ablation.
-The two chain-aware runs differ only in classifier consistency (InfoNCE versus JS);
-their controller, fixed m, and outer JS objective remain the same.
+The three chain-aware runs share the controller and fixed m. Relative to InfoNCE / JS,
+JS / JS changes only classifier consistency, while InfoNCE / InfoNCE changes only
+the mixer objective. All InfoNCE objectives use class-aware negatives.
 
 ## Splits and interpretation
 

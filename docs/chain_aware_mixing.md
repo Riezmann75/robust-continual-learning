@@ -14,7 +14,7 @@ Configuration: CUDA float32; seed 17; native 32x32 six-convolution CNN (288,746 
 
 Final evaluation: all 10,000 clean test images and all 750,000 CIFAR-10-C images (15 corruptions, five severities); class-IL and true-pair task-IL. No test-driven checkpoint selection.
 
-Epoch-boundary checkpoints preserve model/controller/optimizers/replay/RNG/recurrent state; source/config mismatches are refused. Logs record per-example/view weights before/after, fixed m, the selected classifier consistency, outer JS and mixer gradient norms. Reports include chain-weight entropy and maximum weight. Additional candidate forwards increase runtime. Compared with the earlier non-chain-aware mixer, this changes controller inputs, per-view weighting, m and outer objective together, so that comparison is not an isolated ablation. Within the chain-aware method, the new JS configuration isolates the classifier consistency objective.
+Epoch-boundary checkpoints preserve model/controller/optimizers/replay/RNG/recurrent state; source/config mismatches are refused. Logs record per-example/view weights before/after, fixed m, the selected classifier and outer consistency objectives, and mixer gradient norms. Reports include chain-weight entropy and maximum weight. Additional candidate forwards increase runtime. Compared with the earlier non-chain-aware mixer, this changes controller inputs, per-view weighting, m and outer objective together, so that comparison is not an isolated ablation. Within the chain-aware method, the new JS configuration isolates the classifier consistency objective.
 
 Run from the standalone repository using the workspace Python:
 
@@ -37,7 +37,9 @@ python scripts/run_experiment.py configs/chain_aware_infonce_infonce.json --run
 This uses `experiments/chain_aware_infonce_infonce/seed17`, keeping seed 17,
 fixed m=0.5, temperature 0.1, three mixer updates, and 10 epochs/task.
 Compared with InfoNCE / JS, only the outer consistency objective changes.
-Full-budget results for InfoNCE / InfoNCE are pending.
+The completed InfoNCE / InfoNCE run reaches 50.15% clean and 42.79% corrupted
+class-IL, and 90.99% clean and 86.01% corrupted task-IL. Relative to InfoNCE / JS,
+clean and corrupted class-IL fall by 6.07 and 4.38 percentage points at seed 17.
 
 The JS / JS configuration uses `experiments/chain_aware_js/seed17`. It changes only the
 classifier consistency from InfoNCE to JS; seed 17, fixed m=0.5, controller,
