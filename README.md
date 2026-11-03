@@ -4,7 +4,7 @@ Controlled Split-CIFAR10 experiments using a small CNN, DER++ replay, and
 clean/augmented-view objectives. Includes completed historical results, corrected
 random/learned mixing comparisons, and augmented-CE/reconstruction runners.
 
-The corrected four-run comparison below is complete. Other experiment families
+The corrected comparison below includes five completed runs. Other experiment families
 are documented separately; their objectives and results should not be conflated.
 
 ## Repository layout
@@ -25,16 +25,17 @@ experiments. The new work is in [augce_cifar10.py](reproduce/augce_cifar10.py).
 
 For a restatement of our implementation, see [MetaMix paper-to-code guide](docs/metamix_implementation.md): controller inputs, training order, paper-to-code mapping, and remaining differences.
 
-All four runs completed **10 epochs per task across five tasks**, using all
+All five runs completed **10 epochs per task across five tasks**, using all
 50,000 clean training images, the same 288,746-parameter CNN, and CE + DER++.
 Each run performed 15,650 classifier updates and 500,000 current-image presentations.
 
-| Mixer | Consistency objective | Clean class-IL | CIFAR-10-C class-IL | Clean task-IL | CIFAR-10-C task-IL |
-|---|---|---:|---:|---:|---:|
-| Learned | JS (paper-guided MetaMix implementation) | 46.22% | 37.58% | 89.17% | 83.33% |
-| Random | JS | 48.80% | 42.11% | 89.71% | 85.41% |
-| Random | Class-aware InfoNCE | **54.30%** | **48.27%** | **91.20%** | **87.19%** |
-| Learned | Class-aware InfoNCE | 49.42% | 39.68% | 90.08% | 83.24% |
+| Mixer | Classifier consistency | Mixer objective | Clean class-IL | CIFAR-10-C class-IL | Clean task-IL | CIFAR-10-C task-IL |
+|---|---|---|---:|---:|---:|---:|
+| Learned (paper-guided MetaMix) | JS | JS | 46.22% | 37.58% | 89.17% | 83.33% |
+| Random | JS | None | 48.80% | 42.11% | 89.71% | 85.41% |
+| Random | Class-aware InfoNCE | None | **54.30%** | **48.27%** | **91.20%** | **87.19%** |
+| Learned | Class-aware InfoNCE | Class-aware InfoNCE | 49.42% | 39.68% | 90.08% | 83.24% |
+| Learned (unchanged controller) | Class-aware InfoNCE | JS | 48.26% | 38.55% | 89.25% | 82.69% |
 
 Evaluation uses the final checkpoint on **10,000 clean test images** and
 **750,000 CIFAR-10-C images** (15 corruptions x 5 severities x 10,000 images).
@@ -48,8 +49,10 @@ still uses a separate forward. Pseudo-seen and pseudo-unseen operation pools are
 resampled each batch; both use training images, never CIFAR-10-C test data.
 
 Class-aware InfoNCE uses two same-image positive views and different-class
-negatives; other same-class examples are excluded. In these four runs, the named
-consistency objective is used for both classifier and learned-mixer updates.
+negatives; other same-class examples are excluded. Classifier consistency uses
+pseudo-seen views; mixer objectives use pseudo-unseen views. The last row changes
+only the outer consistency objective from InfoNCE to JS relative to learned InfoNCE.
+The corrected LSTM controller is unchanged: m and w remain learned, with no chain inputs.
 Random mixers have no outer optimization. All consistency coefficients are 1;
 InfoNCE temperature is 0.1. See [implementation details](docs/matched_mixing.md).
 
@@ -60,8 +63,14 @@ These are observations from one seed, not proof that the original authors' metho
 collapses. Our CNN, 10-epoch budget and BatchNorm convention differ from the paper;
 the first-order mixer-gradient interpretation remains unverified against author code.
 
-Sampling fingerprints match at every update across the three new runs
-(random JS, random InfoNCE, learned InfoNCE). The learned-JS reference predates
+The new InfoNCE/JS run scores **1.16 points lower on clean class-IL** and
+**1.13 points lower on corrupted class-IL** than InfoNCE/InfoNCE. Its final-epoch
+mean m is **0.9739**, with **99.26%** of per-example values above 0.95. Changing
+only the outer objective did not improve this seed or prevent weak augmentation.
+See [the objective-isolation experiment](docs/matched_infonce_js.md).
+
+Sampling fingerprints match at every update across four runs
+(random JS, random InfoNCE, learned InfoNCE, learned InfoNCE/JS). The learned-JS reference predates
 fingerprint logging. Random weights are independent per image and view, whereas
 learned weights are shared across the two views, so this is not a perfectly
 isolated mixer-only ablation.
@@ -76,10 +85,11 @@ python scripts/run_experiment.py configs/metamix_jointbn.json --data-root /path/
 python scripts/run_experiment.py configs/matched_random_js.json --data-root /path/to/data --run
 python scripts/run_experiment.py configs/matched_random_infonce.json --data-root /path/to/data --run
 python scripts/run_experiment.py configs/matched_learned_infonce.json --data-root /path/to/data --run
+python scripts/run_experiment.py configs/matched_infonce_js.json --data-root /path/to/data --run
 ```
 
 The later chain-aware fixed-m controller is a separate experiment and is not
-included in this four-run comparison.
+included in this corrected-controller comparison.
 
 ## Setup
 

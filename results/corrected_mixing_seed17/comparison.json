@@ -51,13 +51,29 @@
       },
       "final_epoch_m_mean": 0.9915753643867448,
       "artifact_directory": "learned_infonce"
+    },
+    "learned_infonce_js": {
+      "clean": {
+        "n": 10000,
+        "class_il": 0.4826,
+        "task_il": 0.8925
+      },
+      "corrupted_mean": {
+        "class_il": 0.38549866666666666,
+        "task_il": 0.8269106666666666
+      },
+      "final_epoch_m_mean": 0.9738855246844575,
+      "classifier_consistency": "infonce",
+      "mixer_consistency": "js",
+      "artifact_directory": "learned_infonce_js"
     }
   },
   "sampling_verification": {
     "runs": [
       "random_js",
       "random_infonce",
-      "learned_infonce"
+      "learned_infonce",
+      "learned_infonce_js"
     ],
     "updates": 15650,
     "all_equal": true,

@@ -146,7 +146,10 @@ normalized pooled features, temperature 0.1, same-image positives across three
 views and only different-class negatives. Random mixtures sample Beta(1,1) m and
 Dirichlet(1,1,1) w independently per image and view. Learned weights are shared
 across the two views, so the comparison is not an isolated mixer-only ablation.
-The later chain-aware, fixed-m controller is a separate proposed-method experiment.
+A subsequent [InfoNCE/JS ablation](matched_infonce_js.md) keeps this corrected
+controller unchanged while using classifier InfoNCE and mixer JS. It achieved
+48.26% clean and 38.55% corrupted class-IL. The later chain-aware, fixed-m
+controller is a separate proposed-method experiment.
 
 ## Validation and evaluation
 
