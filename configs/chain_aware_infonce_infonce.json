@@ -1,0 +1,12 @@
+{
+  "runner": "chain_aware_mixing.py",
+  "args": {
+    "device": "cuda",
+    "consistency": "infonce",
+    "outer_consistency": "infonce",
+    "epochs_per_task": 10,
+    "temperature": 0.1,
+    "root": "experiments/metamix_cifar10/data",
+    "output": "experiments/chain_aware_infonce_infonce/seed17"
+  }
+}

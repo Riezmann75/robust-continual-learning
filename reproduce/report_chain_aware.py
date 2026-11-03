@@ -41,10 +41,12 @@ def report(output, committed_updates):
             outer_consistency_after_mean=float(np.mean(group['outer'])),
             updates=group['last']['update'], presentations=group['last']['presentations']))
     consistency = next(iter(groups.values()))['last']['consistency'] if groups else 'unknown'
+    outer_consistency = next(iter(groups.values()))['last']['outer_consistency'] if groups else 'unknown'
     result = dict(committed_updates=committed_updates, summary_weighting='m_* are batch mean statistics; per_example_* count weight draws: two candidate-conditioned weight draws per entry; fixed m=.5',
                   epochs=epochs, latest=epochs[-1] if epochs else None,
                   classifier_consistency=consistency,
-                  caveat=f"New chain-aware method; seen {consistency}, unseen JS, fixed m=.5; direct consistency minimization is not a retention hypergradient or a guarantee of robustness.")
+                  outer_consistency=outer_consistency,
+                  caveat=f"New chain-aware method; seen {consistency}, unseen {outer_consistency}, fixed m=.5; direct consistency minimization is not a retention hypergradient or a guarantee of robustness.")
     temp = output/'progress.json.tmp'
     temp.write_text(json.dumps(result, indent=2))
     os.replace(temp, output/'progress.json')

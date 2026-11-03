@@ -2,7 +2,7 @@
 
 New method, not an author-code reproduction of MetaMix. Start fresh; do not resume older mixers.
 
-The classifier objective is clean current CE + 0.5 replay CE + 0.2 replay-logit MSE + consistency on original and two pseudo-seen mixed views. Classifier consistency is either class-aware InfoNCE (the default, weight 1, temperature 0.1) or JS (weight 1, `--consistency js`). The outer mixer objective remains pseudo-unseen three-view JS, weight 1, with a fixed updated classifier. Outer clean CE is reported but has zero mixer gradient. There is no hypergradient through the classifier update and no explicit post-update replay-retention objective.
+The classifier objective is clean current CE + 0.5 replay CE + 0.2 replay-logit MSE + consistency on original and two pseudo-seen mixed views. Classifier consistency is either class-aware InfoNCE (the default, weight 1, temperature 0.1) or JS (weight 1, `--consistency js`). The outer mixer objective uses pseudo-unseen three-view consistency, weight 1, with a fixed updated classifier. It defaults to JS; `--outer-consistency infonce` selects class-aware InfoNCE at the same temperature 0.1. Both InfoNCE objectives use the original image's class label for every mixed view and exclude same-class nonpositive examples. The original outer view is detached; mixer gradients flow through augmented views and the frozen classifier to the chain weights. Outer clean CE is reported but has zero mixer gradient. There is no hypergradient through the classifier update and no explicit post-update replay-retention objective.
 
 For each batch, independently sample two views of three chains from each disjoint pseudo-seen/unseen pool, as in the previous matched runner. Each candidate descriptor concatenates its raw pooled feature minus original feature (128 coordinates) and softmax probabilities minus original probabilities (10 coordinates). Descriptors are detached. Seen descriptors use the classifier before its update; unseen descriptors use it afterward and remain fixed during J=3 mixer steps.
 
@@ -28,7 +28,18 @@ Run the JS classifier comparison in its own output directory:
 python scripts/run_experiment.py configs/chain_aware_js.json --run
 ```
 
-This configuration uses `experiments/chain_aware_js/seed17`. It changes only the
+Run class-aware InfoNCE for both classifier and mixer:
+
+```sh
+python scripts/run_experiment.py configs/chain_aware_infonce_infonce.json --run
+```
+
+This uses `experiments/chain_aware_infonce_infonce/seed17`, keeping seed 17,
+fixed m=0.5, temperature 0.1, three mixer updates, and 10 epochs/task.
+Compared with InfoNCE / JS, only the outer consistency objective changes.
+Full-budget results for InfoNCE / InfoNCE are pending.
+
+The JS / JS configuration uses `experiments/chain_aware_js/seed17`. It changes only the
 classifier consistency from InfoNCE to JS; seed 17, fixed m=0.5, controller,
 CE + DER++, outer JS, and the 10-epoch/task budget stay the same. Temperature is
 retained in the configuration for comparability but is unused by JS. This is a

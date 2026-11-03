@@ -617,9 +617,11 @@ class BiLevelTrainer:
         return result[1] if len(result) == 2 else result[1:]
 
     @staticmethod
-    def update_chain_aware_mixing(model,controller,optimizer,mixer_optimizer,memory,state,raw,labels,device,j=3,debug=False,mixer='learned',kind='infonce',temperature=.1, *, active_slots, candidate_descriptors, chains, clone_buffers, consistency_loss, context_for, forward, mixed_views, ops, outer_objective, tensor):
+    def update_chain_aware_mixing(model,controller,optimizer,mixer_optimizer,memory,state,raw,labels,device,j=3,debug=False,mixer='learned',kind='infonce',temperature=.1, *, outer_kind='js', active_slots, candidate_descriptors, chains, clone_buffers, consistency_loss, context_for, forward, mixed_views, ops, outer_objective, tensor):
         if mixer!='learned' or kind not in ('infonce','js'):
             raise ValueError('This variant requires a learned mixer and seen InfoNCE or JS')
+        if outer_kind not in ('infonce','js'):
+            raise ValueError('Outer consistency must be InfoNCE or JS')
         x=tensor(raw,device);y=torch.as_tensor(labels,device=device)
         ce_raw=memory.sample(32,device,raw=True) if memory.size else None
         replay=(tensor(ce_raw[0],device),ce_raw[1],ce_raw[2]) if ce_raw is not None else None
@@ -658,7 +660,7 @@ class BiLevelTrainer:
         outer_rows=[]
         for _ in range(j):
             mixer_optimizer.zero_grad(set_to_none=True)
-            outer_loss,outer_penalty,om,ow,outer_ce=outer_objective(model,controller,context,incoming,xa,unseen,params,buffers,ya,kind,temperature,candidates=unseen_candidates)
+            outer_loss,outer_penalty,om,ow,outer_ce=outer_objective(model,controller,context,incoming,xa,unseen,params,buffers,ya,outer_kind,temperature,candidates=unseen_candidates)
             outer_loss.backward()
             grads=[p.grad for p in controller.parameters() if p.grad is not None]
             if not torch.isfinite(outer_loss) or not grads or not all(torch.isfinite(g).all() for g in grads):raise RuntimeError('Nonfinite mixer loss/gradient')
@@ -666,11 +668,11 @@ class BiLevelTrainer:
             outer_rows.append(dict(m=om.mean().item(),m_per_example=om.detach().cpu().tolist(),w=ow.detach().cpu().tolist(),consistency_loss=outer_penalty.item(),grad_norm=grad_norm))
             mixer_optimizer.step()
         with torch.no_grad():
-            _,after_penalty,after_m,after_w,_=outer_objective(model,controller,context,incoming,xa,unseen,params,buffers,ya,kind,temperature,candidates=unseen_candidates)
+            _,after_penalty,after_m,after_w,_=outer_objective(model,controller,context,incoming,xa,unseen,params,buffers,ya,outer_kind,temperature,candidates=unseen_candidates)
         memory.add(raw,labels,old_logits)
         row=dict(m_before=m.mean().item(),m_after=after_m.mean().item(),
             m_before_per_example=m.flatten().cpu().tolist(),m_after_per_example=after_m.flatten().cpu().tolist(),
-            w_before=w.cpu().tolist(),w_after=after_w.cpu().tolist(),mixer=mixer,consistency=kind,outer_consistency="js",fixed_m=.5,
+            w_before=w.cpu().tolist(),w_after=after_w.cpu().tolist(),mixer=mixer,consistency=kind,outer_consistency=outer_kind,fixed_m=.5,
             weight_entropy_before=(-(w*w.clamp_min(1e-8).log()).sum(-1)).mean().item(),
             weight_entropy_after=(-(after_w*after_w.clamp_min(1e-8).log()).sum(-1)).mean().item(),
             weight_max_after=after_w.max(-1).values.mean().item(),
