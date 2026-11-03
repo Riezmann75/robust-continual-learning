@@ -77,17 +77,17 @@ Other settings have one seed. Do not infer statistical superiority from these ro
 
 | Training setting | Seed | Clean class-IL | CIFAR-10-C class-IL | Clean task-IL | CIFAR-10-C task-IL |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| [Learned mixer: classifier JS / outer JS](../results/corrected_mixing_seed17/learned_js/config.json) | 17 | 46.22 | 37.58 | 89.17 | 83.33 |
+| [MetaMix-guided mixer: classifier JS / outer JS](../results/corrected_mixing_seed17/learned_js/config.json) | 17 | 46.22 | 37.58 | 89.17 | 83.33 |
 | [Random mixer: classifier JS / no outer loss](../results/corrected_mixing_seed17/random_js/config.json) | 17 | 48.80 | 42.11 | 89.71 | 85.41 |
 | [Random mixer: classifier class-aware InfoNCE / no outer loss](../results/corrected_mixing_seed17/random_infonce/config.json) | 17 | 54.30 | 48.27 | 91.20 | 87.19 |
-| [Learned mixer: classifier class-aware InfoNCE / outer InfoNCE](../results/corrected_mixing_seed17/learned_infonce/config.json) | 17 | 49.42 | 39.68 | 90.08 | 83.24 |
-| [Learned mixer: classifier class-aware InfoNCE / outer JS](../results/corrected_mixing_seed17/learned_infonce_js/config.json) | 17 | 48.26 | 38.55 | 89.25 | 82.69 |
+| [MetaMix-guided mixer: classifier class-aware InfoNCE / outer InfoNCE](../results/corrected_mixing_seed17/learned_infonce/config.json) | 17 | 49.42 | 39.68 | 90.08 | 83.24 |
+| [MetaMix-guided mixer: classifier class-aware InfoNCE / outer JS](../results/corrected_mixing_seed17/learned_infonce_js/config.json) | 17 | 48.26 | 38.55 | 89.25 | 82.69 |
 
 ## Chain-aware extension
 
 | Training setting | Seed | Clean class-IL | CIFAR-10-C class-IL | Clean task-IL | CIFAR-10-C task-IL |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| [Chain-aware, m=0.5: classifier class-aware InfoNCE / outer JS](../results/corrected_mixing_seed17/chain_aware_fixed_m/config.json) | 17 | 56.22 | 47.17 | 91.02 | 86.24 |
+| [Chain-aware mixer (m=0.5): classifier class-aware InfoNCE / outer JS](../results/corrected_mixing_seed17/chain_aware_fixed_m/config.json) | 17 | 56.22 | 47.17 | 91.02 | 86.24 |
 
 ## Settings without a completed full evaluation
 

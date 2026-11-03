@@ -15,12 +15,12 @@ NAMES={
 'bt_threepair_seed17':'BT three pairs (1), no augmented CE',
 'multihead_seed17':'Four heads + augmented CE (1) + diversity (0.1)',
 'infonce_recon_seed17':'Class-aware InfoNCE (1) + own-view pixel MSE (1)',
-'learned_js':'Learned mixer: classifier JS / outer JS',
+'learned_js':'MetaMix-guided mixer: classifier JS / outer JS',
 'random_js':'Random mixer: classifier JS / no outer loss',
 'random_infonce':'Random mixer: classifier class-aware InfoNCE / no outer loss',
-'learned_infonce':'Learned mixer: classifier class-aware InfoNCE / outer InfoNCE',
-'learned_infonce_js':'Learned mixer: classifier class-aware InfoNCE / outer JS',
-'chain_aware_fixed_m':'Chain-aware, m=0.5: classifier class-aware InfoNCE / outer JS',
+'learned_infonce':'MetaMix-guided mixer: classifier class-aware InfoNCE / outer InfoNCE',
+'learned_infonce_js':'MetaMix-guided mixer: classifier class-aware InfoNCE / outer JS',
+'chain_aware_fixed_m':'Chain-aware mixer (m=0.5): classifier class-aware InfoNCE / outer JS',
 }
 
 def main():

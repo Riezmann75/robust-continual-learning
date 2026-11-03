@@ -10,12 +10,12 @@ GROUPS={
     'Digital':['contrast','elastic_transform','pixelate','jpeg_compression'],
 }
 RUNS={
-    'learned_js':'Learned: JS / JS',
-    'random_js':'Random: JS / none',
-    'random_infonce':'Random: InfoNCE / none',
-    'learned_infonce':'Learned: InfoNCE / InfoNCE',
-    'learned_infonce_js':'Learned: InfoNCE / JS',
-    'chain_aware_fixed_m':'Chain-aware, m=0.5: InfoNCE / JS',
+    'learned_js':'MetaMix-guided mixer: JS / JS',
+    'random_js':'Random mixer: JS / none',
+    'random_infonce':'Random mixer: InfoNCE / none',
+    'learned_infonce':'MetaMix-guided mixer: InfoNCE / InfoNCE',
+    'learned_infonce_js':'MetaMix-guided mixer: InfoNCE / JS',
+    'chain_aware_fixed_m':'Chain-aware mixer (m=0.5): InfoNCE / JS',
 }
 LABELS={'gaussian_noise':'Gauss','shot_noise':'Shot','impulse_noise':'Impulse','defocus_blur':'Defocus','glass_blur':'Glass','motion_blur':'Motion','zoom_blur':'Zoom','snow':'Snow','frost':'Frost','fog':'Fog','brightness':'Bright','contrast':'Contrast','elastic_transform':'Elastic','pixelate':'Pixel','jpeg_compression':'JPEG'}
 
@@ -55,6 +55,7 @@ def main():
 These tables aggregate the saved full evaluations of six completed seed-17 runs;
 no model was retrained and no new inference or substitute corruptions were needed.
 Method labels show **classifier consistency / mixer objective**; all include CE + DER++.
+MetaMix-guided denotes our paper-guided implementation, not verified author code.
 The chain-aware model also fixes m=0.5 and changes controller inputs and per-view
 weighting, so it is not an isolated outer-objective ablation.
 

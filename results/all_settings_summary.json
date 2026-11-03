@@ -1051,7 +1051,7 @@
       }
     },
     "learned_js": {
-      "label": "Learned mixer: classifier JS / outer JS",
+      "label": "MetaMix-guided mixer: classifier JS / outer JS",
       "family": "Corrected split-pool pipeline",
       "seed": 17,
       "parameters": 288746,
@@ -1243,7 +1243,7 @@
       }
     },
     "learned_infonce": {
-      "label": "Learned mixer: classifier class-aware InfoNCE / outer InfoNCE",
+      "label": "MetaMix-guided mixer: classifier class-aware InfoNCE / outer InfoNCE",
       "family": "Corrected split-pool pipeline",
       "seed": 17,
       "parameters": 288746,
@@ -1307,7 +1307,7 @@
       }
     },
     "learned_infonce_js": {
-      "label": "Learned mixer: classifier class-aware InfoNCE / outer JS",
+      "label": "MetaMix-guided mixer: classifier class-aware InfoNCE / outer JS",
       "family": "Corrected split-pool pipeline",
       "seed": 17,
       "parameters": 288746,
@@ -1371,7 +1371,7 @@
       }
     },
     "chain_aware_fixed_m": {
-      "label": "Chain-aware, m=0.5: classifier class-aware InfoNCE / outer JS",
+      "label": "Chain-aware mixer (m=0.5): classifier class-aware InfoNCE / outer JS",
       "family": "Chain-aware extension",
       "seed": 17,
       "parameters": 288746,

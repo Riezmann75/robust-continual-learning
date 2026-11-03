@@ -26,18 +26,20 @@ experiments. The new work is in [augce_cifar10.py](reproduce/augce_cifar10.py).
 
 For a restatement of our implementation, see [MetaMix paper-to-code guide](docs/metamix_implementation.md): controller inputs, training order, paper-to-code mapping, and remaining differences.
 
+**MetaMix-guided** denotes our paper-guided implementation, not verified author code.
+
 All six runs completed **10 epochs per task across five tasks**, using all
 50,000 clean training images, the same 288,746-parameter CNN, and CE + DER++.
 Each run performed 15,650 classifier updates and 500,000 current-image presentations.
 
 | Mixer | Classifier consistency | Mixer objective | Clean class-IL | CIFAR-10-C class-IL | Clean task-IL | CIFAR-10-C task-IL |
 |---|---|---|---:|---:|---:|---:|
-| Learned (paper-guided MetaMix) | JS | JS | 46.22% | 37.58% | 89.17% | 83.33% |
-| Random | JS | None | 48.80% | 42.11% | 89.71% | 85.41% |
-| Random | Class-aware InfoNCE | None | 54.30% | **48.27%** | **91.20%** | **87.19%** |
-| Learned | Class-aware InfoNCE | Class-aware InfoNCE | 49.42% | 39.68% | 90.08% | 83.24% |
-| Learned (unchanged controller) | Class-aware InfoNCE | JS | 48.26% | 38.55% | 89.25% | 82.69% |
-| Chain-aware, fixed m=0.5 | Class-aware InfoNCE | JS | **56.22%** | 47.17% | 91.02% | 86.24% |
+| MetaMix-guided mixer | JS | JS | 46.22% | 37.58% | 89.17% | 83.33% |
+| Random mixer | JS | None | 48.80% | 42.11% | 89.71% | 85.41% |
+| Random mixer | Class-aware InfoNCE | None | 54.30% | **48.27%** | **91.20%** | **87.19%** |
+| MetaMix-guided mixer | Class-aware InfoNCE | Class-aware InfoNCE | 49.42% | 39.68% | 90.08% | 83.24% |
+| MetaMix-guided mixer | Class-aware InfoNCE | JS | 48.26% | 38.55% | 89.25% | 82.69% |
+| Chain-aware mixer (`m = 0.5`) | Class-aware InfoNCE | JS | **56.22%** | 47.17% | 91.02% | 86.24% |
 
 Evaluation uses the final checkpoint on **10,000 clean test images** and
 **750,000 CIFAR-10-C images** (15 corruptions x 5 severities x 10,000 images).
@@ -119,23 +121,23 @@ All values are **accuracy (%)**, averaged over severities 1-5. **Bold** marks th
 
 | Mixer | Objectives | Noise | Blur | Weather | Digital | Overall |
 |---|---|---:|---:|---:|---:|---:|
-| Corrected learned | JS / JS | 32.75 | 39.33 | 38.63 | 38.40 | 37.58 |
-| Random | JS / none | 40.38 | 44.00 | 41.69 | 41.95 | 42.11 |
-| Random | InfoNCE / none | **48.78** | **49.96** | <ins>47.48</ins> | <ins>46.98</ins> | **48.27** |
-| Corrected learned | InfoNCE / InfoNCE | 36.42 | 40.35 | 40.54 | 40.59 | 39.68 |
-| Corrected learned | InfoNCE / JS | 34.71 | 40.06 | 39.16 | 39.31 | 38.55 |
-| Chain-aware, `m=0.5` | InfoNCE / JS | <ins>45.06</ins> | <ins>47.26</ins> | **47.51** | **48.31** | <ins>47.17</ins> |
+| MetaMix-guided mixer | JS / JS | 32.75 | 39.33 | 38.63 | 38.40 | 37.58 |
+| Random mixer | JS / none | 40.38 | 44.00 | 41.69 | 41.95 | 42.11 |
+| Random mixer | InfoNCE / none | **48.78** | **49.96** | <ins>47.48</ins> | <ins>46.98</ins> | **48.27** |
+| MetaMix-guided mixer | InfoNCE / InfoNCE | 36.42 | 40.35 | 40.54 | 40.59 | 39.68 |
+| MetaMix-guided mixer | InfoNCE / JS | 34.71 | 40.06 | 39.16 | 39.31 | 38.55 |
+| Chain-aware mixer (`m = 0.5`) | InfoNCE / JS | <ins>45.06</ins> | <ins>47.26</ins> | **47.51** | **48.31** | <ins>47.17</ins> |
 
 #### Task-IL — correct class pair supplied
 
 | Mixer | Objectives | Noise | Blur | Weather | Digital | Overall |
 |---|---|---:|---:|---:|---:|---:|
-| Corrected learned | JS / JS | 81.11 | 82.76 | 85.06 | 83.85 | 83.33 |
-| Random | JS / none | 83.22 | <ins>85.60</ins> | 86.44 | 85.84 | 85.41 |
-| Random | InfoNCE / none | **86.23** | **87.03** | **88.23** | **87.03** | **87.19** |
-| Corrected learned | InfoNCE / InfoNCE | 81.53 | 82.69 | 84.75 | 83.57 | 83.24 |
-| Corrected learned | InfoNCE / JS | 79.01 | 82.57 | 84.74 | 83.52 | 82.69 |
-| Chain-aware, `m=0.5` | InfoNCE / JS | <ins>85.79</ins> | 85.46 | <ins>87.50</ins> | <ins>86.11</ins> | <ins>86.24</ins> |
+| MetaMix-guided mixer | JS / JS | 81.11 | 82.76 | 85.06 | 83.85 | 83.33 |
+| Random mixer | JS / none | 83.22 | <ins>85.60</ins> | 86.44 | 85.84 | 85.41 |
+| Random mixer | InfoNCE / none | **86.23** | **87.03** | **88.23** | **87.03** | **87.19** |
+| MetaMix-guided mixer | InfoNCE / InfoNCE | 81.53 | 82.69 | 84.75 | 83.57 | 83.24 |
+| MetaMix-guided mixer | InfoNCE / JS | 79.01 | 82.57 | 84.74 | 83.52 | 82.69 |
+| Chain-aware mixer (`m = 0.5`) | InfoNCE / JS | <ins>85.79</ins> | 85.46 | <ins>87.50</ins> | <ins>86.11</ins> | <ins>86.24</ins> |
 
 <!-- /core-corruption-ranked-tables -->
 
