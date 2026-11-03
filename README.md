@@ -112,6 +112,33 @@ existing full evaluations, not retraining or paper-equivalent accuracy claims.
 python scripts/summarize_corruption_categories.py
 ```
 
+<!-- core-corruption-ranked-tables -->
+All values are **accuracy (%)**, averaged over severities 1-5. **Bold** marks the best and <ins>underline</ins> marks the second-best score in each column, ranked using unrounded values. Objectives are **classifier consistency / mixer objective**; all methods include CE + DER++.
+
+#### Class-IL — all ten classes
+
+| Mixer | Objectives | Noise | Blur | Weather | Digital | Overall |
+|---|---|---:|---:|---:|---:|---:|
+| Corrected learned | JS / JS | 32.75 | 39.33 | 38.63 | 38.40 | 37.58 |
+| Random | JS / none | 40.38 | 44.00 | 41.69 | 41.95 | 42.11 |
+| Random | InfoNCE / none | **48.78** | **49.96** | <ins>47.48</ins> | <ins>46.98</ins> | **48.27** |
+| Corrected learned | InfoNCE / InfoNCE | 36.42 | 40.35 | 40.54 | 40.59 | 39.68 |
+| Corrected learned | InfoNCE / JS | 34.71 | 40.06 | 39.16 | 39.31 | 38.55 |
+| Chain-aware, `m=0.5` | InfoNCE / JS | <ins>45.06</ins> | <ins>47.26</ins> | **47.51** | **48.31** | <ins>47.17</ins> |
+
+#### Task-IL — correct class pair supplied
+
+| Mixer | Objectives | Noise | Blur | Weather | Digital | Overall |
+|---|---|---:|---:|---:|---:|---:|
+| Corrected learned | JS / JS | 81.11 | 82.76 | 85.06 | 83.85 | 83.33 |
+| Random | JS / none | 83.22 | <ins>85.60</ins> | 86.44 | 85.84 | 85.41 |
+| Random | InfoNCE / none | **86.23** | **87.03** | **88.23** | **87.03** | **87.19** |
+| Corrected learned | InfoNCE / InfoNCE | 81.53 | 82.69 | 84.75 | 83.57 | 83.24 |
+| Corrected learned | InfoNCE / JS | 79.01 | 82.57 | 84.74 | 83.52 | 82.69 |
+| Chain-aware, `m=0.5` | InfoNCE / JS | <ins>85.79</ins> | 85.46 | <ins>87.50</ins> | <ins>86.11</ins> | <ins>86.24</ins> |
+
+<!-- /core-corruption-ranked-tables -->
+
 ## Setup
 
 Tested with Python3.13.11,PyTorch2.10.0+cu128,torchvision0.25.0+cu128,
