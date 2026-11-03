@@ -1,0 +1,12 @@
+{
+  "runner": "matched_mixing.py",
+  "args": {
+    "device": "cuda",
+    "epochs_per_task": 10,
+    "mixer": "learned",
+    "consistency": "infonce",
+    "temperature": 0.1,
+    "root": "experiments/metamix_cifar10/data",
+    "output": "experiments/matched_mixing/learned_infonce/seed17"
+  }
+}

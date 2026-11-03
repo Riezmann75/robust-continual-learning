@@ -1,11 +1,11 @@
 # Robust continual learning
 
 Controlled Split-CIFAR10 experiments using a small CNN, DER++ replay, and
-clean/augmented-view objectives. Includes completed historical results and a new
-**augmented CE** runner with an optional **input-reconstruction decoder**.
+clean/augmented-view objectives. Includes completed historical results, corrected
+random/learned mixing comparisons, and augmented-CE/reconstruction runners.
 
-**New augmented-CE/decoder variants have passed short correctness tests only.
-No full-budget training or test accuracy is claimed for these new variants.**
+The corrected four-run comparison below is complete. Other experiment families
+are documented separately; their objectives and results should not be conflated.
 
 ## Repository layout
 
@@ -20,6 +20,64 @@ No full-budget training or test accuracy is claimed for these new variants.**
 
 Historical runners are preserved separately to avoid silently changing established
 experiments. The new work is in [augce_cifar10.py](reproduce/augce_cifar10.py).
+
+## Corrected mixing comparison (seed 17)
+
+All four runs completed **10 epochs per task across five tasks**, using all
+50,000 clean training images, the same 288,746-parameter CNN, and CE + DER++.
+Each run performed 15,650 classifier updates and 500,000 current-image presentations.
+
+| Mixer | Consistency objective | Clean class-IL | CIFAR-10-C class-IL | Clean task-IL | CIFAR-10-C task-IL |
+|---|---|---:|---:|---:|---:|
+| Learned | JS (paper-guided MetaMix implementation) | 46.22% | 37.58% | 89.17% | 83.33% |
+| Random | JS | 48.80% | 42.11% | 89.71% | 85.41% |
+| Random | Class-aware InfoNCE | **54.30%** | **48.27%** | **91.20%** | **87.19%** |
+| Learned | Class-aware InfoNCE | 49.42% | 39.68% | 90.08% | 83.24% |
+
+Evaluation uses the final checkpoint on **10,000 clean test images** and
+**750,000 CIFAR-10-C images** (15 corruptions x 5 severities x 10,000 images).
+Class-IL predicts among all ten outputs. Task-IL is supplied the true class pair.
+No augmentation is applied at test, and test accuracy does not select checkpoints.
+
+Corrections include augmentation of current and replay examples, individual
+controller contexts and recurrent batch slots, pre-solver state advancement,
+and a joint clean/two-augmented-view BatchNorm forward. Independent logit replay
+still uses a separate forward. Pseudo-seen and pseudo-unseen operation pools are
+resampled each batch; both use training images, never CIFAR-10-C test data.
+
+Class-aware InfoNCE uses two same-image positive views and different-class
+negatives; other same-class examples are excluded. In these four runs, the named
+consistency objective is used for both classifier and learned-mixer updates.
+Random mixers have no outer optimization. All consistency coefficients are 1;
+InfoNCE temperature is 0.1. See [implementation details](docs/matched_mixing.md).
+
+Random InfoNCE exceeds learned InfoNCE by **8.59 percentage points** on corrupted
+class-IL. Final-epoch mean original-image weight m was **0.9726** for learned JS
+and **0.9916** for learned InfoNCE, indicating weak augmentation contributions.
+These are observations from one seed, not proof that the original authors' method
+collapses. Our CNN, 10-epoch budget and BatchNorm convention differ from the paper;
+the first-order mixer-gradient interpretation remains unverified against author code.
+
+Sampling fingerprints match at every update across the three new runs
+(random JS, random InfoNCE, learned InfoNCE). The learned-JS reference predates
+fingerprint logging. Random weights are independent per image and view, whereas
+learned weights are shared across the two views, so this is not a perfectly
+isolated mixer-only ablation.
+
+[Full evaluations, configurations and exact source snapshots](results/corrected_mixing_seed17/)
+are included without datasets, checkpoints or full batch traces.
+
+Reproduce each run from the repository root (CUDA required):
+
+```sh
+python scripts/run_experiment.py configs/metamix_jointbn.json --data-root /path/to/data --run
+python scripts/run_experiment.py configs/matched_random_js.json --data-root /path/to/data --run
+python scripts/run_experiment.py configs/matched_random_infonce.json --data-root /path/to/data --run
+python scripts/run_experiment.py configs/matched_learned_infonce.json --data-root /path/to/data --run
+```
+
+The later chain-aware fixed-m controller is a separate experiment and is not
+included in this four-run comparison.
 
 ## Setup
 
@@ -108,18 +166,19 @@ Only complete epochs resume;uncommitted trace rows are removed.
 
 These are short synthetic correctness tests,including tiny5-task pipeline runs.
 They do not download data or launch50-epoch training.
-Tests use CUDA if available,otherwise CPU. This is a test-device choice;the actual
-trainer never silently changes the explicitly requested device.
+The corrected MetaMix/matched-mixing tests require CUDA. Some older tests support
+CPU. Actual trainers never silently change the explicitly requested device.
 
 ## Completed experiments
 
     python scripts/summarize_results.py
 
 The full results and three-seed feature-MSE ablation are in [results](results/README.md).
-The strongest completed seed17 class-IL result was different-class-negative InfoNCE:
-51.59% clean and 45.27% CIFAR10-C. This is a single-seed exploratory result.
+The older different-class-negative InfoNCE result was 51.59% clean and 45.27%
+CIFAR10-C. The corrected comparison above uses a different augmentation pipeline
+and should be considered separately from those historical runs.
 MetaMix uses a paper-guided first-order implementation,not verified author code.
-A full matched AugMix+JS baseline has not been run.
+The corrected random-mixer JS comparison is now complete (see above).
 
 ## Attribution
 

@@ -1,0 +1,67 @@
+{
+  "results": {
+    "learned_js": {
+      "clean": {
+        "n": 10000,
+        "class_il": 0.4622,
+        "task_il": 0.8917
+      },
+      "corrupted_mean": {
+        "class_il": 0.3757693333333334,
+        "task_il": 0.8333453333333333
+      },
+      "final_epoch_m_mean": 0.972614351823795,
+      "artifact_directory": "learned_js"
+    },
+    "random_js": {
+      "clean": {
+        "n": 10000,
+        "class_il": 0.488,
+        "task_il": 0.8971
+      },
+      "corrupted_mean": {
+        "class_il": 0.42114399999999996,
+        "task_il": 0.8541239999999999
+      },
+      "final_epoch_m_mean": 0.49966298057696706,
+      "artifact_directory": "random_js"
+    },
+    "random_infonce": {
+      "clean": {
+        "n": 10000,
+        "class_il": 0.543,
+        "task_il": 0.912
+      },
+      "corrupted_mean": {
+        "class_il": 0.48268133333333346,
+        "task_il": 0.8719253333333334
+      },
+      "final_epoch_m_mean": 0.49966298057696706,
+      "artifact_directory": "random_infonce"
+    },
+    "learned_infonce": {
+      "clean": {
+        "n": 10000,
+        "class_il": 0.4942,
+        "task_il": 0.9008
+      },
+      "corrupted_mean": {
+        "class_il": 0.3967826666666667,
+        "task_il": 0.8324266666666666
+      },
+      "final_epoch_m_mean": 0.9915753643867448,
+      "artifact_directory": "learned_infonce"
+    }
+  },
+  "sampling_verification": {
+    "runs": [
+      "random_js",
+      "random_infonce",
+      "learned_infonce"
+    ],
+    "updates": 15650,
+    "all_equal": true,
+    "ordered_sampling_digest_sha256": "f741b3464a90019b32bd5ed609a26097f94f3af0a5e27d04d81e3878a8d3f839"
+  },
+  "caveat": "Random weights independent per image/view; learned weights shared across views. First-order gradient interpretation is not verified author behavior. Single seed."
+}

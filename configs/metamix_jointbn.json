@@ -1,0 +1,9 @@
+{
+  "runner": "metamix_jointbn.py",
+  "args": {
+    "device": "cuda",
+    "epochs_per_task": 10,
+    "root": "experiments/metamix_cifar10/data",
+    "output": "experiments/metamix_jointbn/seed17"
+  }
+}

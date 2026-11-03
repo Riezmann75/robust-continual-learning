@@ -1,0 +1,99 @@
+{
+  "method": "random mixer + js + DER++",
+  "mixer": "random",
+  "consistency": "js",
+  "temperature": 0.1,
+  "consistency_coefficient": 1.0,
+  "random_mixture": "Beta(1,1),Dirichlet(1,1,1); independent image/view, stream170501",
+  "sampling": "preserve legacy global shuffle/ops and reservoir RNG; isolate mixture draws; generate both seen/unseen in all variants",
+  "matching_limit": "learned weights shared across views as current run; random weights independently sampled across views as requested",
+  "implementation": "joint three-view forwards; replay augmentation; per-example slot state; pre-solver state advance",
+  "solver": "Algorithm 2 explicit fixed-updated-classifier partial gradient; original CE contributes zero mixer gradient; no unrolled hypergradient",
+  "context_alignment": "broadcast batch dot/replay CE; individual er,et cyclic positional pairing for unequal batch sizes; zero er when empty",
+  "recurrent_state": "64 persistent batch slots: current0:32 replay32:64; inactive slots unchanged; detach between batches; save pre-solver transition",
+  "bn": "joint clean+two seen views train forward then separate distillation; context cloned buffers; joint clean+two unseen outer eval forward",
+  "unresolved": "paper lacks precise feature pairing and autograd details; first-order interpretation not verified author code",
+  "parent_run_sha256": "b45bad8e80b06ab9579cf72f81df7e1c93055944c544adb3e5239a25534fd41e",
+  "seed": 17,
+  "device": "cuda",
+  "gpu": "NVIDIA GeForce RTX 3060 Ti",
+  "epochs_per_task": 10,
+  "images_per_class": 5000,
+  "tasks": [
+    [
+      0,
+      1
+    ],
+    [
+      2,
+      3
+    ],
+    [
+      4,
+      5
+    ],
+    [
+      6,
+      7
+    ],
+    [
+      8,
+      9
+    ]
+  ],
+  "batch": 32,
+  "replay_batch": 32,
+  "reservoir_capacity": 500,
+  "J": 0,
+  "classifier_lr": 0.03,
+  "mixer_lr": 0.05,
+  "alpha": 0.2,
+  "beta": 0.5,
+  "js_coefficient": 1.0,
+  "channels": [
+    32,
+    64,
+    128
+  ],
+  "parameters": 288746,
+  "resolution": 32,
+  "hidden_size": 5,
+  "context_size": 258,
+  "severity": 3,
+  "views": 2,
+  "chains": 3,
+  "depth": [
+    1,
+    3
+  ],
+  "normalization_mean": [
+    0.4914,
+    0.4822,
+    0.4465
+  ],
+  "normalization_std": [
+    0.247,
+    0.2435,
+    0.2616
+  ],
+  "pipeline_test": false,
+  "source_hashes": {
+    "matched_mixing.py": "adb1bfef18b40a81cbdfc14aff31ecd919ccd7d9e5d90e141e43713d1f2eb508",
+    "report_matched_mixing.py": "322a4ebb677399461f07e675ee819b177730e32bdfb2a0f8e64c45b76c851e5e",
+    "augmix_operations.py": "44cb9e48b1ec872277d7278ea42ca16f88620a72e7f36459fc08f246c71c9325",
+    "AUGMIX_LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "download_cifar100_benchmark.py": "ef67249f442be6be8642ee7ce265a3ecf71f9884464296f5ef1e2cb8477d1cd6",
+    "download_cifar10_benchmark.py": "48a2767abb13d0530f915511dc2bfed45c0734a4dfe59742096e360a3f968e5e"
+  },
+  "python": "3.13.11",
+  "torch": "2.10.0+cu128",
+  "torchvision": "0.25.0+cu128",
+  "numpy": "2.4.2",
+  "pillow": "12.1.1",
+  "cuda": "12.8",
+  "cudnn": 91002,
+  "threads": 4,
+  "deterministic_cudnn": true,
+  "tf32": false,
+  "root": "/home/riezmann/dev/memory-retrieval-experiment/experiments/metamix_cifar10/data"
+}
