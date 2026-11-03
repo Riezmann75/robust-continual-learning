@@ -1,0 +1,7 @@
+{
+  "method": "Feature MSE + DER++ (random AugMix views)",
+  "updates": 15650,
+  "presentations": 500000,
+  "completed": 1793567873.134993,
+  "pipeline_test": false
+}

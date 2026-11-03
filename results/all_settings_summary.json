@@ -1,0 +1,1438 @@
+{
+  "units": "fraction",
+  "groups": {
+    "Noise": [
+      "gaussian_noise",
+      "shot_noise",
+      "impulse_noise"
+    ],
+    "Blur": [
+      "defocus_blur",
+      "glass_blur",
+      "motion_blur",
+      "zoom_blur"
+    ],
+    "Weather": [
+      "snow",
+      "frost",
+      "fog",
+      "brightness"
+    ],
+    "Digital": [
+      "contrast",
+      "elastic_transform",
+      "pixelate",
+      "jpeg_compression"
+    ]
+  },
+  "runs": {
+    "metamix_seed17": {
+      "label": "Original first-order MetaMix pilot",
+      "family": "Historical MetaMix",
+      "seed": 17,
+      "parameters": 288746,
+      "config": "metamix_seed17/config.json",
+      "evaluation": "metamix_seed17/evaluation.json",
+      "metrics": {
+        "class_il": {
+          "clean": 0.2992,
+          "per_corruption": {
+            "gaussian_noise": 0.25844,
+            "shot_noise": 0.26774,
+            "impulse_noise": 0.22492,
+            "defocus_blur": 0.25636000000000003,
+            "glass_blur": 0.2338,
+            "motion_blur": 0.21718,
+            "zoom_blur": 0.24564,
+            "snow": 0.26612,
+            "frost": 0.24653999999999998,
+            "fog": 0.23662,
+            "brightness": 0.2883,
+            "contrast": 0.22583999999999999,
+            "elastic_transform": 0.24628,
+            "pixelate": 0.26305999999999996,
+            "jpeg_compression": 0.27586
+          },
+          "categories": {
+            "Noise": 0.2503666666666667,
+            "Blur": 0.238245,
+            "Weather": 0.259395,
+            "Digital": 0.25276
+          },
+          "overall": 0.25018
+        },
+        "task_il": {
+          "clean": 0.8929,
+          "per_corruption": {
+            "gaussian_noise": 0.8076800000000001,
+            "shot_noise": 0.8283799999999999,
+            "impulse_noise": 0.79014,
+            "defocus_blur": 0.8797,
+            "glass_blur": 0.7930400000000001,
+            "motion_blur": 0.8499800000000001,
+            "zoom_blur": 0.8730800000000001,
+            "snow": 0.85092,
+            "frost": 0.8452400000000001,
+            "fog": 0.8466400000000001,
+            "brightness": 0.88902,
+            "contrast": 0.7659800000000001,
+            "elastic_transform": 0.87334,
+            "pixelate": 0.8675,
+            "jpeg_compression": 0.87134
+          },
+          "categories": {
+            "Noise": 0.8087333333333332,
+            "Blur": 0.8489500000000001,
+            "Weather": 0.857955,
+            "Digital": 0.8445400000000001
+          },
+          "overall": 0.842132
+        }
+      }
+    },
+    "feature_mse_seed17": {
+      "label": "Feature MSE (1.0)",
+      "family": "Random AugMix objectives",
+      "seed": 17,
+      "parameters": 288746,
+      "config": "feature_mse_seed17/config.json",
+      "evaluation": "feature_mse_seed17/evaluation.json",
+      "metrics": {
+        "class_il": {
+          "clean": 0.4529,
+          "per_corruption": {
+            "gaussian_noise": 0.36219999999999997,
+            "shot_noise": 0.38314,
+            "impulse_noise": 0.32732,
+            "defocus_blur": 0.47153999999999996,
+            "glass_blur": 0.36544,
+            "motion_blur": 0.43768,
+            "zoom_blur": 0.47828,
+            "snow": 0.36056,
+            "frost": 0.3641,
+            "fog": 0.41197999999999996,
+            "brightness": 0.43710000000000004,
+            "contrast": 0.33616,
+            "elastic_transform": 0.44826,
+            "pixelate": 0.36608,
+            "jpeg_compression": 0.43144
+          },
+          "categories": {
+            "Noise": 0.35755333333333333,
+            "Blur": 0.438235,
+            "Weather": 0.393435,
+            "Digital": 0.395485
+          },
+          "overall": 0.398752
+        },
+        "task_il": {
+          "clean": 0.8849,
+          "per_corruption": {
+            "gaussian_noise": 0.8126200000000001,
+            "shot_noise": 0.834,
+            "impulse_noise": 0.78584,
+            "defocus_blur": 0.8683400000000001,
+            "glass_blur": 0.7825,
+            "motion_blur": 0.8499399999999999,
+            "zoom_blur": 0.8610599999999999,
+            "snow": 0.82678,
+            "frost": 0.8394,
+            "fog": 0.8519,
+            "brightness": 0.87808,
+            "contrast": 0.78906,
+            "elastic_transform": 0.85838,
+            "pixelate": 0.8595,
+            "jpeg_compression": 0.86706
+          },
+          "categories": {
+            "Noise": 0.81082,
+            "Blur": 0.84046,
+            "Weather": 0.84904,
+            "Digital": 0.8435
+          },
+          "overall": 0.8376306666666667
+        }
+      }
+    },
+    "feature_mse_seed17_lambda0": {
+      "label": "Feature MSE (0.0)",
+      "family": "Random AugMix objectives",
+      "seed": 17,
+      "parameters": 288746,
+      "config": "feature_mse_seed17_lambda0/config.json",
+      "evaluation": "feature_mse_seed17_lambda0/evaluation.json",
+      "metrics": {
+        "class_il": {
+          "clean": 0.3827,
+          "per_corruption": {
+            "gaussian_noise": 0.30766,
+            "shot_noise": 0.3256,
+            "impulse_noise": 0.2606,
+            "defocus_blur": 0.4076000000000001,
+            "glass_blur": 0.30838,
+            "motion_blur": 0.4043,
+            "zoom_blur": 0.42560000000000003,
+            "snow": 0.3019,
+            "frost": 0.30844,
+            "fog": 0.373,
+            "brightness": 0.36692,
+            "contrast": 0.29838,
+            "elastic_transform": 0.41042000000000006,
+            "pixelate": 0.30548000000000003,
+            "jpeg_compression": 0.38416
+          },
+          "categories": {
+            "Noise": 0.29795333333333335,
+            "Blur": 0.38647000000000004,
+            "Weather": 0.337565,
+            "Digital": 0.34961000000000003
+          },
+          "overall": 0.345896
+        },
+        "task_il": {
+          "clean": 0.8866,
+          "per_corruption": {
+            "gaussian_noise": 0.79188,
+            "shot_noise": 0.8185600000000001,
+            "impulse_noise": 0.76784,
+            "defocus_blur": 0.8429,
+            "glass_blur": 0.7624,
+            "motion_blur": 0.8251,
+            "zoom_blur": 0.82574,
+            "snow": 0.8277599999999999,
+            "frost": 0.83614,
+            "fog": 0.84418,
+            "brightness": 0.8811399999999999,
+            "contrast": 0.7681600000000001,
+            "elastic_transform": 0.8451000000000001,
+            "pixelate": 0.8482799999999999,
+            "jpeg_compression": 0.8656600000000001
+          },
+          "categories": {
+            "Noise": 0.79276,
+            "Blur": 0.814035,
+            "Weather": 0.847305,
+            "Digital": 0.8318000000000001
+          },
+          "overall": 0.8233893333333333
+        }
+      }
+    },
+    "feature_mse_seed18": {
+      "label": "Feature MSE (1.0)",
+      "family": "Random AugMix objectives",
+      "seed": 18,
+      "parameters": 288746,
+      "config": "feature_mse_seed18/config.json",
+      "evaluation": "feature_mse_seed18/evaluation.json",
+      "metrics": {
+        "class_il": {
+          "clean": 0.4804,
+          "per_corruption": {
+            "gaussian_noise": 0.40492,
+            "shot_noise": 0.42284,
+            "impulse_noise": 0.36086,
+            "defocus_blur": 0.48224,
+            "glass_blur": 0.37758,
+            "motion_blur": 0.43666,
+            "zoom_blur": 0.48308,
+            "snow": 0.39408000000000004,
+            "frost": 0.36272000000000004,
+            "fog": 0.4176,
+            "brightness": 0.457,
+            "contrast": 0.37570000000000003,
+            "elastic_transform": 0.45936000000000005,
+            "pixelate": 0.40274,
+            "jpeg_compression": 0.46294
+          },
+          "categories": {
+            "Noise": 0.39620666666666665,
+            "Blur": 0.44489,
+            "Weather": 0.40785000000000005,
+            "Digital": 0.42518500000000004
+          },
+          "overall": 0.42002133333333336
+        },
+        "task_il": {
+          "clean": 0.9018,
+          "per_corruption": {
+            "gaussian_noise": 0.8526400000000001,
+            "shot_noise": 0.86608,
+            "impulse_noise": 0.8280799999999999,
+            "defocus_blur": 0.88536,
+            "glass_blur": 0.81532,
+            "motion_blur": 0.86014,
+            "zoom_blur": 0.86948,
+            "snow": 0.8614200000000001,
+            "frost": 0.8550800000000001,
+            "fog": 0.8547800000000001,
+            "brightness": 0.8883599999999999,
+            "contrast": 0.7908999999999999,
+            "elastic_transform": 0.8709199999999999,
+            "pixelate": 0.8759600000000001,
+            "jpeg_compression": 0.88748
+          },
+          "categories": {
+            "Noise": 0.8489333333333334,
+            "Blur": 0.857575,
+            "Weather": 0.8649100000000001,
+            "Digital": 0.8563149999999999
+          },
+          "overall": 0.8574666666666667
+        }
+      }
+    },
+    "feature_mse_seed18_lambda0": {
+      "label": "Feature MSE (0.0)",
+      "family": "Random AugMix objectives",
+      "seed": 18,
+      "parameters": 288746,
+      "config": "feature_mse_seed18_lambda0/config.json",
+      "evaluation": "feature_mse_seed18_lambda0/evaluation.json",
+      "metrics": {
+        "class_il": {
+          "clean": 0.493,
+          "per_corruption": {
+            "gaussian_noise": 0.39492,
+            "shot_noise": 0.42001999999999995,
+            "impulse_noise": 0.34198,
+            "defocus_blur": 0.43938,
+            "glass_blur": 0.37888,
+            "motion_blur": 0.39468000000000003,
+            "zoom_blur": 0.40968,
+            "snow": 0.38528,
+            "frost": 0.37728,
+            "fog": 0.44048,
+            "brightness": 0.45996,
+            "contrast": 0.35694,
+            "elastic_transform": 0.46699999999999997,
+            "pixelate": 0.43355999999999995,
+            "jpeg_compression": 0.46372
+          },
+          "categories": {
+            "Noise": 0.38564,
+            "Blur": 0.405655,
+            "Weather": 0.41575,
+            "Digital": 0.430305
+          },
+          "overall": 0.4109173333333333
+        },
+        "task_il": {
+          "clean": 0.8898,
+          "per_corruption": {
+            "gaussian_noise": 0.81882,
+            "shot_noise": 0.8366,
+            "impulse_noise": 0.79516,
+            "defocus_blur": 0.85114,
+            "glass_blur": 0.78544,
+            "motion_blur": 0.8260799999999999,
+            "zoom_blur": 0.83016,
+            "snow": 0.83618,
+            "frost": 0.8260400000000001,
+            "fog": 0.84192,
+            "brightness": 0.8755599999999999,
+            "contrast": 0.77342,
+            "elastic_transform": 0.85296,
+            "pixelate": 0.83708,
+            "jpeg_compression": 0.8664200000000001
+          },
+          "categories": {
+            "Noise": 0.81686,
+            "Blur": 0.823205,
+            "Weather": 0.844925,
+            "Digital": 0.83247
+          },
+          "overall": 0.8301986666666666
+        }
+      }
+    },
+    "feature_mse_seed19": {
+      "label": "Feature MSE (1.0)",
+      "family": "Random AugMix objectives",
+      "seed": 19,
+      "parameters": 288746,
+      "config": "feature_mse_seed19/config.json",
+      "evaluation": "feature_mse_seed19/evaluation.json",
+      "metrics": {
+        "class_il": {
+          "clean": 0.4705,
+          "per_corruption": {
+            "gaussian_noise": 0.39294,
+            "shot_noise": 0.42081999999999997,
+            "impulse_noise": 0.33799999999999997,
+            "defocus_blur": 0.47196,
+            "glass_blur": 0.37002,
+            "motion_blur": 0.41934000000000005,
+            "zoom_blur": 0.47409999999999997,
+            "snow": 0.40772,
+            "frost": 0.38106,
+            "fog": 0.41662,
+            "brightness": 0.45621999999999996,
+            "contrast": 0.33738,
+            "elastic_transform": 0.45309999999999995,
+            "pixelate": 0.37532,
+            "jpeg_compression": 0.44892000000000004
+          },
+          "categories": {
+            "Noise": 0.38392,
+            "Blur": 0.433855,
+            "Weather": 0.415405,
+            "Digital": 0.40368
+          },
+          "overall": 0.41090133333333334
+        },
+        "task_il": {
+          "clean": 0.898,
+          "per_corruption": {
+            "gaussian_noise": 0.82438,
+            "shot_noise": 0.85024,
+            "impulse_noise": 0.79558,
+            "defocus_blur": 0.87158,
+            "glass_blur": 0.7787200000000001,
+            "motion_blur": 0.8491199999999999,
+            "zoom_blur": 0.86006,
+            "snow": 0.85,
+            "frost": 0.8460599999999999,
+            "fog": 0.8489599999999999,
+            "brightness": 0.8871600000000001,
+            "contrast": 0.7776799999999999,
+            "elastic_transform": 0.8625,
+            "pixelate": 0.85276,
+            "jpeg_compression": 0.8708600000000001
+          },
+          "categories": {
+            "Noise": 0.8234,
+            "Blur": 0.83987,
+            "Weather": 0.858045,
+            "Digital": 0.84095
+          },
+          "overall": 0.8417106666666666
+        }
+      }
+    },
+    "feature_mse_seed19_lambda0": {
+      "label": "Feature MSE (0.0)",
+      "family": "Random AugMix objectives",
+      "seed": 19,
+      "parameters": 288746,
+      "config": "feature_mse_seed19_lambda0/config.json",
+      "evaluation": "feature_mse_seed19_lambda0/evaluation.json",
+      "metrics": {
+        "class_il": {
+          "clean": 0.43,
+          "per_corruption": {
+            "gaussian_noise": 0.33614,
+            "shot_noise": 0.35892,
+            "impulse_noise": 0.30062,
+            "defocus_blur": 0.43694,
+            "glass_blur": 0.29296,
+            "motion_blur": 0.39644,
+            "zoom_blur": 0.44692,
+            "snow": 0.33376,
+            "frost": 0.3133,
+            "fog": 0.38738,
+            "brightness": 0.40282,
+            "contrast": 0.33228,
+            "elastic_transform": 0.43748000000000004,
+            "pixelate": 0.35459999999999997,
+            "jpeg_compression": 0.41462000000000004
+          },
+          "categories": {
+            "Noise": 0.3318933333333333,
+            "Blur": 0.39331499999999997,
+            "Weather": 0.359315,
+            "Digital": 0.384745
+          },
+          "overall": 0.36967866666666666
+        },
+        "task_il": {
+          "clean": 0.8995,
+          "per_corruption": {
+            "gaussian_noise": 0.79588,
+            "shot_noise": 0.8284800000000001,
+            "impulse_noise": 0.7663800000000001,
+            "defocus_blur": 0.8446999999999999,
+            "glass_blur": 0.7593,
+            "motion_blur": 0.82398,
+            "zoom_blur": 0.8264799999999999,
+            "snow": 0.8445199999999999,
+            "frost": 0.83378,
+            "fog": 0.84016,
+            "brightness": 0.88856,
+            "contrast": 0.7813,
+            "elastic_transform": 0.85594,
+            "pixelate": 0.84702,
+            "jpeg_compression": 0.87088
+          },
+          "categories": {
+            "Noise": 0.7969133333333334,
+            "Blur": 0.813615,
+            "Weather": 0.851755,
+            "Digital": 0.838785
+          },
+          "overall": 0.8271573333333334
+        }
+      }
+    },
+    "infonce_seed17": {
+      "label": "Standard InfoNCE (1)",
+      "family": "Random AugMix objectives",
+      "seed": 17,
+      "parameters": 288746,
+      "config": "infonce_seed17/config.json",
+      "evaluation": "infonce_seed17/evaluation.json",
+      "metrics": {
+        "class_il": {
+          "clean": 0.4814,
+          "per_corruption": {
+            "gaussian_noise": 0.4143,
+            "shot_noise": 0.43368,
+            "impulse_noise": 0.39814,
+            "defocus_blur": 0.49022,
+            "glass_blur": 0.42191999999999996,
+            "motion_blur": 0.44943999999999995,
+            "zoom_blur": 0.49842,
+            "snow": 0.40662000000000004,
+            "frost": 0.35284,
+            "fog": 0.4208,
+            "brightness": 0.44048,
+            "contrast": 0.3518,
+            "elastic_transform": 0.47366,
+            "pixelate": 0.43152,
+            "jpeg_compression": 0.45596
+          },
+          "categories": {
+            "Noise": 0.4153733333333333,
+            "Blur": 0.46499999999999997,
+            "Weather": 0.405185,
+            "Digital": 0.42823500000000003
+          },
+          "overall": 0.42932
+        },
+        "task_il": {
+          "clean": 0.8886,
+          "per_corruption": {
+            "gaussian_noise": 0.84304,
+            "shot_noise": 0.85992,
+            "impulse_noise": 0.8332599999999999,
+            "defocus_blur": 0.87866,
+            "glass_blur": 0.8358000000000001,
+            "motion_blur": 0.86424,
+            "zoom_blur": 0.87546,
+            "snow": 0.8503400000000001,
+            "frost": 0.85236,
+            "fog": 0.84094,
+            "brightness": 0.8815999999999999,
+            "contrast": 0.7585200000000001,
+            "elastic_transform": 0.873,
+            "pixelate": 0.8775000000000001,
+            "jpeg_compression": 0.87112
+          },
+          "categories": {
+            "Noise": 0.8454066666666668,
+            "Blur": 0.86354,
+            "Weather": 0.85631,
+            "Digital": 0.845035
+          },
+          "overall": 0.8530506666666666
+        }
+      }
+    },
+    "classaware_infonce_seed17": {
+      "label": "Class-aware InfoNCE (1)",
+      "family": "Random AugMix objectives",
+      "seed": 17,
+      "parameters": 288746,
+      "config": "classaware_infonce_seed17/config.json",
+      "evaluation": "classaware_infonce_seed17/evaluation.json",
+      "metrics": {
+        "class_il": {
+          "clean": 0.5159,
+          "per_corruption": {
+            "gaussian_noise": 0.44610000000000005,
+            "shot_noise": 0.46392,
+            "impulse_noise": 0.43426,
+            "defocus_blur": 0.52112,
+            "glass_blur": 0.40465999999999996,
+            "motion_blur": 0.46684000000000003,
+            "zoom_blur": 0.52746,
+            "snow": 0.43322000000000005,
+            "frost": 0.3725,
+            "fog": 0.4404,
+            "brightness": 0.47816000000000003,
+            "contrast": 0.36538,
+            "elastic_transform": 0.49616,
+            "pixelate": 0.46132,
+            "jpeg_compression": 0.4784
+          },
+          "categories": {
+            "Noise": 0.4480933333333333,
+            "Blur": 0.48002,
+            "Weather": 0.43107,
+            "Digital": 0.450315
+          },
+          "overall": 0.45266
+        },
+        "task_il": {
+          "clean": 0.9111,
+          "per_corruption": {
+            "gaussian_noise": 0.8574400000000001,
+            "shot_noise": 0.8723600000000001,
+            "impulse_noise": 0.85064,
+            "defocus_blur": 0.9000199999999999,
+            "glass_blur": 0.81648,
+            "motion_blur": 0.87958,
+            "zoom_blur": 0.8949200000000002,
+            "snow": 0.8634999999999999,
+            "frost": 0.8587999999999999,
+            "fog": 0.86904,
+            "brightness": 0.9000400000000001,
+            "contrast": 0.7896,
+            "elastic_transform": 0.8893000000000001,
+            "pixelate": 0.89664,
+            "jpeg_compression": 0.8898199999999999
+          },
+          "categories": {
+            "Noise": 0.8601466666666667,
+            "Blur": 0.87275,
+            "Weather": 0.872845,
+            "Digital": 0.86634
+          },
+          "overall": 0.8685453333333334
+        }
+      }
+    },
+    "mse05_nce05_seed17": {
+      "label": "Class-aware InfoNCE (0.5) + feature MSE (0.5)",
+      "family": "Random AugMix objectives",
+      "seed": 17,
+      "parameters": 288746,
+      "config": "mse05_nce05_seed17/config.json",
+      "evaluation": "mse05_nce05_seed17/evaluation.json",
+      "metrics": {
+        "class_il": {
+          "clean": 0.46,
+          "per_corruption": {
+            "gaussian_noise": 0.39156,
+            "shot_noise": 0.41052,
+            "impulse_noise": 0.37878,
+            "defocus_blur": 0.47338,
+            "glass_blur": 0.36572,
+            "motion_blur": 0.43384,
+            "zoom_blur": 0.48452,
+            "snow": 0.39146000000000003,
+            "frost": 0.35287999999999997,
+            "fog": 0.41719999999999996,
+            "brightness": 0.43028000000000005,
+            "contrast": 0.33614,
+            "elastic_transform": 0.45362,
+            "pixelate": 0.38926,
+            "jpeg_compression": 0.43688000000000005
+          },
+          "categories": {
+            "Noise": 0.39362,
+            "Blur": 0.439365,
+            "Weather": 0.397955,
+            "Digital": 0.40397500000000003
+          },
+          "overall": 0.409736
+        },
+        "task_il": {
+          "clean": 0.9046,
+          "per_corruption": {
+            "gaussian_noise": 0.8341799999999999,
+            "shot_noise": 0.85358,
+            "impulse_noise": 0.8228199999999999,
+            "defocus_blur": 0.8925599999999999,
+            "glass_blur": 0.81192,
+            "motion_blur": 0.86334,
+            "zoom_blur": 0.88932,
+            "snow": 0.84988,
+            "frost": 0.85196,
+            "fog": 0.8581,
+            "brightness": 0.89158,
+            "contrast": 0.77204,
+            "elastic_transform": 0.87884,
+            "pixelate": 0.8836,
+            "jpeg_compression": 0.8818199999999999
+          },
+          "categories": {
+            "Noise": 0.83686,
+            "Blur": 0.864285,
+            "Weather": 0.86288,
+            "Digital": 0.8540749999999999
+          },
+          "overall": 0.8557026666666666
+        }
+      }
+    },
+    "mse02_nce1_seed17": {
+      "label": "Class-aware InfoNCE (1) + feature MSE (0.2)",
+      "family": "Random AugMix objectives",
+      "seed": 17,
+      "parameters": 288746,
+      "config": "mse02_nce1_seed17/config.json",
+      "evaluation": "mse02_nce1_seed17/evaluation.json",
+      "metrics": {
+        "class_il": {
+          "clean": 0.4745,
+          "per_corruption": {
+            "gaussian_noise": 0.38636,
+            "shot_noise": 0.41102,
+            "impulse_noise": 0.36924,
+            "defocus_blur": 0.48841999999999997,
+            "glass_blur": 0.38226,
+            "motion_blur": 0.45616,
+            "zoom_blur": 0.5019,
+            "snow": 0.39326,
+            "frost": 0.35402,
+            "fog": 0.43906,
+            "brightness": 0.44046,
+            "contrast": 0.37344,
+            "elastic_transform": 0.46452,
+            "pixelate": 0.41082,
+            "jpeg_compression": 0.43023999999999996
+          },
+          "categories": {
+            "Noise": 0.38887333333333335,
+            "Blur": 0.457185,
+            "Weather": 0.4067,
+            "Digital": 0.419755
+          },
+          "overall": 0.42007866666666666
+        },
+        "task_il": {
+          "clean": 0.903,
+          "per_corruption": {
+            "gaussian_noise": 0.8295600000000001,
+            "shot_noise": 0.84816,
+            "impulse_noise": 0.82438,
+            "defocus_blur": 0.90016,
+            "glass_blur": 0.8329000000000001,
+            "motion_blur": 0.8863199999999999,
+            "zoom_blur": 0.89868,
+            "snow": 0.85258,
+            "frost": 0.8593,
+            "fog": 0.8704000000000001,
+            "brightness": 0.8983800000000001,
+            "contrast": 0.81328,
+            "elastic_transform": 0.88548,
+            "pixelate": 0.8804399999999999,
+            "jpeg_compression": 0.8720800000000001
+          },
+          "categories": {
+            "Noise": 0.8340333333333333,
+            "Blur": 0.879515,
+            "Weather": 0.8701650000000001,
+            "Digital": 0.86282
+          },
+          "overall": 0.8634733333333333
+        }
+      }
+    },
+    "augce_seed17": {
+      "label": "Augmented CE (1)",
+      "family": "Random AugMix objectives",
+      "seed": 17,
+      "parameters": 288746,
+      "config": "augce_seed17/config.json",
+      "evaluation": "augce_seed17/evaluation.json",
+      "metrics": {
+        "class_il": {
+          "clean": 0.4886,
+          "per_corruption": {
+            "gaussian_noise": 0.40696000000000004,
+            "shot_noise": 0.42584,
+            "impulse_noise": 0.37478,
+            "defocus_blur": 0.48438,
+            "glass_blur": 0.39204,
+            "motion_blur": 0.4377,
+            "zoom_blur": 0.48362,
+            "snow": 0.40693999999999997,
+            "frost": 0.374,
+            "fog": 0.44408000000000003,
+            "brightness": 0.45882000000000006,
+            "contrast": 0.37342,
+            "elastic_transform": 0.45792,
+            "pixelate": 0.39908,
+            "jpeg_compression": 0.45899999999999996
+          },
+          "categories": {
+            "Noise": 0.4025266666666667,
+            "Blur": 0.449435,
+            "Weather": 0.42096,
+            "Digital": 0.422355
+          },
+          "overall": 0.4252386666666667
+        },
+        "task_il": {
+          "clean": 0.894,
+          "per_corruption": {
+            "gaussian_noise": 0.8348800000000001,
+            "shot_noise": 0.8525,
+            "impulse_noise": 0.81312,
+            "defocus_blur": 0.8893599999999999,
+            "glass_blur": 0.80898,
+            "motion_blur": 0.87144,
+            "zoom_blur": 0.8812,
+            "snow": 0.84504,
+            "frost": 0.8466799999999999,
+            "fog": 0.86974,
+            "brightness": 0.88676,
+            "contrast": 0.8053000000000001,
+            "elastic_transform": 0.8738199999999999,
+            "pixelate": 0.8702799999999999,
+            "jpeg_compression": 0.8773799999999999
+          },
+          "categories": {
+            "Noise": 0.8335,
+            "Blur": 0.862745,
+            "Weather": 0.862055,
+            "Digital": 0.856695
+          },
+          "overall": 0.8550986666666667
+        }
+      }
+    },
+    "barlow_seed17": {
+      "label": "Augmented CE (1) + BT augmented pair (1)",
+      "family": "Random AugMix objectives",
+      "seed": 17,
+      "parameters": 288746,
+      "config": "barlow_seed17/config.json",
+      "evaluation": "barlow_seed17/evaluation.json",
+      "metrics": {
+        "class_il": {
+          "clean": 0.4812,
+          "per_corruption": {
+            "gaussian_noise": 0.4018,
+            "shot_noise": 0.42068000000000005,
+            "impulse_noise": 0.37828,
+            "defocus_blur": 0.47240000000000004,
+            "glass_blur": 0.35788000000000003,
+            "motion_blur": 0.41832,
+            "zoom_blur": 0.4697,
+            "snow": 0.3964,
+            "frost": 0.36276,
+            "fog": 0.39998,
+            "brightness": 0.4563,
+            "contrast": 0.33971999999999997,
+            "elastic_transform": 0.44566,
+            "pixelate": 0.40018000000000004,
+            "jpeg_compression": 0.44501999999999997
+          },
+          "categories": {
+            "Noise": 0.40025333333333335,
+            "Blur": 0.42957500000000004,
+            "Weather": 0.40386,
+            "Digital": 0.407645
+          },
+          "overall": 0.41100533333333333
+        },
+        "task_il": {
+          "clean": 0.8933,
+          "per_corruption": {
+            "gaussian_noise": 0.8346199999999999,
+            "shot_noise": 0.84984,
+            "impulse_noise": 0.8163,
+            "defocus_blur": 0.8815,
+            "glass_blur": 0.79222,
+            "motion_blur": 0.86248,
+            "zoom_blur": 0.87842,
+            "snow": 0.8408200000000001,
+            "frost": 0.84254,
+            "fog": 0.85016,
+            "brightness": 0.88034,
+            "contrast": 0.7737999999999999,
+            "elastic_transform": 0.8667,
+            "pixelate": 0.86974,
+            "jpeg_compression": 0.8708600000000001
+          },
+          "categories": {
+            "Noise": 0.8335866666666667,
+            "Blur": 0.853655,
+            "Weather": 0.853465,
+            "Digital": 0.845275
+          },
+          "overall": 0.847356
+        }
+      }
+    },
+    "bt_threepair_seed17": {
+      "label": "BT three pairs (1), no augmented CE",
+      "family": "Random AugMix objectives",
+      "seed": 17,
+      "parameters": 288746,
+      "config": "bt_threepair_seed17/config.json",
+      "evaluation": "bt_threepair_seed17/evaluation.json",
+      "metrics": {
+        "class_il": {
+          "clean": 0.4525,
+          "per_corruption": {
+            "gaussian_noise": 0.37614000000000003,
+            "shot_noise": 0.39456,
+            "impulse_noise": 0.32942,
+            "defocus_blur": 0.48536,
+            "glass_blur": 0.35326,
+            "motion_blur": 0.43722000000000005,
+            "zoom_blur": 0.49144000000000004,
+            "snow": 0.36812,
+            "frost": 0.35372,
+            "fog": 0.41022,
+            "brightness": 0.4258,
+            "contrast": 0.33804,
+            "elastic_transform": 0.4671,
+            "pixelate": 0.41288,
+            "jpeg_compression": 0.44514000000000004
+          },
+          "categories": {
+            "Noise": 0.3667066666666667,
+            "Blur": 0.44182000000000005,
+            "Weather": 0.389465,
+            "Digital": 0.41579
+          },
+          "overall": 0.4058946666666667
+        },
+        "task_il": {
+          "clean": 0.8932,
+          "per_corruption": {
+            "gaussian_noise": 0.8081799999999999,
+            "shot_noise": 0.8277599999999999,
+            "impulse_noise": 0.8017199999999999,
+            "defocus_blur": 0.8727600000000001,
+            "glass_blur": 0.80054,
+            "motion_blur": 0.83776,
+            "zoom_blur": 0.86094,
+            "snow": 0.83696,
+            "frost": 0.83698,
+            "fog": 0.84142,
+            "brightness": 0.88272,
+            "contrast": 0.77722,
+            "elastic_transform": 0.8621800000000001,
+            "pixelate": 0.86936,
+            "jpeg_compression": 0.87382
+          },
+          "categories": {
+            "Noise": 0.8125533333333332,
+            "Blur": 0.843,
+            "Weather": 0.8495199999999999,
+            "Digital": 0.845645
+          },
+          "overall": 0.8393546666666667
+        }
+      }
+    },
+    "multihead_seed17": {
+      "label": "Four heads + augmented CE (1) + diversity (0.1)",
+      "family": "Random AugMix objectives",
+      "seed": 17,
+      "parameters": 305288,
+      "config": "multihead_seed17/config.json",
+      "evaluation": "multihead_seed17/evaluation.json",
+      "metrics": {
+        "class_il": {
+          "clean": 0.4081,
+          "per_corruption": {
+            "gaussian_noise": 0.35972,
+            "shot_noise": 0.37034,
+            "impulse_noise": 0.32454,
+            "defocus_blur": 0.40502000000000005,
+            "glass_blur": 0.34022,
+            "motion_blur": 0.37832,
+            "zoom_blur": 0.40570000000000006,
+            "snow": 0.34158,
+            "frost": 0.33161999999999997,
+            "fog": 0.37263999999999997,
+            "brightness": 0.39752,
+            "contrast": 0.32498,
+            "elastic_transform": 0.38605999999999996,
+            "pixelate": 0.3357,
+            "jpeg_compression": 0.3888
+          },
+          "categories": {
+            "Noise": 0.3515333333333333,
+            "Blur": 0.382315,
+            "Weather": 0.36084,
+            "Digital": 0.358885
+          },
+          "overall": 0.364184
+        },
+        "task_il": {
+          "clean": 0.8661,
+          "per_corruption": {
+            "gaussian_noise": 0.8245799999999999,
+            "shot_noise": 0.8391400000000001,
+            "impulse_noise": 0.80892,
+            "defocus_blur": 0.8572599999999999,
+            "glass_blur": 0.8011799999999999,
+            "motion_blur": 0.84848,
+            "zoom_blur": 0.85578,
+            "snow": 0.8233,
+            "frost": 0.83872,
+            "fog": 0.84278,
+            "brightness": 0.86812,
+            "contrast": 0.79808,
+            "elastic_transform": 0.8481799999999999,
+            "pixelate": 0.8468600000000001,
+            "jpeg_compression": 0.8453799999999999
+          },
+          "categories": {
+            "Noise": 0.8242133333333334,
+            "Blur": 0.840675,
+            "Weather": 0.84323,
+            "Digital": 0.834625
+          },
+          "overall": 0.8364506666666666
+        }
+      }
+    },
+    "infonce_recon_seed17": {
+      "label": "Class-aware InfoNCE (1) + own-view pixel MSE (1)",
+      "family": "Random AugMix objectives",
+      "seed": 17,
+      "parameters": 288746,
+      "config": "infonce_recon_seed17/config.json",
+      "evaluation": "infonce_recon_seed17/evaluation.json",
+      "metrics": {
+        "class_il": {
+          "clean": 0.4684,
+          "per_corruption": {
+            "gaussian_noise": 0.39378,
+            "shot_noise": 0.4145,
+            "impulse_noise": 0.37757999999999997,
+            "defocus_blur": 0.47275999999999996,
+            "glass_blur": 0.38486,
+            "motion_blur": 0.4306,
+            "zoom_blur": 0.4796,
+            "snow": 0.40123999999999993,
+            "frost": 0.35102,
+            "fog": 0.41498,
+            "brightness": 0.43612,
+            "contrast": 0.35863999999999996,
+            "elastic_transform": 0.45104,
+            "pixelate": 0.40426,
+            "jpeg_compression": 0.43772
+          },
+          "categories": {
+            "Noise": 0.3952866666666666,
+            "Blur": 0.441955,
+            "Weather": 0.40084,
+            "Digital": 0.412915
+          },
+          "overall": 0.4139133333333333
+        },
+        "task_il": {
+          "clean": 0.9045,
+          "per_corruption": {
+            "gaussian_noise": 0.8511799999999999,
+            "shot_noise": 0.8682399999999999,
+            "impulse_noise": 0.83856,
+            "defocus_blur": 0.8930400000000001,
+            "glass_blur": 0.8346,
+            "motion_blur": 0.8739800000000001,
+            "zoom_blur": 0.88778,
+            "snow": 0.8573999999999999,
+            "frost": 0.86134,
+            "fog": 0.86244,
+            "brightness": 0.8993800000000001,
+            "contrast": 0.8041600000000001,
+            "elastic_transform": 0.8830600000000001,
+            "pixelate": 0.8863,
+            "jpeg_compression": 0.88186
+          },
+          "categories": {
+            "Noise": 0.8526599999999999,
+            "Blur": 0.8723500000000001,
+            "Weather": 0.87014,
+            "Digital": 0.863845
+          },
+          "overall": 0.8655546666666667
+        }
+      }
+    },
+    "learned_js": {
+      "label": "Learned mixer: classifier JS / outer JS",
+      "family": "Corrected split-pool pipeline",
+      "seed": 17,
+      "parameters": 288746,
+      "config": "corrected_mixing_seed17/learned_js/config.json",
+      "evaluation": "corrected_mixing_seed17/learned_js/evaluation.json",
+      "metrics": {
+        "class_il": {
+          "clean": 0.4622,
+          "per_corruption": {
+            "gaussian_noise": 0.34118,
+            "shot_noise": 0.35886,
+            "impulse_noise": 0.28252,
+            "defocus_blur": 0.4332,
+            "glass_blur": 0.35150000000000003,
+            "motion_blur": 0.36268,
+            "zoom_blur": 0.42576,
+            "snow": 0.37639999999999996,
+            "frost": 0.34708,
+            "fog": 0.38533999999999996,
+            "brightness": 0.43620000000000003,
+            "contrast": 0.31778,
+            "elastic_transform": 0.42219999999999996,
+            "pixelate": 0.36458,
+            "jpeg_compression": 0.43126
+          },
+          "categories": {
+            "Noise": 0.32752,
+            "Blur": 0.393285,
+            "Weather": 0.386255,
+            "Digital": 0.383955
+          },
+          "overall": 0.37576933333333334
+        },
+        "task_il": {
+          "clean": 0.8917,
+          "per_corruption": {
+            "gaussian_noise": 0.81516,
+            "shot_noise": 0.83008,
+            "impulse_noise": 0.7881199999999999,
+            "defocus_blur": 0.8567199999999999,
+            "glass_blur": 0.7714399999999999,
+            "motion_blur": 0.83396,
+            "zoom_blur": 0.84824,
+            "snow": 0.8373200000000001,
+            "frost": 0.83622,
+            "fog": 0.84816,
+            "brightness": 0.8809000000000001,
+            "contrast": 0.76378,
+            "elastic_transform": 0.8565799999999999,
+            "pixelate": 0.86266,
+            "jpeg_compression": 0.8708400000000001
+          },
+          "categories": {
+            "Noise": 0.81112,
+            "Blur": 0.8275899999999999,
+            "Weather": 0.85065,
+            "Digital": 0.838465
+          },
+          "overall": 0.8333453333333334
+        }
+      }
+    },
+    "random_js": {
+      "label": "Random mixer: classifier JS / no outer loss",
+      "family": "Corrected split-pool pipeline",
+      "seed": 17,
+      "parameters": 288746,
+      "config": "corrected_mixing_seed17/random_js/config.json",
+      "evaluation": "corrected_mixing_seed17/random_js/evaluation.json",
+      "metrics": {
+        "class_il": {
+          "clean": 0.488,
+          "per_corruption": {
+            "gaussian_noise": 0.40774,
+            "shot_noise": 0.42538,
+            "impulse_noise": 0.37834,
+            "defocus_blur": 0.47973999999999994,
+            "glass_blur": 0.38161999999999996,
+            "motion_blur": 0.42824,
+            "zoom_blur": 0.47048000000000006,
+            "snow": 0.41022,
+            "frost": 0.37454,
+            "fog": 0.42088000000000003,
+            "brightness": 0.46212,
+            "contrast": 0.36304,
+            "elastic_transform": 0.45944,
+            "pixelate": 0.3971,
+            "jpeg_compression": 0.45827999999999997
+          },
+          "categories": {
+            "Noise": 0.40382,
+            "Blur": 0.44001999999999997,
+            "Weather": 0.41694,
+            "Digital": 0.419465
+          },
+          "overall": 0.42114399999999996
+        },
+        "task_il": {
+          "clean": 0.8971,
+          "per_corruption": {
+            "gaussian_noise": 0.8313,
+            "shot_noise": 0.8492599999999999,
+            "impulse_noise": 0.81598,
+            "defocus_blur": 0.8888,
+            "glass_blur": 0.79206,
+            "motion_blur": 0.86494,
+            "zoom_blur": 0.87826,
+            "snow": 0.85078,
+            "frost": 0.85028,
+            "fog": 0.8648199999999999,
+            "brightness": 0.89176,
+            "contrast": 0.8072800000000001,
+            "elastic_transform": 0.8755600000000001,
+            "pixelate": 0.87098,
+            "jpeg_compression": 0.8798
+          },
+          "categories": {
+            "Noise": 0.83218,
+            "Blur": 0.856015,
+            "Weather": 0.86441,
+            "Digital": 0.8584050000000001
+          },
+          "overall": 0.854124
+        }
+      }
+    },
+    "random_infonce": {
+      "label": "Random mixer: classifier class-aware InfoNCE / no outer loss",
+      "family": "Corrected split-pool pipeline",
+      "seed": 17,
+      "parameters": 288746,
+      "config": "corrected_mixing_seed17/random_infonce/config.json",
+      "evaluation": "corrected_mixing_seed17/random_infonce/evaluation.json",
+      "metrics": {
+        "class_il": {
+          "clean": 0.543,
+          "per_corruption": {
+            "gaussian_noise": 0.48495999999999995,
+            "shot_noise": 0.5078199999999999,
+            "impulse_noise": 0.47058,
+            "defocus_blur": 0.5311600000000001,
+            "glass_blur": 0.44618,
+            "motion_blur": 0.49176000000000003,
+            "zoom_blur": 0.5292399999999999,
+            "snow": 0.46840000000000004,
+            "frost": 0.43518,
+            "fog": 0.48422,
+            "brightness": 0.51132,
+            "contrast": 0.3944,
+            "elastic_transform": 0.50798,
+            "pixelate": 0.46852,
+            "jpeg_compression": 0.5085
+          },
+          "categories": {
+            "Noise": 0.4877866666666666,
+            "Blur": 0.499585,
+            "Weather": 0.47478,
+            "Digital": 0.46985
+          },
+          "overall": 0.48268133333333335
+        },
+        "task_il": {
+          "clean": 0.912,
+          "per_corruption": {
+            "gaussian_noise": 0.8616199999999999,
+            "shot_noise": 0.87538,
+            "impulse_noise": 0.85,
+            "defocus_blur": 0.8974,
+            "glass_blur": 0.8244400000000001,
+            "motion_blur": 0.8704000000000001,
+            "zoom_blur": 0.8889799999999999,
+            "snow": 0.87388,
+            "frost": 0.86998,
+            "fog": 0.87964,
+            "brightness": 0.9057600000000001,
+            "contrast": 0.80942,
+            "elastic_transform": 0.88416,
+            "pixelate": 0.89192,
+            "jpeg_compression": 0.8958999999999999
+          },
+          "categories": {
+            "Noise": 0.8623333333333333,
+            "Blur": 0.870305,
+            "Weather": 0.882315,
+            "Digital": 0.87035
+          },
+          "overall": 0.8719253333333333
+        }
+      }
+    },
+    "learned_infonce": {
+      "label": "Learned mixer: classifier class-aware InfoNCE / outer InfoNCE",
+      "family": "Corrected split-pool pipeline",
+      "seed": 17,
+      "parameters": 288746,
+      "config": "corrected_mixing_seed17/learned_infonce/config.json",
+      "evaluation": "corrected_mixing_seed17/learned_infonce/evaluation.json",
+      "metrics": {
+        "class_il": {
+          "clean": 0.4942,
+          "per_corruption": {
+            "gaussian_noise": 0.3725,
+            "shot_noise": 0.395,
+            "impulse_noise": 0.32511999999999996,
+            "defocus_blur": 0.44934,
+            "glass_blur": 0.35864,
+            "motion_blur": 0.37246,
+            "zoom_blur": 0.43338,
+            "snow": 0.40215999999999996,
+            "frost": 0.36494,
+            "fog": 0.39476,
+            "brightness": 0.45978,
+            "contrast": 0.31826,
+            "elastic_transform": 0.44814,
+            "pixelate": 0.40228,
+            "jpeg_compression": 0.45498000000000005
+          },
+          "categories": {
+            "Noise": 0.3642066666666666,
+            "Blur": 0.403455,
+            "Weather": 0.40541,
+            "Digital": 0.405915
+          },
+          "overall": 0.3967826666666667
+        },
+        "task_il": {
+          "clean": 0.9008,
+          "per_corruption": {
+            "gaussian_noise": 0.81412,
+            "shot_noise": 0.83452,
+            "impulse_noise": 0.79728,
+            "defocus_blur": 0.8675,
+            "glass_blur": 0.7651600000000001,
+            "motion_blur": 0.8254400000000001,
+            "zoom_blur": 0.8495799999999999,
+            "snow": 0.84658,
+            "frost": 0.82858,
+            "fog": 0.8321799999999999,
+            "brightness": 0.88256,
+            "contrast": 0.72638,
+            "elastic_transform": 0.86624,
+            "pixelate": 0.87012,
+            "jpeg_compression": 0.88016
+          },
+          "categories": {
+            "Noise": 0.8153066666666667,
+            "Blur": 0.82692,
+            "Weather": 0.847475,
+            "Digital": 0.835725
+          },
+          "overall": 0.8324266666666666
+        }
+      }
+    },
+    "learned_infonce_js": {
+      "label": "Learned mixer: classifier class-aware InfoNCE / outer JS",
+      "family": "Corrected split-pool pipeline",
+      "seed": 17,
+      "parameters": 288746,
+      "config": "corrected_mixing_seed17/learned_infonce_js/config.json",
+      "evaluation": "corrected_mixing_seed17/learned_infonce_js/evaluation.json",
+      "metrics": {
+        "class_il": {
+          "clean": 0.4826,
+          "per_corruption": {
+            "gaussian_noise": 0.35032,
+            "shot_noise": 0.3773,
+            "impulse_noise": 0.31376,
+            "defocus_blur": 0.44123999999999997,
+            "glass_blur": 0.34965999999999997,
+            "motion_blur": 0.37668,
+            "zoom_blur": 0.43479999999999996,
+            "snow": 0.38254,
+            "frost": 0.34886,
+            "fog": 0.40198,
+            "brightness": 0.43284,
+            "contrast": 0.31976,
+            "elastic_transform": 0.43822,
+            "pixelate": 0.37229999999999996,
+            "jpeg_compression": 0.44222
+          },
+          "categories": {
+            "Noise": 0.34712666666666664,
+            "Blur": 0.400595,
+            "Weather": 0.391555,
+            "Digital": 0.393125
+          },
+          "overall": 0.38549866666666666
+        },
+        "task_il": {
+          "clean": 0.8925,
+          "per_corruption": {
+            "gaussian_noise": 0.78434,
+            "shot_noise": 0.8148799999999999,
+            "impulse_noise": 0.77108,
+            "defocus_blur": 0.8585200000000001,
+            "glass_blur": 0.7752800000000001,
+            "motion_blur": 0.8229200000000001,
+            "zoom_blur": 0.84612,
+            "snow": 0.8321400000000001,
+            "frost": 0.82986,
+            "fog": 0.84712,
+            "brightness": 0.8805799999999999,
+            "contrast": 0.76472,
+            "elastic_transform": 0.85684,
+            "pixelate": 0.85328,
+            "jpeg_compression": 0.8659800000000001
+          },
+          "categories": {
+            "Noise": 0.7900999999999999,
+            "Blur": 0.82571,
+            "Weather": 0.847425,
+            "Digital": 0.835205
+          },
+          "overall": 0.8269106666666667
+        }
+      }
+    },
+    "chain_aware_fixed_m": {
+      "label": "Chain-aware, m=0.5: classifier class-aware InfoNCE / outer JS",
+      "family": "Chain-aware extension",
+      "seed": 17,
+      "parameters": 288746,
+      "config": "corrected_mixing_seed17/chain_aware_fixed_m/config.json",
+      "evaluation": "corrected_mixing_seed17/chain_aware_fixed_m/evaluation.json",
+      "metrics": {
+        "class_il": {
+          "clean": 0.5622,
+          "per_corruption": {
+            "gaussian_noise": 0.4516,
+            "shot_noise": 0.47924,
+            "impulse_noise": 0.42084,
+            "defocus_blur": 0.52442,
+            "glass_blur": 0.40984,
+            "motion_blur": 0.45348,
+            "zoom_blur": 0.50266,
+            "snow": 0.47501999999999994,
+            "frost": 0.42611999999999994,
+            "fog": 0.48491999999999996,
+            "brightness": 0.51436,
+            "contrast": 0.38748,
+            "elastic_transform": 0.50646,
+            "pixelate": 0.51214,
+            "jpeg_compression": 0.52622
+          },
+          "categories": {
+            "Noise": 0.45056,
+            "Blur": 0.4726,
+            "Weather": 0.475105,
+            "Digital": 0.48307500000000003
+          },
+          "overall": 0.4716533333333333
+        },
+        "task_il": {
+          "clean": 0.9102,
+          "per_corruption": {
+            "gaussian_noise": 0.8558,
+            "shot_noise": 0.8718999999999999,
+            "impulse_noise": 0.84602,
+            "defocus_blur": 0.8835000000000001,
+            "glass_blur": 0.80992,
+            "motion_blur": 0.85394,
+            "zoom_blur": 0.8710000000000001,
+            "snow": 0.8667199999999999,
+            "frost": 0.8635400000000001,
+            "fog": 0.86872,
+            "brightness": 0.90098,
+            "contrast": 0.7925000000000001,
+            "elastic_transform": 0.87432,
+            "pixelate": 0.8896200000000001,
+            "jpeg_compression": 0.88792
+          },
+          "categories": {
+            "Noise": 0.8579066666666666,
+            "Blur": 0.8545900000000001,
+            "Weather": 0.87499,
+            "Digital": 0.86109
+          },
+          "overall": 0.8624266666666667
+        }
+      }
+    }
+  }
+}

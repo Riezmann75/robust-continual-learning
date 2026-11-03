@@ -16,8 +16,8 @@ are documented separately; their objectives and results should not be conflated.
 - tests/: objective,decoder,checkpoint and historical-provenance tests.
 - scripts/: configuration launcher and completed-result summary.
 - docs/: current objective specification; history/ preserves previous lab notes.
-- results/:11 completed historical evaluations,selected provenance,and exact
-  hashed source snapshots. No datasets or model weights are committed.
+- results/: 22 completed evaluations, full configurations, completion records,
+  and verified source snapshots. No datasets or model weights are committed.
 
 Historical runners are preserved separately to avoid silently changing established
 experiments. The new work is in [augce_cifar10.py](reproduce/augce_cifar10.py).
@@ -203,6 +203,10 @@ The corrected MetaMix/matched-mixing tests require CUDA. Some older tests suppor
 CPU. Actual trainers never silently change the explicitly requested device.
 
 ## Completed experiments
+
+The README focuses on the six core variants above. For the broader history, see
+[all 22 completed runs](docs/all_training_results.md) and
+[their Class-IL/Task-IL corruption tables](docs/all_settings_corruptions.md).
 
     python scripts/summarize_results.py
 

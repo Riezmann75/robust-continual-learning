@@ -1,0 +1,7 @@
+{
+  "method": "Label-aware InfoNCE + DER++ (random AugMix views)",
+  "updates": 15650,
+  "presentations": 500000,
+  "completed": 1793589967.164194,
+  "pipeline_test": false
+}

@@ -1,0 +1,7 @@
+{
+  "method": "Augmented CE + DER++ (random AugMix views)",
+  "updates": 15650,
+  "presentations": 500000,
+  "completed": 1793602050.5551882,
+  "pipeline_test": false
+}

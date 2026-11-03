@@ -1,5 +1,7 @@
 # Completed historical results
 
+The complete inventory now covers **22 completed runs**. See [all training settings](../docs/all_training_results.md) and [Class-IL/Task-IL corruption-category results](../docs/all_settings_corruptions.md). The historical summary below is retained for context.
+
 Each run contains full per-corruption/severity evaluation.json, selected original
 configuration fields in provenance.json, and exact hashed training-source snapshots.
 These are historical results, not outputs from the new augmented-CE/decoder experiments.

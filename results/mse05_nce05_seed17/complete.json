@@ -1,0 +1,7 @@
+{
+  "method": "Feature MSE + label-aware InfoNCE + DER++ (random AugMix views)",
+  "updates": 15650,
+  "presentations": 500000,
+  "completed": 1793591931.1687322,
+  "pipeline_test": false
+}

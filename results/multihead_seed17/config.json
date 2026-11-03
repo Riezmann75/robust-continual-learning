@@ -1,0 +1,107 @@
+{
+  "method": "Four heads + augmented CE + cosine diversity + DER++",
+  "seed": 17,
+  "epochs_per_task": 10,
+  "images_per_class": 5000,
+  "batch": 32,
+  "replay_batch": 32,
+  "memory_capacity": 500,
+  "tasks": [
+    [
+      0,
+      1
+    ],
+    [
+      2,
+      3
+    ],
+    [
+      4,
+      5
+    ],
+    [
+      6,
+      7
+    ],
+    [
+      8,
+      9
+    ]
+  ],
+  "resolution": 32,
+  "parameters": 305288,
+  "optimizer": "SGD",
+  "lr": 0.03,
+  "momentum": 0,
+  "weight_decay": 0,
+  "schedule": "constant",
+  "alpha": 0.2,
+  "beta": 0.5,
+  "lambda_aug": 1.0,
+  "lambda_div": 0.1,
+  "heads": 4,
+  "head_feature_dimension": 32,
+  "total_parameters": 305288,
+  "feature_dimension": 128,
+  "head_architecture": "Shared CNN pooled128 -> four Linear128to32/ReLU branches -> four Linear32to10 classifiers",
+  "diversity": "mean squared pairwise cosine, off-diagonal heads, averaged across examples and all three views; eps1e-8",
+  "classification": "CE averaged across all four heads for both clean and augmented inputs",
+  "inference": "mean of four softmax probabilities; task mask applied after averaging",
+  "replay_logits": "pre-update logits for each head; MSE mean over examples, heads, classes",
+  "normalization_mean": [
+    0.4914,
+    0.4822,
+    0.4465
+  ],
+  "normalization_std": [
+    0.247,
+    0.243,
+    0.261
+  ],
+  "views": 2,
+  "chains": 3,
+  "depth": [
+    1,
+    2,
+    3
+  ],
+  "severity": 3,
+  "m_distribution": "Beta(1,1)",
+  "w_distribution": "Dirichlet(1,1,1)",
+  "weights": "independent per example and view, freshly sampled",
+  "bn": "joint original/view1/view2 forward, then separate replay-logit forward",
+  "rng_streams": [
+    "insertion",
+    "replay_ce",
+    "replay_logit",
+    "shuffle",
+    "mixture",
+    "operations"
+  ],
+  "dtype": "float32",
+  "device": "cuda",
+  "hardware": "NVIDIA GeForce RTX 3060 Ti",
+  "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "python": "3.13.11",
+  "torch": "2.10.0+cu128",
+  "torchvision": "0.25.0+cu128",
+  "numpy": "2.4.2",
+  "pillow": "12.1.1",
+  "cuda": "12.8",
+  "cudnn": 91002,
+  "threads": 4,
+  "deterministic_cudnn": true,
+  "tf32": false,
+  "pipeline_test": false,
+  "root": "/home/riezmann/dev/memory-retrieval-experiment/experiments/metamix_cifar10/data",
+  "source_hashes": {
+    "multihead_cifar10.py": "fcbf0a522e79b645417a509b817900000c8a815e2150d5a8ec7085329fbeb2a7",
+    "report_multihead.py": "70b853898f1b6d34d2695bb609a2af3aead9e2493ea56e67dcb585f07bdd75b0",
+    "augmix_operations.py": "44cb9e48b1ec872277d7278ea42ca16f88620a72e7f36459fc08f246c71c9325",
+    "AUGMIX_LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "download_cifar100_benchmark.py": "ef67249f442be6be8642ee7ce265a3ecf71f9884464296f5ef1e2cb8477d1cd6",
+    "download_cifar10_benchmark.py": "48a2767abb13d0530f915511dc2bfed45c0734a4dfe59742096e360a3f968e5e"
+  },
+  "architecture_provenance": "SmallCNN copied unchanged from reproduce/metamix_long.py; normalization wrapper added",
+  "data_verification_sha256": "1ca536d40b02e5828a68f47285af682183841b6f725cb39e09ebd373280898ea"
+}

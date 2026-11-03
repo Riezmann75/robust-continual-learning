@@ -1,0 +1,134 @@
+[
+  {
+    "run": "metamix_seed17",
+    "family": "Historical MetaMix",
+    "evaluation": "metamix_seed17/evaluation.json",
+    "config": "metamix_seed17/config.json"
+  },
+  {
+    "run": "feature_mse_seed17",
+    "family": "Random AugMix objectives",
+    "evaluation": "feature_mse_seed17/evaluation.json",
+    "config": "feature_mse_seed17/config.json"
+  },
+  {
+    "run": "feature_mse_seed17_lambda0",
+    "family": "Random AugMix objectives",
+    "evaluation": "feature_mse_seed17_lambda0/evaluation.json",
+    "config": "feature_mse_seed17_lambda0/config.json"
+  },
+  {
+    "run": "feature_mse_seed18",
+    "family": "Random AugMix objectives",
+    "evaluation": "feature_mse_seed18/evaluation.json",
+    "config": "feature_mse_seed18/config.json"
+  },
+  {
+    "run": "feature_mse_seed18_lambda0",
+    "family": "Random AugMix objectives",
+    "evaluation": "feature_mse_seed18_lambda0/evaluation.json",
+    "config": "feature_mse_seed18_lambda0/config.json"
+  },
+  {
+    "run": "feature_mse_seed19",
+    "family": "Random AugMix objectives",
+    "evaluation": "feature_mse_seed19/evaluation.json",
+    "config": "feature_mse_seed19/config.json"
+  },
+  {
+    "run": "feature_mse_seed19_lambda0",
+    "family": "Random AugMix objectives",
+    "evaluation": "feature_mse_seed19_lambda0/evaluation.json",
+    "config": "feature_mse_seed19_lambda0/config.json"
+  },
+  {
+    "run": "infonce_seed17",
+    "family": "Random AugMix objectives",
+    "evaluation": "infonce_seed17/evaluation.json",
+    "config": "infonce_seed17/config.json"
+  },
+  {
+    "run": "classaware_infonce_seed17",
+    "family": "Random AugMix objectives",
+    "evaluation": "classaware_infonce_seed17/evaluation.json",
+    "config": "classaware_infonce_seed17/config.json"
+  },
+  {
+    "run": "mse05_nce05_seed17",
+    "family": "Random AugMix objectives",
+    "evaluation": "mse05_nce05_seed17/evaluation.json",
+    "config": "mse05_nce05_seed17/config.json"
+  },
+  {
+    "run": "mse02_nce1_seed17",
+    "family": "Random AugMix objectives",
+    "evaluation": "mse02_nce1_seed17/evaluation.json",
+    "config": "mse02_nce1_seed17/config.json"
+  },
+  {
+    "run": "augce_seed17",
+    "family": "Random AugMix objectives",
+    "evaluation": "augce_seed17/evaluation.json",
+    "config": "augce_seed17/config.json"
+  },
+  {
+    "run": "barlow_seed17",
+    "family": "Random AugMix objectives",
+    "evaluation": "barlow_seed17/evaluation.json",
+    "config": "barlow_seed17/config.json"
+  },
+  {
+    "run": "bt_threepair_seed17",
+    "family": "Random AugMix objectives",
+    "evaluation": "bt_threepair_seed17/evaluation.json",
+    "config": "bt_threepair_seed17/config.json"
+  },
+  {
+    "run": "multihead_seed17",
+    "family": "Random AugMix objectives",
+    "evaluation": "multihead_seed17/evaluation.json",
+    "config": "multihead_seed17/config.json"
+  },
+  {
+    "run": "infonce_recon_seed17",
+    "family": "Random AugMix objectives",
+    "evaluation": "infonce_recon_seed17/evaluation.json",
+    "config": "infonce_recon_seed17/config.json"
+  },
+  {
+    "run": "learned_js",
+    "family": "Corrected split-pool pipeline",
+    "evaluation": "corrected_mixing_seed17/learned_js/evaluation.json",
+    "config": "corrected_mixing_seed17/learned_js/config.json"
+  },
+  {
+    "run": "random_js",
+    "family": "Corrected split-pool pipeline",
+    "evaluation": "corrected_mixing_seed17/random_js/evaluation.json",
+    "config": "corrected_mixing_seed17/random_js/config.json"
+  },
+  {
+    "run": "random_infonce",
+    "family": "Corrected split-pool pipeline",
+    "evaluation": "corrected_mixing_seed17/random_infonce/evaluation.json",
+    "config": "corrected_mixing_seed17/random_infonce/config.json"
+  },
+  {
+    "run": "learned_infonce",
+    "family": "Corrected split-pool pipeline",
+    "evaluation": "corrected_mixing_seed17/learned_infonce/evaluation.json",
+    "config": "corrected_mixing_seed17/learned_infonce/config.json"
+  },
+  {
+    "run": "learned_infonce_js",
+    "family": "Corrected split-pool pipeline",
+    "evaluation": "corrected_mixing_seed17/learned_infonce_js/evaluation.json",
+    "config": "corrected_mixing_seed17/learned_infonce_js/config.json"
+  },
+  {
+    "run": "chain_aware_fixed_m",
+    "family": "Chain-aware extension",
+    "evaluation": "corrected_mixing_seed17/chain_aware_fixed_m/evaluation.json",
+    "config": "corrected_mixing_seed17/chain_aware_fixed_m/config.json"
+  }
+]

@@ -1,0 +1,7 @@
+{
+  "method": "InfoNCE + DER++ (random AugMix views)",
+  "updates": 15650,
+  "presentations": 500000,
+  "completed": 1793587872.8944395,
+  "pipeline_test": false
+}

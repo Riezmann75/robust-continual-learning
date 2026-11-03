@@ -1,0 +1,99 @@
+{
+  "method": "Feature MSE + DER++ (random AugMix views)",
+  "seed": 19,
+  "epochs_per_task": 10,
+  "images_per_class": 5000,
+  "batch": 32,
+  "replay_batch": 32,
+  "memory_capacity": 500,
+  "tasks": [
+    [
+      0,
+      1
+    ],
+    [
+      2,
+      3
+    ],
+    [
+      4,
+      5
+    ],
+    [
+      6,
+      7
+    ],
+    [
+      8,
+      9
+    ]
+  ],
+  "resolution": 32,
+  "parameters": 288746,
+  "optimizer": "SGD",
+  "lr": 0.03,
+  "momentum": 0,
+  "weight_decay": 0,
+  "schedule": "constant",
+  "alpha": 0.2,
+  "beta": 0.5,
+  "lambda_feat": 0.0,
+  "feature_dimension": 128,
+  "feature_loss": "mean over examples and two views, sum over coordinates; symmetric gradients",
+  "normalization_mean": [
+    0.4914,
+    0.4822,
+    0.4465
+  ],
+  "normalization_std": [
+    0.247,
+    0.243,
+    0.261
+  ],
+  "views": 2,
+  "chains": 3,
+  "depth": [
+    1,
+    2,
+    3
+  ],
+  "severity": 3,
+  "m_distribution": "Beta(1,1)",
+  "w_distribution": "Dirichlet(1,1,1)",
+  "weights": "independent per example and view, freshly sampled",
+  "bn": "joint original/view1/view2 forward, then separate replay-logit forward",
+  "rng_streams": [
+    "insertion",
+    "replay_ce",
+    "replay_logit",
+    "shuffle",
+    "mixture",
+    "operations"
+  ],
+  "dtype": "float32",
+  "device": "cuda",
+  "hardware": "NVIDIA GeForce RTX 3060 Ti",
+  "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "python": "3.13.11",
+  "torch": "2.10.0+cu128",
+  "torchvision": "0.25.0+cu128",
+  "numpy": "2.4.2",
+  "pillow": "12.1.1",
+  "cuda": "12.8",
+  "cudnn": 91002,
+  "threads": 4,
+  "deterministic_cudnn": true,
+  "tf32": false,
+  "pipeline_test": false,
+  "root": "/home/riezmann/dev/memory-retrieval-experiment/experiments/metamix_cifar10/data",
+  "source_hashes": {
+    "feature_mse_cifar10.py": "975472b982232d58afa21e48dd1d86d33da9b2a895a86a27853c73c64403bfaf",
+    "report_feature_mse.py": "0b382ce63f07f2d785851d754f274b66a5617ca140cab2d4979c3ed3d1773338",
+    "augmix_operations.py": "34682c8abacea54e79d9a67491a18c839a828fda44662b7815f10ac9b4a210f5",
+    "AUGMIX_LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "download_cifar100_benchmark.py": "ef67249f442be6be8642ee7ce265a3ecf71f9884464296f5ef1e2cb8477d1cd6",
+    "download_cifar10_benchmark.py": "4bfa3e156615223c13dcaa8b3c2b8f26dfebfe7a7755e2957832be360878e49c"
+  },
+  "architecture_provenance": "SmallCNN copied unchanged from reproduce/metamix_long.py; normalization wrapper added",
+  "data_verification_sha256": "1ca536d40b02e5828a68f47285af682183841b6f725cb39e09ebd373280898ea"
+}
