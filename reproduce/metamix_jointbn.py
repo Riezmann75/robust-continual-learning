@@ -25,7 +25,7 @@ from download_cifar100_benchmark import CORRUPTIONS, verify_arrays
 from report_metamix_jointbn import report
 import shutil
 
-from libs.models import SmallCNN
+from libs.models import SmallCNN, backbone_metadata
 
 from libs.models import Controller as Controller
 
@@ -217,6 +217,7 @@ def main():
     p.add_argument('--epochs-per-task', type=int, default=10)
     p.add_argument('--stop-after-epochs',type=int,default=0)
     p.add_argument('--pipeline-test', action='store_true')
+    p.add_argument('--backbone', choices=['smallcnn', 'resnet18'], default='smallcnn')
     a = p.parse_args()
     if a.epochs_per_task < 1:
         p.error('--epochs-per-task must be positive')
@@ -243,6 +244,8 @@ def main():
         torch=torch.__version__, torchvision=torchvision.__version__, numpy=np.__version__,
         pillow=PIL.__version__, cuda=torch.version.cuda, cudnn=torch.backends.cudnn.version(),
         threads=4, deterministic_cudnn=True, tf32=False, root=str(a.root.resolve()))
+    config.update(backbone_metadata(a.backbone))
+    config['context_size'] = 2 * config['feature_dimension'] + 2
     config_path = a.output/'config.json'
     if config_path.exists():
         if json.loads(config_path.read_text()) != config:
@@ -267,8 +270,8 @@ def main():
         assert json.loads(index_path.read_text()) == indices
     else:
         atomic_json(index_path, indices)
-    model, controller = SmallCNN().to(a.device), Controller().to(a.device)
-    assert sum(p.numel() for p in model.parameters()) == 288746
+    model, controller = SmallCNN(backbone=a.backbone).to(a.device), Controller(feature_dimension=config['feature_dimension']).to(a.device)
+    assert sum(p.numel() for p in model.parameters()) == config['parameters']
     optimizer = torch.optim.SGD(model.parameters(), lr=.03)
     mixer_optimizer = torch.optim.SGD(controller.parameters(), lr=.05)
     memory = Reservoir()

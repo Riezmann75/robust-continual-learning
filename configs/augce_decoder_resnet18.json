@@ -1,0 +1,14 @@
+{
+  "runner": "augce_cifar10.py",
+  "args": {
+    "device": "cuda",
+    "seed": 17,
+    "epochs_per_task": 10,
+    "root": "experiments/metamix_cifar10/data",
+    "output": "experiments/augce_decoder_resnet18/seed17",
+    "lambda_aug": 1.0,
+    "decoder": true,
+    "lambda_recon": 1.0,
+    "backbone": "resnet18"
+  }
+}

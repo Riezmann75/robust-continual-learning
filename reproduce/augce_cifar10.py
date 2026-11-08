@@ -27,7 +27,7 @@ from report_augce import report
 
 METHOD = 'Augmented CE + DER++ (random AugMix views)'
 # Copied unchanged from SmallCNN in metamix_long.py (architecture provenance in config).
-from libs.models import SmallCNN
+from libs.models import SmallCNN, backbone_metadata
 
 from libs.models import ImageDecoder
 
@@ -243,6 +243,7 @@ def main():
     parser.add_argument('--output',type=Path,default=Path('experiments/augce_cifar10/seed17'))
     parser.add_argument('--pipeline-test',action='store_true')
     parser.add_argument('--stop-after-epochs',type=int,default=0,help='Validation-only interruption at an epoch boundary')
+    parser.add_argument('--backbone', choices=['smallcnn', 'resnet18'], default='smallcnn')
     a=parser.parse_args()
     if not np.isfinite(a.lambda_aug) or a.lambda_aug<0:
         parser.error('--lambda-aug must be finite and nonnegative')
@@ -279,6 +280,9 @@ def main():
         deterministic_cudnn=True,tf32=False,pipeline_test=a.pipeline_test,
         root=str(a.root.resolve()),source_hashes=source_hashes(),
         architecture_provenance='SmallCNN copied unchanged from reproduce/metamix_long.py; normalization wrapper added')
+    config.update(backbone_metadata(a.backbone))
+    config['decoder_parameters'] = (429667 + (config['feature_dimension'] - 128) * 2048) if a.decoder else 0
+    config['total_parameters'] = config['parameters'] + config['decoder_parameters']
     if not a.pipeline_test:
         verified=a.root/'CIFAR-10-C'/'verified.json'
         if not verified.exists():
@@ -307,7 +311,7 @@ def main():
         assert json.loads(index_path.read_text())==indices
     else:
         atomic_json(index_path,indices)
-    model=Network(decoder=a.decoder).to(a.device)
+    model=Network(decoder=a.decoder, backbone=a.backbone).to(a.device)
     assert sum(p.numel() for p in model.parameters())==config['total_parameters']
     optimizer=torch.optim.SGD(model.parameters(),lr=.03)
     memory=Reservoir()

@@ -27,7 +27,7 @@ from report_feature_mse import report
 
 METHOD = 'Feature MSE + DER++ (random AugMix views)'
 # Copied unchanged from SmallCNN in metamix_long.py (architecture provenance in config).
-from libs.models import SmallCNN
+from libs.models import SmallCNN, backbone_metadata
 
 from libs.models import Network as Network
 
@@ -240,6 +240,7 @@ def main():
     parser.add_argument('--output',type=Path,default=Path('experiments/feature_mse_cifar10/seed17'))
     parser.add_argument('--pipeline-test',action='store_true')
     parser.add_argument('--stop-after-epochs',type=int,default=0,help='Validation-only interruption at an epoch boundary')
+    parser.add_argument('--backbone', choices=['smallcnn', 'resnet18'], default='smallcnn')
     a=parser.parse_args()
     if not np.isfinite(a.lambda_feat) or a.lambda_feat<0:
         parser.error('--lambda-feat must be finite and nonnegative')
@@ -270,6 +271,7 @@ def main():
         deterministic_cudnn=True,tf32=False,pipeline_test=a.pipeline_test,
         root=str(a.root.resolve()),source_hashes=source_hashes(),
         architecture_provenance='SmallCNN copied unchanged from reproduce/metamix_long.py; normalization wrapper added')
+    config.update(backbone_metadata(a.backbone))
     if not a.pipeline_test:
         verified=a.root/'CIFAR-10-C'/'verified.json'
         if not verified.exists():
@@ -298,8 +300,8 @@ def main():
         assert json.loads(index_path.read_text())==indices
     else:
         atomic_json(index_path,indices)
-    model=Network().to(a.device)
-    assert sum(p.numel() for p in model.parameters())==288746
+    model=Network(backbone=a.backbone).to(a.device)
+    assert sum(p.numel() for p in model.parameters())==config['parameters']
     optimizer=torch.optim.SGD(model.parameters(),lr=.03)
     memory=Reservoir()
     next_task=next_epoch=updates=0

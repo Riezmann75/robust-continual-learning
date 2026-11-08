@@ -305,3 +305,35 @@ The corrected random-mixer JS comparison is now complete (see above).
 The included Google AugMix PIL operations retain their Apache2.0 license.
 See [third-party notices](THIRD_PARTY_NOTICES.md) and [license](reproduce/AUGMIX_LICENSE).
 CIFAR10/CIFAR10-C are separate datasets and not distributed here.
+
+## ResNet18 from scratch
+
+All runners supported by `scripts/run_experiment.py` accept
+`--backbone resnet18`; `smallcnn` remains the default. The historical
+`metamix_long.py` and `metamix_revised.py` entry points retain SmallCNN.
+ResNet18 is created with `torchvision.models.resnet18(weights=None)` and never
+loads pretrained weights. For 32x32 CIFAR inputs it uses a 3x3, stride-1 stem
+and no initial maxpool. Native 512-dimensional pooled features feed the classifier and feature losses;
+the decoder and controller input dimensions adapt to the selected backbone. This is a CIFAR-adapted
+ResNet18, with a ten-class head.
+
+After the dataset setup above, run:
+
+```sh
+python scripts/run_experiment.py configs/augce_resnet18.json --run
+python scripts/run_experiment.py configs/augce_decoder_resnet18.json --run
+```
+
+Or select ResNet18 for another supported configuration:
+
+```sh
+python scripts/run_experiment.py configs/matched_random_infonce.json \
+  --backbone resnet18 --device cuda --data-root /path/to/data \
+  --output experiments/random_infonce_resnet18/seed17 --run
+```
+
+Use a fresh output directory when changing backbones. Configuration metadata
+records the architecture, scratch initialization and actual parameter counts;
+resume guards reject incompatible runs. Existing optimizer settings are retained
+as starting recipes and have not been tuned for ResNet18. Published SmallCNN
+results do not represent ResNet18 performance.
