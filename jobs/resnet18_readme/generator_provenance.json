@@ -1,0 +1,7 @@
+{
+  "generator_path": "/Users/riezmann/dev/liver-transplant/generate_hpc_job.py",
+  "sha256": "31f66e5226210d27355d8ada77a5cc560d55e9f5e87cd82f80fed09f19a5a50b",
+  "python": "3.13.2",
+  "working_directory": "robust-continual-learning repository root",
+  "regeneration": "bash jobs/resnet18_readme/regenerate.sh --force"
+}

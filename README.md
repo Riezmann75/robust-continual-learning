@@ -337,3 +337,6 @@ records the architecture, scratch initialization and actual parameter counts;
 resume guards reject incompatible runs. Existing optimizer settings are retained
 as starting recipes and have not been tuned for ResNet18. Published SmallCNN
 results do not represent ResNet18 performance.
+
+PBS jobs for all eight main-comparison settings with scratch ResNet18, including
+post-clone setup and submission commands: [HPC instructions](jobs/resnet18_readme/README.md).

@@ -1,0 +1,114 @@
+{
+  "size": 8,
+  "experiment_path": "experiments/resnet18_readme",
+  "output_pattern": "experiments/resnet18_readme/<EXP_NAME>/<ARRAY_JOB_ID[]>/<EXP_NAME>_<INDEX>",
+  "pbs": "jobs/resnet18_readme/resnet18_readme.pbs",
+  "submit": "jobs/resnet18_readme/submit_resnet18_readme.sh",
+  "download": "jobs/resnet18_readme/download_resnet18_readme.sh",
+  "points": [
+    {
+      "index": 1,
+      "arguments": {
+        "setting": "metamix_jointbn",
+        "data-root": "experiments/metamix_cifar10/data"
+      },
+      "scheduling": {
+        "gpus_per_job": 1,
+        "tasks_per_gpu": 1,
+        "gpu_slot": 0,
+        "array_task": 1
+      }
+    },
+    {
+      "index": 2,
+      "arguments": {
+        "setting": "matched_random_js",
+        "data-root": "experiments/metamix_cifar10/data"
+      },
+      "scheduling": {
+        "gpus_per_job": 1,
+        "tasks_per_gpu": 1,
+        "gpu_slot": 0,
+        "array_task": 2
+      }
+    },
+    {
+      "index": 3,
+      "arguments": {
+        "setting": "matched_random_infonce",
+        "data-root": "experiments/metamix_cifar10/data"
+      },
+      "scheduling": {
+        "gpus_per_job": 1,
+        "tasks_per_gpu": 1,
+        "gpu_slot": 0,
+        "array_task": 3
+      }
+    },
+    {
+      "index": 4,
+      "arguments": {
+        "setting": "matched_learned_infonce",
+        "data-root": "experiments/metamix_cifar10/data"
+      },
+      "scheduling": {
+        "gpus_per_job": 1,
+        "tasks_per_gpu": 1,
+        "gpu_slot": 0,
+        "array_task": 4
+      }
+    },
+    {
+      "index": 5,
+      "arguments": {
+        "setting": "matched_infonce_js",
+        "data-root": "experiments/metamix_cifar10/data"
+      },
+      "scheduling": {
+        "gpus_per_job": 1,
+        "tasks_per_gpu": 1,
+        "gpu_slot": 0,
+        "array_task": 5
+      }
+    },
+    {
+      "index": 6,
+      "arguments": {
+        "setting": "chain_aware_mixing",
+        "data-root": "experiments/metamix_cifar10/data"
+      },
+      "scheduling": {
+        "gpus_per_job": 1,
+        "tasks_per_gpu": 1,
+        "gpu_slot": 0,
+        "array_task": 6
+      }
+    },
+    {
+      "index": 7,
+      "arguments": {
+        "setting": "chain_aware_js",
+        "data-root": "experiments/metamix_cifar10/data"
+      },
+      "scheduling": {
+        "gpus_per_job": 1,
+        "tasks_per_gpu": 1,
+        "gpu_slot": 0,
+        "array_task": 7
+      }
+    },
+    {
+      "index": 8,
+      "arguments": {
+        "setting": "chain_aware_infonce_infonce",
+        "data-root": "experiments/metamix_cifar10/data"
+      },
+      "scheduling": {
+        "gpus_per_job": 1,
+        "tasks_per_gpu": 1,
+        "gpu_slot": 0,
+        "array_task": 8
+      }
+    }
+  ]
+}

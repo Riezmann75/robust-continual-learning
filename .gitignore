@@ -19,3 +19,6 @@ outputs/
 .env.*
 !.env.example
 .DS_Store
+
+# Generated PBS submission logs
+jobs/**/logs/

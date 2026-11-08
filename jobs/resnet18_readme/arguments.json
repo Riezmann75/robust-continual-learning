@@ -1,0 +1,13 @@
+{
+  "setting": [
+    "metamix_jointbn",
+    "matched_random_js",
+    "matched_random_infonce",
+    "matched_learned_infonce",
+    "matched_infonce_js",
+    "chain_aware_mixing",
+    "chain_aware_js",
+    "chain_aware_infonce_infonce"
+  ],
+  "data-root": ["experiments/metamix_cifar10/data"]
+}
