@@ -6,7 +6,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel)"
 REMOTE_HOST="${REMOTE_HOST:-hpc}"
-REMOTE_PROJECT="${REMOTE_PROJECT:-/path/to/robust-continual-learning}"
+REMOTE_PROJECT="${REMOTE_PROJECT:-/home/users/ntu/giabaoca/myProject-12004268/giabao/robust-continual-learning}"
 EXPERIMENT_PATH=experiments/resnet18_readme
 LOG_PATH=jobs/resnet18_readme/logs
 

@@ -9,5 +9,5 @@ python "$GENERATOR" \
   --experiment-path experiments/resnet18_readme \
   --job-name resnet18_readme \
   --job-folder jobs/resnet18_readme \
-  --remote-project "${REMOTE_PROJECT:-/path/to/robust-continual-learning}" \
+  --remote-project "${REMOTE_PROJECT:-/home/users/ntu/giabaoca/myProject-12004268/giabao/robust-continual-learning}" \
   "$@"

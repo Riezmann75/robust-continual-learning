@@ -83,17 +83,17 @@ launcher's `--output` and selects the existing config.
 
 ```bash
 HPC_JOB_GENERATOR=/path/to/liver-transplant/generate_hpc_job.py \
-REMOTE_PROJECT=/actual/hpc/path/to/robust-continual-learning \
+REMOTE_PROJECT=/home/users/ntu/giabaoca/myProject-12004268/giabao/robust-continual-learning \
 bash jobs/resnet18_readme/regenerate.sh --force
 ```
 
 `regenerate.sh` must run with Python 3.10+; defaults remain the generator's defaults.
 `--force` intentionally replaces the generated files. Its working directory is
 the target repository so trainer, output and helper paths stay repo-relative.
-The checked-in download helper has a placeholder remote path; override it:
+The download helper defaults to your HPC checkout path; you can override it:
 
 ```bash
-REMOTE_PROJECT=/actual/hpc/path/to/robust-continual-learning \
+REMOTE_PROJECT=/home/users/ntu/giabaoca/myProject-12004268/giabao/robust-continual-learning \
 bash jobs/resnet18_readme/download_resnet18_readme.sh resnet18_seed17 '15020042[]'
 ```
 
