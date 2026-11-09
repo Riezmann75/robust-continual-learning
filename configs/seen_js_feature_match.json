@@ -1,0 +1,13 @@
+{
+  "runner": "chain_aware_mixing.py",
+  "args": {
+    "device": "cuda",
+    "backbone": "smallcnn",
+    "epochs_per_task": 10,
+    "consistency": "infonce",
+    "outer_consistency": "seen_js_feature_match",
+    "temperature": 0.1,
+    "root": "experiments/metamix_cifar10/data",
+    "output": "experiments/seen_js_feature_match_smallcnn/seed17"
+  }
+}

@@ -4,7 +4,22 @@ Run commands from the root of **robust-continual-learning**, not the separate
 ce7554-ai-image-classification repository. This is a new experiment; use a fresh
 output directory. Historical JS/InfoNCE modes retain their original objectives.
 
-## Objective and update order
+## Train SmallCNN with both mixer terms
+
+After the environment and dataset setup below, run:
+
+```sh
+python scripts/run_experiment.py configs/seen_js_feature_match.json --run
+```
+
+This recipe minimizes the sum of two equally weighted losses. JS compares the
+classifier predictions on the original image and both mixer-produced seen views.
+Feature MSE compares the seen mixtures to detached features of unmixed unseen
+chains. The classifier stays fixed during both mixer terms. The trace records
+the sum in `mixer_loss_after` and its MSE component in `feature_match_after`.
+Results go to `experiments/seen_js_feature_match_smallcnn/seed17`.
+
+## Feature matching alone: objective and update order
 
 Use the chain-aware controller with fixed original-image weight m=0.5 and three
 learned chain weights per image and view. Each batch splits the nine AugMix

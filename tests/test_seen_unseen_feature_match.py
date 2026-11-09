@@ -54,7 +54,16 @@ class FeatureMatchTests(unittest.TestCase):
         torch.testing.assert_close(loss, seen_unseen_feature_loss(h.reshape(2, 3, 128), targets))
         torch.testing.assert_close(loss, penalty)
         self.assertFalse(ce.requires_grad)
-        loss.backward()
+        total, match, _, _, _ = m.outer_objective(
+            net, ctl, context, state, x, branches, params, buffers,
+            torch.zeros(len(x), dtype=torch.long, device=self.device),
+            'seen_js_feature_match', candidates=desc, target_features=targets)
+        logits, _ = m.forward(net, torch.cat([x, *m.mixed_views(x, branches, mm, w)]), params, buffers)
+        torch.testing.assert_close(total, penalty + m.js(*logits.chunk(3)))
+        for component in (total - match, match):
+            grads = torch.autograd.grad(component, tuple(ctl.parameters()), retain_graph=True)
+            self.assertGreater(sum(g.square().sum().item() for g in grads), 0.)
+        total.backward()
         self.assertIsNone(targets.grad)
         self.assertTrue(all(p.grad is None for p in net.parameters()))
         self.assertGreater(sum(p.grad.square().sum().item() for p in ctl.parameters()
@@ -91,7 +100,7 @@ class FeatureMatchTests(unittest.TestCase):
             before = copy.deepcopy(ctl.state_dict())
             with patch.object(m, 'chains', sample), patch.object(m, 'outer_objective', outer):
                 state, row = m.step(net, ctl, opt, mo, memory, state, raw[:n], labels[:n],
-                                    self.device, outer_kind='feature_match')
+                                    self.device, outer_kind='seen_js_feature_match')
             self.assertEqual(len(outer_calls), 4)
             self.assertEqual(len(row['mixer_updates']), 3)
             self.assertEqual(row['m_after'], .5)
