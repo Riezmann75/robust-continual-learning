@@ -31,7 +31,16 @@ Here v=1,2 and k=1,2,3. h is the classifier's raw penultimate pooled feature,
 128 dimensions for SmallCNN or 512 for ResNet18. The coefficient is 1. Features
 are not normalized. Gradients flow through the fixed classifier into the seen
 mixing weights only. There is no derivative through the classifier optimizer step.
-There is no old unseen JS/InfoNCE term and no outer CE term in this mode.
+There is no unseen JS/InfoNCE loss in this mode and no outer CE term.
+Unseen views are used only as detached targets: they bypass the mixer and do not
+contribute gradients or BatchNorm updates to the classifier. Seen-view InfoNCE
+(or JS when selected) remains active in the classifier loss.
+
+The saved configuration records `classifier_seen_consistency`, its coefficient,
+`feature_match_coefficient`, `unseen_targets_use_mixer=false`, and
+`unseen_targets_update_classifier=false`. The obsolete
+`old_unseen_consistency_coefficient` field has been removed to avoid implying
+that an optional unseen JS computation exists in this mode.
 
 The classifier continues to train on seen mixtures. Since its update precedes the
 mixer update, new mixer parameters affect subsequent batches. Persistent recurrent

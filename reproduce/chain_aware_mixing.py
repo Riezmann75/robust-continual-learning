@@ -301,7 +301,11 @@ def main():
             method=f'Chain-aware fixed-m mixer: seen {classifier_objective} + seen-to-unseen feature MSE + DER++',
             mixer_objective='seen-to-unseen raw pooled feature MSE',
             target_policy='six unmixed unseen chains; each seen view matches its three unseen targets; detached; reused for J steps',
-            feature_match_coefficient=1., old_unseen_consistency_coefficient=0.,
+            feature_match_coefficient=1.,
+            classifier_seen_consistency=a.consistency,
+            classifier_seen_consistency_coefficient=1.,
+            unseen_targets_use_mixer=False,
+            unseen_targets_update_classifier=False,
             matching_limit='feature matching may average incompatible targets; fixed m=.5 restricts reachability; no robustness guarantee',
             solver='fixed updated classifier; gradients through seen mixtures only; no hypergradient; no outer clean CE term',
             bn='classifier joint clean+seen train; outer eval; seen descriptors recomputed after classifier update; six unseen target features cached without gradients')
