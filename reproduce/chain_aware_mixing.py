@@ -259,7 +259,6 @@ def main(*, bilevel_step=None, split_indices=None):
     p.add_argument('--consistency',choices=['infonce','js'],default='infonce')
     if bilevel_step:
         p.set_defaults(outer_consistency='virtual_query_ce')
-        p.add_argument('--batch-size', type=int, default=256)
     else:
         p.add_argument('--outer-consistency',choices=['infonce','js','feature_match','seen_js_feature_match'],default='js')
     p.add_argument('--temperature',type=float,default=.1)
@@ -270,8 +269,9 @@ def main(*, bilevel_step=None, split_indices=None):
     p.add_argument('--stop-after-epochs',type=int,default=0)
     p.add_argument('--pipeline-test', action='store_true')
     p.add_argument('--backbone', choices=['smallcnn', 'resnet18'], default='smallcnn')
+    p.add_argument('--batch-size', type=int, default=256 if bilevel_step else 32)
     a = p.parse_args()
-    batch_size = a.batch_size if bilevel_step else 32
+    batch_size = a.batch_size
     if batch_size < 1:
         p.error('batch-size must be positive')
     if not np.isfinite(a.temperature) or a.temperature<=0:p.error('positive finite temperature required')
@@ -291,13 +291,13 @@ def main(*, bilevel_step=None, split_indices=None):
         matching_limit='new method: fixed m, candidate-conditioned per-view weights, selectable unseen consistency, extra eval descriptor passes', implementation='joint three-view forwards; replay augmentation; per-example slot state; pre-solver state advance',
         solver=f'Algorithm 2 explicit fixed-updated-classifier partial gradient; unseen {mixer_objective} drives mixer; original CE contributes zero mixer gradient; no unrolled hypergradient; not an explicit retention outer objective',
         context_alignment='broadcast batch dot/replay CE; individual er,et cyclic positional pairing for unequal batch sizes; zero er when empty',
-        recurrent_state='64 persistent batch slots: current0:32 replay32:64; inactive slots unchanged; detach between batches; save pre-solver transition',
+        recurrent_state=f'{batch_size} current slots followed by 32 replay slots',
         bn='joint clean+two seen views train forward then separate distillation; context cloned buffers; joint clean+two unseen outer eval forward; candidate descriptors joint original+six chains eval before classifier and after classifier for unseen',
         unresolved='paper lacks precise feature pairing and autograd details; first-order interpretation not verified author code',
         parent_run_sha256='b45bad8e80b06ab9579cf72f81df7e1c93055944c544adb3e5239a25534fd41e',
         seed=17, device=a.device, gpu=torch.cuda.get_device_name(), epochs_per_task=1 if a.pipeline_test else a.epochs_per_task,
         images_per_class=17 if a.pipeline_test else 5000, tasks=[[0,1],[2,3],[4,5],[6,7],[8,9]],
-        batch=32, replay_batch=32, reservoir_capacity=500, J=3 if a.mixer=='learned' else 0, classifier_lr=.03, mixer_lr=.05,
+        batch=batch_size, replay_batch=32, reservoir_capacity=500, J=3 if a.mixer=='learned' else 0, classifier_lr=.03, mixer_lr=.05,
         alpha=.2, beta=.5, js_coefficient=1., channels=[32,64,128], parameters=288746,
         resolution=32, hidden_size=5, context_size=258, severity=3, views=2, chains=3, depth=[1,3],
         normalization_mean=[.4914,.4822,.4465], normalization_std=[.2470,.2435,.2616],

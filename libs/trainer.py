@@ -629,7 +629,8 @@ class BiLevelTrainer:
         raw_a=np.concatenate((raw,ce_raw[0])) if ce_raw is not None else raw
         xa=tensor(raw_a,device);ya=torch.cat((y,ce_raw[1])) if ce_raw is not None else y
         b,r=len(raw),0 if ce_raw is None else len(ce_raw[0])
-        slots=active_slots(b,r,device)
+        current_capacity = len(state[0]) - 32  # final 32 slots are reserved for replay
+        slots=active_slots(b,r,device,current_capacity)
         context=context_for(model,x,y,replay)
         incoming=tuple(v[slots].detach() for v in state)
         next_state=tuple(v.detach().clone() for v in state)
