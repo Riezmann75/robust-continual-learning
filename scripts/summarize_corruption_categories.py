@@ -59,7 +59,7 @@ def ranked(values, columns, suffix='', second=False):
 def update_readme(results):
     path=ROOT/'README.md'
     text=path.read_text()
-    readme_runs = ('learned_js', 'random_js', 'random_infonce', 'learned_infonce', 'learned_infonce_js')
+    readme_runs = ('learned_js', 'random_js', 'random_infonce', 'learned_infonce', 'learned_infonce_js', IMPORTED)
     results = {run: results[run] for run in readme_runs}
     labels=[COMPARISON[run].split(': ',1) for run in readme_runs]
     labels=[(mixer.replace('(m=0.5)','(`m = 0.5`)'),objective) for mixer,objective in labels]

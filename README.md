@@ -4,7 +4,7 @@ Controlled Split-CIFAR10 experiments using a small CNN, DER++ replay, and
 clean/augmented-view objectives. Includes completed historical results, corrected
 random/learned mixing comparisons, and augmented-CE/reconstruction runners.
 
-The comparison below includes five completed random and MetaMix-guided mixer runs. Other experiment families
+The comparison below includes five random and MetaMix-guided baselines and the reported batch-32 feature-MSE result. Other experiment families
 are documented separately; their objectives and results should not be conflated.
 
 ## Repository layout
@@ -86,7 +86,7 @@ For a restatement of our implementation, see [MetaMix paper-to-code guide](docs/
 
 **MetaMix-guided** denotes our paper-guided implementation, not verified author code.
 
-The five runs shown below completed **10 epochs per task across five tasks**, using all
+The five baseline runs completed **10 epochs per task across five tasks**, using all
 50,000 clean training images, the same 288,746-parameter CNN, and CE + DER++.
 Each run performed 15,650 classifier updates and 500,000 current-image presentations.
 
@@ -94,10 +94,13 @@ Each run performed 15,650 classifier updates and 500,000 current-image presentat
 | --- | --- | --- | ---: | ---: | ---: | ---: |
 | MetaMix-guided mixer | JS | JS | 46.22% | 37.58% | 89.17% | 83.33% |
 | Random mixer | JS | None | 48.80% | 42.11% | 89.71% | 85.41% |
-| Random mixer | Class-aware InfoNCE | None | **54.30%** | **48.27%** | **91.20%** | **87.19%** |
+| Random mixer | Class-aware InfoNCE | None | 54.30% | **48.27%** | **91.20%** | **87.19%** |
 | MetaMix-guided mixer | Class-aware InfoNCE | Class-aware InfoNCE | 49.42% | 39.68% | 90.08% | 83.24% |
 | MetaMix-guided mixer | Class-aware InfoNCE | JS | 48.26% | 38.55% | 89.25% | 82.69% |
+| Feature-matching run* | Class-aware InfoNCE | Feature MSE (JS unconfirmed) | **54.96%** | 45.05% | 90.17% | 84.72% |
 
+
+\* The feature-matching row uses MSE between seen-mixture features and unmixed pseudo-unseen target features. Batch 32 is attributed from run history. The [saved evaluation](results/feature_matching_evaluation/evaluation.json) contains scores only; the original configuration is needed to confirm the batch size and whether the mixer also used seen-view JS.
 
 Evaluation uses the final checkpoint on **10,000 clean test images** and
 **750,000 CIFAR-10-C images** (15 corruptions x 5 severities x 10,000 images).
@@ -205,20 +208,22 @@ All values are **accuracy (%)**, averaged over severities 1-5. **Bold** marks th
 | Mixer | Objectives | Noise | Blur | Weather | Digital | Overall |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
 | MetaMix-guided mixer | JS / JS | 32.75 | 39.33 | 38.63 | 38.40 | 37.58 |
-| Random mixer | JS / none | <ins>40.38</ins> | <ins>44.00</ins> | <ins>41.69</ins> | <ins>41.95</ins> | <ins>42.11</ins> |
+| Random mixer | JS / none | 40.38 | 44.00 | 41.69 | 41.95 | 42.11 |
 | Random mixer | InfoNCE / none | **48.78** | **49.96** | **47.48** | **46.98** | **48.27** |
 | MetaMix-guided mixer | InfoNCE / InfoNCE | 36.42 | 40.35 | 40.54 | 40.59 | 39.68 |
 | MetaMix-guided mixer | InfoNCE / JS | 34.71 | 40.06 | 39.16 | 39.31 | 38.55 |
+| Feature-matching run* | InfoNCE / Feature MSE (JS unconfirmed) | <ins>42.02</ins> | <ins>46.40</ins> | <ins>44.95</ins> | <ins>46.08</ins> | <ins>45.05</ins> |
 
 #### Task-IL — correct class pair supplied
 
 | Mixer | Objectives | Noise | Blur | Weather | Digital | Overall |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
 | MetaMix-guided mixer | JS / JS | 81.11 | 82.76 | 85.06 | 83.85 | 83.33 |
-| Random mixer | JS / none | <ins>83.22</ins> | <ins>85.60</ins> | <ins>86.44</ins> | <ins>85.84</ins> | <ins>85.41</ins> |
+| Random mixer | JS / none | 83.22 | <ins>85.60</ins> | <ins>86.44</ins> | <ins>85.84</ins> | <ins>85.41</ins> |
 | Random mixer | InfoNCE / none | **86.23** | **87.03** | **88.23** | **87.03** | **87.19** |
 | MetaMix-guided mixer | InfoNCE / InfoNCE | 81.53 | 82.69 | 84.75 | 83.57 | 83.24 |
 | MetaMix-guided mixer | InfoNCE / JS | 79.01 | 82.57 | 84.74 | 83.52 | 82.69 |
+| Feature-matching run* | InfoNCE / Feature MSE (JS unconfirmed) | <ins>83.49</ins> | 84.04 | 86.06 | 84.98 | 84.72 |
 
 <!-- /core-corruption-ranked-tables -->
 
