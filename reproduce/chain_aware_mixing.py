@@ -97,11 +97,11 @@ def random_weights(n,device):
 def mixed_views(x,branches,m,w):
     return [blend(x,v,m[i] if m.ndim==2 else m,w[i] if w.ndim==3 else w) for i,v in enumerate(branches)]
 
-def chains(raw, pool, device):
+def chains(raw, pool, device, views_count=2, branch_count=3):
     views = []
-    for _ in range(2):
+    for _ in range(views_count):
         branches = []
-        for _ in range(3):
+        for _ in range(branch_count):
             batch = []
             for image in raw:
                 im = Image.fromarray(image)
@@ -252,15 +252,18 @@ def evaluate(model, root, output, device, synthetic=None):
     atomic_json(output/'evaluation.json', result)
     return result
 
-def main():
+def main(*, bilevel_step=None, split_indices=None):
     p = argparse.ArgumentParser()
     p.add_argument('--mixer',choices=['learned'],default='learned')
     p.add_argument('--consistency',choices=['infonce','js'],default='infonce')
-    p.add_argument('--outer-consistency',choices=['infonce','js','feature_match','seen_js_feature_match'],default='js')
+    if bilevel_step:
+        p.set_defaults(outer_consistency='virtual_query_ce')
+    else:
+        p.add_argument('--outer-consistency',choices=['infonce','js','feature_match','seen_js_feature_match'],default='js')
     p.add_argument('--temperature',type=float,default=.1)
     p.add_argument('--device', choices=['cuda'], default='cuda')
     p.add_argument('--root', type=Path, default=Path('experiments/metamix_cifar10/data'))
-    p.add_argument('--output', type=Path, default=Path('experiments/chain_aware_mixing/seed17'))
+    p.add_argument('--output', type=Path, default=Path('experiments/virtual_mixer/seed17' if bilevel_step else 'experiments/chain_aware_mixing/seed17'))
     p.add_argument('--epochs-per-task', type=int, default=10)
     p.add_argument('--stop-after-epochs',type=int,default=0)
     p.add_argument('--pipeline-test', action='store_true')
@@ -314,6 +317,17 @@ def main():
         config['method'] += ' + mixer seen-view JS'
         config['mixer_objective'] = 'seen-view prediction JS + seen-to-unseen raw pooled feature MSE'
         config['mixer_seen_js_coefficient'] = 1.
+    if bilevel_step:
+        config.update(method=f'One-step bilevel mixer: seen {classifier_objective} + DER++',
+                      J=1, mixer_objective='query clean CE + query unseen CE',
+                      solver='differentiate through one plain classifier SGD update',
+                      sampling='seed-17 stratified 10% query holdout per task; query sampled without replacement per batch',
+                      matching_limit='one-step approximation on training-set query holdout',
+                      bn='one committed support training pass plus distillation; virtual query in eval mode',
+                      implementation='one virtual SGD step committed using detached support gradients',
+                      query_unseen_chains=1, query_unseen_coefficient=1.)
+        config['source_hashes']['virtual_mixer.py'] = hashlib.sha256(
+            Path(__file__).with_name('virtual_mixer.py').read_bytes()).hexdigest()
     config.update(backbone_metadata(a.backbone))
     config['candidate_features'] = f"{config['feature_dimension']} raw feature deltas and 10 softmax probability deltas; detached eval joint7N forward"
     config['scorer'] = f"shared Linear({5 + config['feature_dimension'] + 10},32),ReLU,Linear(32,1); zero final layer; softmax per image/view"
@@ -337,6 +351,9 @@ def main():
         raw, labels = data.data, np.array(data.targets)
         assert len(raw) == 50000 and all((labels == c).sum() == 5000 for c in range(10))
     indices = [np.flatnonzero(np.isin(labels, pair)).tolist() for pair in config['tasks']]
+    if bilevel_step:
+        indices, query_indices = split_indices(labels, config['tasks'])
+        atomic_json(a.output/'query_indices.json', query_indices)
     index_path = a.output/'train_indices.json'
     if index_path.exists():
         assert json.loads(index_path.read_text()) == indices
@@ -379,7 +396,7 @@ def main():
         next_epoch=next_epoch, updates=updates, config=config)), flush=True)
     atomic_json(a.output/'process.json', dict(pid=os.getpid(), host=platform.node(),
         started=time.time(), command=' '.join(__import__('sys').argv)))
-    trainer = BiLevelTrainer(model, controller, optimizer, mixer_optimizer, memory, state, a.device, update=step)
+    trainer = BiLevelTrainer(model, controller, optimizer, mixer_optimizer, memory, state, a.device, update=bilevel_step or step)
     for task in range(next_task, 5):
         first = next_epoch if task == next_task else 0
         for epoch in range(first, epochs):
@@ -388,7 +405,12 @@ def main():
             with trace_path.open('a', buffering=1) as trace:
                 for batch, pos in enumerate(range(0, len(order), 32)):
                     ix = order[pos:pos+32]
-                    row = trainer.step(raw[ix], labels[ix], mixer=a.mixer, kind=a.consistency, temperature=a.temperature, outer_kind=a.outer_consistency, j=3)
+                    extra = {}
+                    if bilevel_step:
+                        pool = query_indices[task]
+                        qix = np.random.choice(pool, min(32, len(pool)), replace=False)
+                        extra['query_batch'] = raw[qix], labels[qix]
+                    row = trainer.step(raw[ix], labels[ix], mixer=a.mixer, kind=a.consistency, temperature=a.temperature, outer_kind=a.outer_consistency, j=config['J'], **extra)
                     state = trainer.state
                     updates += 1
                     row.update(task=task+1, epoch=epoch+1, global_epoch=task*epochs+epoch+1,
@@ -409,7 +431,8 @@ def main():
             if a.stop_after_epochs and task*epochs+epoch+1>=a.stop_after_epochs:
                 return
     if not a.pipeline_test:
-        assert updates == 5*epochs*313 and memory.seen == 5*epochs*10000
+        assert updates == epochs * sum((len(ids)+31)//32 for ids in indices)
+        assert memory.seen == epochs * sum(map(len, indices))
     report(a.output, updates)
     if not (a.output/'evaluation.json').exists():
         evaluate(model, a.root, a.output, a.device, (raw, labels) if a.pipeline_test else None)

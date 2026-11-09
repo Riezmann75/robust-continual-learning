@@ -1,0 +1,12 @@
+{
+  "runner": "virtual_mixer.py",
+  "args": {
+    "device": "cuda",
+    "backbone": "smallcnn",
+    "epochs_per_task": 10,
+    "consistency": "infonce",
+    "temperature": 0.1,
+    "root": "experiments/metamix_cifar10/data",
+    "output": "experiments/virtual_mixer_smallcnn/seed17"
+  }
+}

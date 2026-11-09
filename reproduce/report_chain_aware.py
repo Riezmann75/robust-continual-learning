@@ -21,7 +21,7 @@ def report(output, committed_updates):
             group['m'].append(row['m_after'])
             group['per_example'].extend(row['m_after_per_example'])
             group['seen'].append(row['seen_consistency'])
-            group['outer'].append(row['outer_consistency_after'])
+            group['outer'].append(row['mixer_loss'] if row['outer_consistency'] == 'virtual_query_ce' else row['outer_consistency_after'])
             group['entropy'].append(row['weight_entropy_after'])
             group['max_weight'].append(row['weight_max_after'])
             group['last'] = row
@@ -47,6 +47,10 @@ def report(output, committed_updates):
                   classifier_consistency=consistency,
                   outer_consistency=outer_consistency,
                   caveat=f"New chain-aware method; seen {consistency}, unseen {outer_consistency}, fixed m=.5; direct consistency minimization is not a retention hypergradient or a guarantee of robustness.")
+    if outer_consistency == 'virtual_query_ce':
+        result['caveat'] = 'Query CE measured at virtual classifier parameters before the mixer step.'
+        for epoch in epochs:
+            epoch['query_loss_mean'] = epoch.pop('outer_consistency_after_mean')
     if outer_consistency == 'feature_match':
         result['caveat'] = 'Seen mixtures match detached unmixed unseen target features; fixed m=.5; no hypergradient or robustness guarantee.'
         for epoch in epochs:

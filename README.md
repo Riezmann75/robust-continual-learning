@@ -59,6 +59,21 @@ supplied by the compatibility `step` functions. New source snapshots include
 directories still enforce exact source/configuration matching, so use a new output
 directory for runs made with refactored code.
 
+## One-step bilevel SmallCNN mixer
+
+Run `python scripts/run_experiment.py configs/virtual_mixer_smallcnn.json --run`.
+The [runner](reproduce/virtual_mixer.py) differentiates through one classifier SGD
+update on original and pseudo-seen training views (CE, DER++ replay, and
+class-aware InfoNCE). The mixer minimizes the sum of clean and pseudo-unseen
+cross-entropies on a separate labeled current-task query batch. Each query image
+receives one random unseen chain. The classifier commits its support gradient
+once. Each batch has one mixer update, and the original-image weight stays at 0.5.
+
+The seed-17 split reserves 500 of each class's 5,000 training images for queries.
+This gives the classifier 45,000 distinct support images over five tasks, compared
+with 50,000 in earlier runs. The run records both index sets and the query losses.
+Results go to `experiments/virtual_mixer_smallcnn/seed17`.
+
 ## Corrected mixing comparison (seed 17)
 
 For a restatement of our implementation, see [MetaMix paper-to-code guide](docs/metamix_implementation.md): controller inputs, training order, paper-to-code mapping, and remaining differences.
