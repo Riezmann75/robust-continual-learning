@@ -1,0 +1,89 @@
+\begin{center}
+\begin{minipage}{\textwidth}
+\centering\small
+\setlength{\tabcolsep}{6pt}
+\begin{tabular}{lllrrrrrr}
+\toprule
+ &  &  & \multicolumn{3}{c}{Class-IL} & \multicolumn{3}{c}{Task-IL} \\
+ID & Mixer & Objectives & Gauss & Shot & Impulse & Gauss & Shot & Impulse \\
+\midrule
+A & Guided & JS / JS & 34.12 & 35.89 & 28.25 & 81.52 & 83.01 & 78.81 \\
+B & Random & JS / none & 40.77 & 42.54 & 37.83 & 83.13 & 84.93 & 81.60 \\
+C & Random & NCE / none & \textbf{48.50} & \textbf{50.78} & \textbf{47.06} & \textbf{86.16} & \textbf{87.54} & \textbf{85.00} \\
+D & Guided & NCE / NCE & 37.25 & 39.50 & 32.51 & 81.41 & 83.45 & 79.73 \\
+E & Guided & NCE / JS & 35.03 & 37.73 & 31.38 & 78.43 & 81.49 & 77.11 \\
+\rowcolor{ourrow} F & Chain-aware & NCE / JS & \underline{45.16} & \underline{47.92} & \underline{42.08} & \underline{85.58} & \underline{87.19} & \underline{84.60} \\
+G & Chain-aware & JS / JS & 37.75 & 39.82 & 32.79 & 83.11 & 84.97 & 80.79 \\
+H & Chain-aware & NCE / NCE & 41.11 & 42.84 & 35.57 & 84.83 & 86.12 & 83.14 \\
+\bottomrule
+\end{tabular}
+\captionof{table}{Noise corruptions: accuracy (\%) averaged over five severities. Bold: best; underlined: second-best (unrounded ranks).}
+\end{minipage}
+\end{center}
+\begin{center}
+\begin{minipage}{\textwidth}
+\centering\small
+\setlength{\tabcolsep}{6pt}
+\begin{tabular}{lllrrrrrrrr}
+\toprule
+ &  &  & \multicolumn{4}{c}{Class-IL} & \multicolumn{4}{c}{Task-IL} \\
+ID & Mixer & Objectives & Defocus & Glass & Motion & Zoom & Defocus & Glass & Motion & Zoom \\
+\midrule
+A & Guided & JS / JS & 43.32 & 35.15 & 36.27 & 42.58 & 85.67 & 77.14 & 83.40 & 84.82 \\
+B & Random & JS / none & 47.97 & 38.16 & 42.82 & 47.05 & \underline{88.88} & 79.21 & 86.49 & 87.83 \\
+C & Random & NCE / none & \textbf{53.12} & \textbf{44.62} & \textbf{49.18} & \textbf{52.92} & \textbf{89.74} & \textbf{82.44} & \textbf{87.04} & \textbf{88.90} \\
+D & Guided & NCE / NCE & 44.93 & 35.86 & 37.25 & 43.34 & 86.75 & 76.52 & 82.54 & 84.96 \\
+E & Guided & NCE / JS & 44.12 & 34.97 & 37.67 & 43.48 & 85.85 & 77.53 & 82.29 & 84.61 \\
+\rowcolor{ourrow} F & Chain-aware & NCE / JS & \underline{52.44} & \underline{40.98} & 45.35 & \underline{50.27} & 88.35 & \underline{80.99} & 85.39 & 87.10 \\
+G & Chain-aware & JS / JS & 50.77 & 36.39 & \underline{45.93} & 49.59 & 88.88 & 79.55 & \underline{86.79} & \underline{87.89} \\
+H & Chain-aware & NCE / NCE & 48.95 & 38.01 & 43.66 & 48.52 & 88.40 & 80.49 & 85.74 & 87.54 \\
+\bottomrule
+\end{tabular}
+\captionof{table}{Blur corruptions: accuracy (\%) averaged over five severities. Bold: best; underlined: second-best (unrounded ranks).}
+\end{minipage}
+\end{center}
+\clearpage
+\begin{center}
+\begin{minipage}{\textwidth}
+\centering\small
+\setlength{\tabcolsep}{6pt}
+\begin{tabular}{lllrrrrrrrr}
+\toprule
+ &  &  & \multicolumn{4}{c}{Class-IL} & \multicolumn{4}{c}{Task-IL} \\
+ID & Mixer & Objectives & Snow & Frost & Fog & Bright & Snow & Frost & Fog & Bright \\
+\midrule
+A & Guided & JS / JS & 37.64 & 34.71 & 38.53 & 43.62 & 83.73 & 83.62 & 84.82 & 88.09 \\
+B & Random & JS / none & 41.02 & 37.45 & 42.09 & 46.21 & 85.08 & 85.03 & 86.48 & 89.18 \\
+C & Random & NCE / none & \underline{46.84} & \textbf{43.52} & \underline{48.42} & \underline{51.13} & \textbf{87.39} & \textbf{87.00} & \textbf{87.96} & \textbf{90.58} \\
+D & Guided & NCE / NCE & 40.22 & 36.49 & 39.48 & 45.98 & 84.66 & 82.86 & 83.22 & 88.26 \\
+E & Guided & NCE / JS & 38.25 & 34.89 & 40.20 & 43.28 & 83.21 & 82.99 & 84.71 & 88.06 \\
+\rowcolor{ourrow} F & Chain-aware & NCE / JS & \textbf{47.50} & \underline{42.61} & \textbf{48.49} & \textbf{51.44} & 86.67 & \underline{86.35} & 86.87 & \underline{90.10} \\
+G & Chain-aware & JS / JS & 39.77 & 37.84 & 44.17 & 47.76 & 85.32 & 85.75 & 86.98 & 89.63 \\
+H & Chain-aware & NCE / NCE & 41.20 & 38.63 & 44.44 & 45.85 & \underline{86.70} & 86.14 & \underline{87.06} & 89.77 \\
+\bottomrule
+\end{tabular}
+\captionof{table}{Weather corruptions: accuracy (\%) averaged over five severities. Bold: best; underlined: second-best (unrounded ranks).}
+\end{minipage}
+\end{center}
+\begin{center}
+\begin{minipage}{\textwidth}
+\centering\small
+\setlength{\tabcolsep}{6pt}
+\begin{tabular}{lllrrrrrrrr}
+\toprule
+ &  &  & \multicolumn{4}{c}{Class-IL} & \multicolumn{4}{c}{Task-IL} \\
+ID & Mixer & Objectives & Contrast & Elastic & Pixel & JPEG & Contrast & Elastic & Pixel & JPEG \\
+\midrule
+A & Guided & JS / JS & 31.78 & 42.22 & 36.46 & 43.13 & 76.38 & 85.66 & 86.27 & 87.08 \\
+B & Random & JS / none & 36.30 & 45.94 & 39.71 & 45.83 & 80.73 & 87.56 & 87.10 & 87.98 \\
+C & Random & NCE / none & \textbf{39.44} & \textbf{50.80} & \underline{46.85} & \underline{50.85} & \underline{80.94} & \textbf{88.42} & \textbf{89.19} & \textbf{89.59} \\
+D & Guided & NCE / NCE & 31.83 & 44.81 & 40.23 & 45.50 & 72.64 & 86.62 & 87.01 & 88.02 \\
+E & Guided & NCE / JS & 31.98 & 43.82 & 37.23 & 44.22 & 76.47 & 85.68 & 85.33 & 86.60 \\
+\rowcolor{ourrow} F & Chain-aware & NCE / JS & \underline{38.75} & \underline{50.65} & \textbf{51.21} & \textbf{52.62} & 79.25 & 87.43 & \underline{88.96} & 88.79 \\
+G & Chain-aware & JS / JS & 37.94 & 48.22 & 39.21 & 47.62 & \textbf{81.13} & \underline{87.84} & 87.47 & 88.77 \\
+H & Chain-aware & NCE / NCE & 35.55 & 47.34 & 42.63 & 47.54 & 79.45 & 87.77 & 88.13 & \underline{88.82} \\
+\bottomrule
+\end{tabular}
+\captionof{table}{Digital corruptions: accuracy (\%) averaged over five severities. Bold: best; underlined: second-best (unrounded ranks).}
+\end{minipage}
+\end{center}

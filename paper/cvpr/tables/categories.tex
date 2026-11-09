@@ -1,0 +1,36 @@
+\begin{table*}[t]
+\centering\small
+\begin{tabular}{lllrrrrr}
+\toprule
+\multicolumn{8}{l}{\textbf{Class-IL}} \\
+ID & Mixer & Objectives & Noise & Blur & Weather & Digital & Overall \\
+\midrule
+A & Guided & JS / JS & 32.75 & 39.33 & 38.63 & 38.40 & 37.58 \\
+B & Random & JS / none & 40.38 & 44.00 & 41.69 & 41.95 & 42.11 \\
+C & Random & NCE / none & \textbf{48.78} & \textbf{49.96} & \underline{47.48} & \underline{46.98} & \textbf{48.27} \\
+D & Guided & NCE / NCE & 36.42 & 40.35 & 40.54 & 40.59 & 39.68 \\
+E & Guided & NCE / JS & 34.71 & 40.06 & 39.16 & 39.31 & 38.55 \\
+\rowcolor{ourrow} F & Chain-aware & NCE / JS & \underline{45.06} & \underline{47.26} & \textbf{47.51} & \textbf{48.31} & \underline{47.17} \\
+G & Chain-aware & JS / JS & 36.79 & 45.67 & 42.39 & 43.25 & 42.37 \\
+H & Chain-aware & NCE / NCE & 39.84 & 44.79 & 42.53 & 43.26 & 42.79 \\
+\midrule
+\multicolumn{8}{l}{\textbf{Task-IL}} \\
+ID & Mixer & Objectives & Noise & Blur & Weather & Digital & Overall \\
+\midrule
+A & Guided & JS / JS & 81.11 & 82.76 & 85.06 & 83.85 & 83.33 \\
+B & Random & JS / none & 83.22 & 85.60 & 86.44 & 85.84 & 85.41 \\
+C & Random & NCE / none & \textbf{86.23} & \textbf{87.03} & \textbf{88.23} & \textbf{87.03} & \textbf{87.19} \\
+D & Guided & NCE / NCE & 81.53 & 82.69 & 84.75 & 83.57 & 83.24 \\
+E & Guided & NCE / JS & 79.01 & 82.57 & 84.74 & 83.52 & 82.69 \\
+\rowcolor{ourrow} F & Chain-aware & NCE / JS & \underline{85.79} & 85.46 & \underline{87.50} & 86.11 & \underline{86.24} \\
+G & Chain-aware & JS / JS & 82.96 & \underline{85.78} & 86.92 & \underline{86.30} & 85.66 \\
+H & Chain-aware & NCE / NCE & 84.69 & 85.54 & 87.42 & 86.04 & 86.01 \\
+\bottomrule
+\end{tabular}
+\caption{\textbf{Corruption-category accuracy (\%).} Each category averages
+five-severity corruption means. Overall weights Noise, Blur, Weather, and
+Digital by 3, 4, 4, and 4 corruptions, respectively. NCE is class-aware InfoNCE;
+all chain-aware runs fix $m=0.5$. Blue highlights chain-aware InfoNCE/JS;
+bold marks the best score and underlining the second-best, ranked using unrounded values per column.}
+\label{tab:categories}
+\end{table*}

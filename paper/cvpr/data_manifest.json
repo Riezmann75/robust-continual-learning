@@ -1,0 +1,50 @@
+{
+  "learned_js": {
+    "config.json": "5c8b148bdcf472495ef79398347c8ee1542fd865db30b4107213f8092029d145",
+    "complete.json": "2074e293b0c1614d63ac99fb9e76037d02a41086a0ef50cd7b219a8b6231cd4d",
+    "evaluation.json": "19444c221fd90c03591d9ca1f1ca67e7ba2f421aa55dc4fe39fba61f14b65261",
+    "progress.json": "b53f719aa2e6e55a7122b02785c6171395d33a877e45a5e857390b6c115ad235"
+  },
+  "random_js": {
+    "config.json": "b83ada5ce5b2baeb792d857eb661bb1b1241e40ea9c9f6746e29ed8db1f4f3e0",
+    "complete.json": "349857bbce92afe624d389f5732c21fb2227edd45cf64ef063f4336796902820",
+    "evaluation.json": "144990b966653dd2aef207701099c18376f4b7f8a3b4a64f07c423bd7ccee59f",
+    "progress.json": "d9ac6eeba295eb8a7dff779f13da9a79d4b170eebc6f315a7952daad9d784a35"
+  },
+  "random_infonce": {
+    "config.json": "0c4b579057000e3402253380183de005b21ca3533c927c4d2447fa0c2904c11a",
+    "complete.json": "353d78315f7ce27c47395b0878da497998461d018c99ae41b72dfd4e70a7722e",
+    "evaluation.json": "3030d35493c0b27b53c981417c926ad4c230fade5ac6ecfbd3c6331d00833be1",
+    "progress.json": "97bf19754250ac4c00859f35c5ad2e9b1fa0a2b3bd46d97f0c31e1c44a0cd314"
+  },
+  "learned_infonce": {
+    "config.json": "b10f7faa96297385368603767ab61328cd02a1be7813c06a949a6867fd351404",
+    "complete.json": "9425d005651cc79cfb8da87aecdac8879d92b7a9a79609ffb13f9a0b0f0b3689",
+    "evaluation.json": "25ac6b3a1c1da5a43d9ef21ba4f453fbd433780cd12ddaaddcbd9d869c480402",
+    "progress.json": "186c7739c890de4d22507f616dea6ac7a70456129ffd65f0b43cc70404a8bfa0"
+  },
+  "learned_infonce_js": {
+    "config.json": "7807afb01536d7d21ebcc87a6d6a8271313e205ccd7bc1dcbe865cac0683295c",
+    "complete.json": "45738c68731f45b005104ff1f0aa6148b2a805c28eec9ccf7cd430d425a8220d",
+    "evaluation.json": "542b0df67321155cd085f836dc96a037316a4b0d5e41edb4319156d23163fb04",
+    "progress.json": "8fe69debf903bec0644b0898fa9bfab065154405f14076262bef4e6d2e45e9aa"
+  },
+  "chain_aware_fixed_m": {
+    "config.json": "cd345cf37421c3295929f73ab33343bc01f286416f777f3d088713575ba14302",
+    "complete.json": "8077a374a72ac282372832261400ede86b165122dc5eecd74d1e554940ebb829",
+    "evaluation.json": "5d3b82f28b652cb1ebe600ea1fb17f28d1f9e8b38f9217bb4bc998752e9320d1",
+    "progress.json": "9245eeb79a3b2909feaeda05dc54522917de75a4e155b353787bc701250f50c6"
+  },
+  "chain_aware_js": {
+    "config.json": "15441641784b7c2549f692e1f806c80b504c11e78d64b1788ab7e21393ad7851",
+    "complete.json": "4ffb57b942e6aba857731a6cdfe62ab9871f37a107b78b2a94ae8b6f80558c8d",
+    "evaluation.json": "6a4ddb2ef36a48e66a23f06cb83615c8c8c6ffd11e4ffa8f9960a29311b14d7e",
+    "progress.json": "3c4d7f54bd15cddee4016fcda51c7c4a297520de4c77caef6ca8d1b074d2d1ea"
+  },
+  "chain_aware_infonce_infonce": {
+    "config.json": "be023252f7a99502d43f48d665b4d8783b655c79a4314a5e9465f470c4693c91",
+    "complete.json": "f70cb72b7123a3ee512e4553aa4efd6508e2078cac641d3f6a8d5968fbee3b5d",
+    "evaluation.json": "ab1bf40fe7396981b4ddbb51255bf92a30fe37df1960540081cb625a6776b612",
+    "progress.json": "b729271abd04da835247158515c6c1f52d5b0edca38fe3caa83ec257e1ef7544"
+  }
+}

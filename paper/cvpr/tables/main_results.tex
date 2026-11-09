@@ -1,0 +1,25 @@
+\begin{table*}[t]
+\centering\small
+\setlength{\tabcolsep}{7pt}
+\begin{tabular}{lllrrrr}
+\toprule
+ID & Mixer & Classifier / mixer & Clean class-IL & Corrupt class-IL & Clean task-IL & Corrupt task-IL \\
+\midrule
+A & Guided & JS / JS & 46.22 & 37.58 & 89.17 & 83.33 \\
+B & Random & JS / none & 48.80 & 42.11 & 89.71 & 85.41 \\
+C & Random & NCE / none & \underline{54.30} & \textbf{48.27} & \textbf{91.20} & \textbf{87.19} \\
+D & Guided & NCE / NCE & 49.42 & 39.68 & 90.08 & 83.24 \\
+E & Guided & NCE / JS & 48.26 & 38.55 & 89.25 & 82.69 \\
+\rowcolor{ourrow} F & Chain-aware & NCE / JS & \textbf{56.22} & \underline{47.17} & \underline{91.02} & \underline{86.24} \\
+G & Chain-aware & JS / JS & 50.33 & 42.37 & 90.50 & 85.66 \\
+H & Chain-aware & NCE / NCE & 50.15 & 42.79 & 90.99 & 86.01 \\
+\bottomrule
+\end{tabular}
+\caption{\textbf{All completed core experiments.} Accuracy (\%), seed 17.
+Guided denotes our MetaMix-guided implementation, not verified author code.
+NCE denotes class-aware InfoNCE. All chain-aware runs fix $m=0.5$; all rows use
+CE + DER++. Corrupt scores average all 15 corruptions and five severities.
+Blue highlights our focal chain-aware InfoNCE/JS configuration.
+Bold marks the best score and underlining the second-best, ranked using unrounded values per column.}
+\label{tab:main}
+\end{table*}
