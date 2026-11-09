@@ -6,40 +6,32 @@ mixture and three independently sampled, unmixed pseudo-unseen targets. The mixe
 minimizes their mean squared feature distance. Class-aware InfoNCE trains the
 classifier on the original and two seen mixtures.
 
-## Batch-256 comparison
+## Batch-32 SmallCNN results
 
-The reported MSE recipe scored **6.44 percentage points higher on corrupted
-Class-IL** and **8.38 points higher on clean Class-IL** than the one-step bilevel
-recipe. The earlier feature-matching score provides batch-size context. Percent
-accuracies below come from the linked evaluation files. Recipe labels follow the
-run commands associated with the reports. The files contain scores only, and
-the earlier evaluation does not distinguish MSE alone from MSE plus seen-view JS.
+All rows use class-aware InfoNCE for classifier consistency. The feature-matching
+row is associated with the batch-32 recipe from the run history. Its evaluation
+file contains scores only. Confirmation of the batch size and whether the mixer
+also used seen-view JS requires the original run configuration.
 
-| Reported SmallCNN recipe | Clean Class-IL | CIFAR-10-C Class-IL | Clean Task-IL | CIFAR-10-C Task-IL |
+| Mixer and objective | Clean Class-IL | CIFAR-10-C Class-IL | Clean Task-IL | CIFAR-10-C Task-IL |
 | --- | ---: | ---: | ---: | ---: |
-| [Feature MSE, batch 256](../results/feature_mse_bs256/evaluation.json) | 45.54 | 37.92 | 85.99 | 80.32 |
-| [One-step bilevel query CE, batch 256](../results/bilevel_bs256/evaluation.json) | 37.16 | 31.48 | 81.20 | 77.11 |
-| [Earlier feature matching, batch 32 recipe](../results/feature_matching_evaluation/evaluation.json) | 54.96 | 45.05 | 90.17 | 84.72 |
+| [Feature matching](../results/feature_matching_evaluation/evaluation.json) | 54.96 | 45.05 | 90.17 | 84.72 |
+| [MetaMix-guided, JS](../results/corrected_mixing_seed17/learned_infonce_js/evaluation.json) | 48.26 | 38.55 | 89.25 | 82.69 |
+| [MetaMix-guided, InfoNCE](../results/corrected_mixing_seed17/learned_infonce/evaluation.json) | 49.42 | 39.68 | 90.08 | 83.24 |
+| [Random mixing](../results/corrected_mixing_seed17/random_infonce/evaluation.json) | 54.30 | 48.27 | 91.20 | 87.19 |
 
-Class-IL accuracy by corruption family, averaged across five severity levels:
+Class-IL accuracy (%) by corruption family, averaged across all five severities.
 
-| Recipe | Noise | Blur | Weather | Digital |
+| Mixer and objective | Noise | Blur | Weather | Digital |
 | --- | ---: | ---: | ---: | ---: |
-| Feature MSE, batch 256 | 40.73 | 37.12 | 36.16 | 38.36 |
-| One-step bilevel query CE, batch 256 | 30.39 | 31.36 | 32.00 | 31.89 |
-| Earlier feature matching, batch 32 recipe | 42.02 | 46.40 | 44.95 | 46.08 |
+| Feature matching | 42.02 | 46.40 | 44.95 | 46.08 |
+| MetaMix-guided, JS | 34.71 | 40.06 | 39.16 | 39.31 |
+| MetaMix-guided, InfoNCE | 36.42 | 40.35 | 40.54 | 40.59 |
+| Random mixing | 48.78 | 49.96 | 47.48 | 46.98 |
 
-## What the comparison supports
-
-The MSE recipe improved all four corruption-family averages over the batch-256
-bilevel recipe. This supports keeping feature MSE as a candidate when training
-SmallCNN to handle unseen transformations. The recipes also differ in classifier
-training data (50,000 versus 45,000 images), classifier updates (2,000 versus
-1,800), and mixer steps per classifier update (three versus one). These runs
-therefore measure the combined effect of those choices.
-
-The random mixer with classifier InfoNCE reached **48.27% corrupted Class-IL**
-in the [batch-32 baseline comparison](../README.md#corrected-mixing-comparison-seed-17),
-above both reported feature-matching scores. To estimate the contribution of the
-MSE term itself, compare MSE, JS, and MSE + JS with the same controller, data
-split, batch size, update counts, and seeds, alongside random mixing.
+Feature matching reached **45.05% corrupted Class-IL**, above the learned JS
+(38.55%) and InfoNCE (39.68%) baselines. Random mixing reached **48.27%**.
+On clean Class-IL, feature matching reached **54.96%**, compared with **54.30%**
+for random mixing. The learned baselines also differ in their controller inputs
+and original-image weights, so these differences describe whole recipes. An
+estimate of MSE's contribution requires a comparison with the same controller.

@@ -61,11 +61,9 @@ directory for runs made with refactored code.
 ## Choosing the mixer objective
 
 Feature MSE trains the mixer to weight seen augmentation chains so their mixtures
-approximate pseudo-unseen views in the classifier’s feature space. At batch 256,
-the reported MSE recipe achieved higher clean and corrupted Class-IL accuracy
-than the one-step bilevel recipe below. Differences in training data and update
-counts limit attribution to the loss alone. See the [mixer-objective comparison](docs/mixer_objective_results.md)
-for scores, corruption-family results, and the random-mixing baseline.
+approximate pseudo-unseen views in the classifier’s feature space. The [batch-32 comparison](docs/mixer_objective_results.md)
+reports clean and corrupted accuracy for feature matching and for learned and random
+mixer baselines under classifier InfoNCE.
 
 ## One-step bilevel SmallCNN mixer
 
