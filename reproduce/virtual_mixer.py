@@ -35,7 +35,7 @@ def meta_loss(model, inner_loss, lr, query, unseen_query, labels):
 
 
 def step(model, controller, optimizer, mixer_optimizer, memory, state, raw,
-         labels, device, *, query_batch, kind, temperature, **options):
+         labels, device, *, query_batch, kind, temperature, current_capacity=32, **options):
     # The runner constructs both optimizers as plain SGD with one parameter group.
     x = base.tensor(raw, device)
     y = torch.as_tensor(labels, device=device)
@@ -47,7 +47,7 @@ def step(model, controller, optimizer, mixer_optimizer, memory, state, raw,
     raw_all = np.concatenate((raw, replay[0])) if replay else raw
     xa = base.tensor(raw_all, device)
     ya = torch.cat((y, replay[1])) if replay else y
-    slots = base.active_slots(b, len(xa) - b, device)
+    slots = base.active_slots(b, len(xa) - b, device, current_capacity)
     incoming = tuple(v[slots].detach() for v in state)
     perm = np.random.permutation(9)
     cut = np.random.randint(5, 8)

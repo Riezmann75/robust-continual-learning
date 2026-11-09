@@ -72,7 +72,7 @@ once. Each batch has one mixer update, and the original-image weight stays at 0.
 The seed-17 split reserves 500 of each class's 5,000 training images for queries.
 This gives the classifier 45,000 distinct support images over five tasks, compared
 with 50,000 in earlier runs. The run records both index sets and the query losses.
-Results go to `experiments/virtual_mixer_smallcnn/seed17`.
+Classifier steps use up to 256 current examples, 32 replay examples for CE, and an independent replay sample for distillation. Mixer query batches contain 32 examples. Results go to `experiments/virtual_mixer_smallcnn_bs256/seed17`.
 
 ## Corrected mixing comparison (seed 17)
 

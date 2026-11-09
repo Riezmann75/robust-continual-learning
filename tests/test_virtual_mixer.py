@@ -10,6 +10,13 @@ import virtual_mixer as vm
 
 
 class VirtualMixerTests(unittest.TestCase):
+    def test_replay_slots_for_full_and_short_batches(self):
+        state = vm.base.initial_state('cpu', current_capacity=256)
+        self.assertEqual(state[0].shape, (288, 5))
+        for current in (256, 40):
+            slots = vm.base.active_slots(current, 32, 'cpu', current_capacity=256)
+            self.assertEqual(slots.tolist(), list(range(current)) + list(range(256, 288)))
+
     def test_hypergradient_matches_finite_difference(self):
         torch.manual_seed(4)
         net = vm.base.SmallCNN().double().eval()

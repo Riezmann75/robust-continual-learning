@@ -7,6 +7,7 @@
     "consistency": "infonce",
     "temperature": 0.1,
     "root": "experiments/metamix_cifar10/data",
-    "output": "experiments/virtual_mixer_smallcnn/seed17"
+    "output": "experiments/virtual_mixer_smallcnn_bs256/seed17",
+    "batch_size": 256
   }
 }

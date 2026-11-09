@@ -148,12 +148,13 @@ def context_for(model, x, y, replay):
     n = len(et)
     return torch.cat((dot.detach().expand(n,1),rce.detach().expand(n,1),er,et),dim=1)
 
-def initial_state(device):
-    # Separate fixed slots for current [0:32] and replay [32:64]. Not image IDs.
-    return (torch.randn(64,5,device=device),torch.randn(64,5,device=device))
+def initial_state(device, current_capacity=32, replay_capacity=32):
+    # Current and replay positions occupy disjoint persistent slots.
+    slots = current_capacity + replay_capacity
+    return (torch.randn(slots,5,device=device),torch.randn(slots,5,device=device))
 
-def active_slots(b,r,device):
-    return torch.cat((torch.arange(b,device=device),32+torch.arange(r,device=device)))
+def active_slots(b,r,device,current_capacity=32):
+    return torch.cat((torch.arange(b,device=device),current_capacity+torch.arange(r,device=device)))
 
 def outer_objective(model,controller,context,incoming,x,branches,params,buffers,labels,kind='js',temperature=.1,candidates=None,target_features=None):
     assert not model.training
@@ -258,6 +259,7 @@ def main(*, bilevel_step=None, split_indices=None):
     p.add_argument('--consistency',choices=['infonce','js'],default='infonce')
     if bilevel_step:
         p.set_defaults(outer_consistency='virtual_query_ce')
+        p.add_argument('--batch-size', type=int, default=256)
     else:
         p.add_argument('--outer-consistency',choices=['infonce','js','feature_match','seen_js_feature_match'],default='js')
     p.add_argument('--temperature',type=float,default=.1)
@@ -269,6 +271,9 @@ def main(*, bilevel_step=None, split_indices=None):
     p.add_argument('--pipeline-test', action='store_true')
     p.add_argument('--backbone', choices=['smallcnn', 'resnet18'], default='smallcnn')
     a = p.parse_args()
+    batch_size = a.batch_size if bilevel_step else 32
+    if batch_size < 1:
+        p.error('batch-size must be positive')
     if not np.isfinite(a.temperature) or a.temperature<=0:p.error('positive finite temperature required')
     if a.epochs_per_task < 1:
         p.error('--epochs-per-task must be positive')
@@ -318,7 +323,9 @@ def main(*, bilevel_step=None, split_indices=None):
         config['mixer_objective'] = 'seen-view prediction JS + seen-to-unseen raw pooled feature MSE'
         config['mixer_seen_js_coefficient'] = 1.
     if bilevel_step:
-        config.update(method=f'One-step bilevel mixer: seen {classifier_objective} + DER++',
+        config.update(batch=batch_size, query_batch=32,
+                      recurrent_state=f'{batch_size} current slots followed by 32 replay slots',
+                      method=f'One-step bilevel mixer: seen {classifier_objective} + DER++',
                       J=1, mixer_objective='query clean CE + query unseen CE',
                       solver='differentiate through one plain classifier SGD update',
                       sampling='seed-17 stratified 10% query holdout per task; query sampled without replacement per batch',
@@ -364,7 +371,7 @@ def main(*, bilevel_step=None, split_indices=None):
     optimizer = torch.optim.SGD(model.parameters(), lr=.03)
     mixer_optimizer = torch.optim.SGD(controller.parameters(), lr=.05)
     memory = Reservoir()
-    state = initial_state(a.device)
+    state = initial_state(a.device, batch_size, config['replay_batch'])
     next_task = next_epoch = updates = 0
     trace_path = a.output/'trace.jsonl'
     if checkpoint_path.exists():
@@ -403,13 +410,14 @@ def main(*, bilevel_step=None, split_indices=None):
             start = time.monotonic()
             order = np.random.permutation(indices[task])
             with trace_path.open('a', buffering=1) as trace:
-                for batch, pos in enumerate(range(0, len(order), 32)):
-                    ix = order[pos:pos+32]
+                for batch, pos in enumerate(range(0, len(order), batch_size)):
+                    ix = order[pos:pos+batch_size]
                     extra = {}
                     if bilevel_step:
                         pool = query_indices[task]
-                        qix = np.random.choice(pool, min(32, len(pool)), replace=False)
+                        qix = np.random.choice(pool, min(config['query_batch'], len(pool)), replace=False)
                         extra['query_batch'] = raw[qix], labels[qix]
+                        extra['current_capacity'] = batch_size
                     row = trainer.step(raw[ix], labels[ix], mixer=a.mixer, kind=a.consistency, temperature=a.temperature, outer_kind=a.outer_consistency, j=config['J'], **extra)
                     state = trainer.state
                     updates += 1
@@ -431,7 +439,7 @@ def main(*, bilevel_step=None, split_indices=None):
             if a.stop_after_epochs and task*epochs+epoch+1>=a.stop_after_epochs:
                 return
     if not a.pipeline_test:
-        assert updates == epochs * sum((len(ids)+31)//32 for ids in indices)
+        assert updates == epochs * sum((len(ids)+batch_size-1)//batch_size for ids in indices)
         assert memory.seen == epochs * sum(map(len, indices))
     report(a.output, updates)
     if not (a.output/'evaluation.json').exists():
