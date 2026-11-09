@@ -65,7 +65,7 @@ For a restatement of our implementation, see [MetaMix paper-to-code guide](docs/
 
 **MetaMix-guided** denotes our paper-guided implementation, not verified author code.
 
-All eight runs completed **10 epochs per task across five tasks**, using all
+The eight previously documented runs completed **10 epochs per task across five tasks**, using all
 50,000 clean training images, the same 288,746-parameter CNN, and CE + DER++.
 Each run performed 15,650 classifier updates and 500,000 current-image presentations.
 
@@ -79,6 +79,9 @@ Each run performed 15,650 classifier updates and 500,000 current-image presentat
 | Chain-aware mixer (`m = 0.5`) | Class-aware InfoNCE | JS | **56.22%** | 47.17% | 91.02% | 86.24% |
 | Chain-aware mixer (`m = 0.5`) | JS | JS | 50.33% | 42.37% | 90.50% | 85.66% |
 | Chain-aware mixer (`m = 0.5`) | Class-aware InfoNCE | Class-aware InfoNCE | 50.15% | 42.79% | 90.99% | 86.01% |
+| Feature-matching run* | Class-aware InfoNCE | Feature MSE (JS unconfirmed) | 54.96% | 45.05% | 90.17% | 84.72% |
+
+*The imported feature-matching evaluation scored 1.26 percentage points lower on clean Class-IL and 2.12 points lower on corrupted Class-IL than the chain-aware InfoNCE / JS baseline. Both feature-matching recipes use classifier InfoNCE. The supplied scores do not identify whether the mixer also used seen-view JS. [Raw evaluation](results/feature_matching_evaluation/evaluation.json).
 
 Evaluation uses the final checkpoint on **10,000 clean test images** and
 **750,000 CIFAR-10-C images** (15 corruptions x 5 severities x 10,000 images).
@@ -181,7 +184,7 @@ mapping and reproduction commands.
 ### Class-IL and Task-IL by corruption category
 
 [Category and per-corruption tables](docs/corruption_category_results.md) report
-both evaluation modes for all eight runs, grouped as in MetaMix Tables 6-7:
+both evaluation modes for the eight documented runs and the imported evaluation, grouped as in MetaMix Tables 6-7:
 Noise (Gaussian, shot, impulse), Blur (defocus, glass, motion, zoom), Weather
 (snow, frost, fog, brightness), and Digital (contrast, elastic, pixelate, JPEG).
 Each corruption averages severities 1-5. Overall averages all 15 corruptions,
@@ -211,6 +214,7 @@ All values are **accuracy (%)**, averaged over severities 1-5. **Bold** marks th
 | Chain-aware mixer (`m = 0.5`) | InfoNCE / JS | <ins>45.06</ins> | <ins>47.26</ins> | **47.51** | **48.31** | <ins>47.17</ins> |
 | Chain-aware mixer (`m = 0.5`) | JS / JS | 36.79 | 45.67 | 42.39 | 43.25 | 42.37 |
 | Chain-aware mixer (`m = 0.5`) | InfoNCE / InfoNCE | 39.84 | 44.79 | 42.53 | 43.26 | 42.79 |
+| Feature-matching run* | InfoNCE / Feature MSE (JS unconfirmed) | 42.02 | 46.40 | 44.95 | 46.08 | 45.05 |
 
 #### Task-IL — correct class pair supplied
 
@@ -224,6 +228,7 @@ All values are **accuracy (%)**, averaged over severities 1-5. **Bold** marks th
 | Chain-aware mixer (`m = 0.5`) | InfoNCE / JS | <ins>85.79</ins> | 85.46 | <ins>87.50</ins> | 86.11 | <ins>86.24</ins> |
 | Chain-aware mixer (`m = 0.5`) | JS / JS | 82.96 | <ins>85.78</ins> | 86.92 | <ins>86.30</ins> | 85.66 |
 | Chain-aware mixer (`m = 0.5`) | InfoNCE / InfoNCE | 84.69 | 85.54 | 87.42 | 86.04 | 86.01 |
+| Feature-matching run* | InfoNCE / Feature MSE (JS unconfirmed) | 83.49 | 84.04 | 86.06 | 84.98 | 84.72 |
 
 <!-- /core-corruption-ranked-tables -->
 

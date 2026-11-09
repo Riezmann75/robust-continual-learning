@@ -19,6 +19,8 @@ RUNS={
     'chain_aware_js':'Chain-aware mixer (m=0.5): JS / JS',
     'chain_aware_infonce_infonce':'Chain-aware mixer (m=0.5): InfoNCE / InfoNCE',
 }
+IMPORTED = 'feature_matching_evaluation'
+COMPARISON = {**RUNS, IMPORTED: 'Feature-matching run*: InfoNCE / Feature MSE (JS unconfirmed)'}
 LABELS={'gaussian_noise':'Gauss','shot_noise':'Shot','impulse_noise':'Impulse','defocus_blur':'Defocus','glass_blur':'Glass','motion_blur':'Motion','zoom_blur':'Zoom','snow':'Snow','frost':'Frost','fog':'Fog','brightness':'Bright','contrast':'Contrast','elastic_transform':'Elastic','pixelate':'Pixel','jpeg_compression':'JPEG'}
 
 def aggregate(e):
@@ -57,7 +59,7 @@ def ranked(values, columns, suffix='', second=False):
 def update_readme(results):
     path=ROOT/'README.md'
     text=path.read_text()
-    labels=[label.split(': ',1) for label in RUNS.values()]
+    labels=[label.split(': ',1) for label in COMPARISON.values()]
     labels=[(mixer.replace('(m=0.5)','(`m = 0.5`)'),objective) for mixer,objective in labels]
     values=[[a['class_il']['clean'],a['class_il']['overall'],a['task_il']['clean'],a['task_il']['overall']] for a in results.values()]
     columns=list(zip(*values))
@@ -66,7 +68,7 @@ def update_readme(results):
         classifier,outer=objective.split(' / ')
         rows.append([mixer,classifier.replace('InfoNCE','Class-aware InfoNCE'),outer.replace('InfoNCE','Class-aware InfoNCE').replace('none','None'),*ranked(v,columns,'%')])
     main=table(['Mixer','Classifier consistency','Mixer objective','Clean class-IL','CIFAR-10-C class-IL','Clean task-IL','CIFAR-10-C task-IL'],rows,text_columns=3)
-    text,count=re.subn(r'\| Mixer \| Classifier consistency[^\n]*\n(?:\|[^\n]*\n)+',lambda _:main+'\n',text)
+    text,count=re.subn(r'\| Mixer \| Classifier consistency[^\n]*Clean task-IL[^\n]*\n(?:\|[^\n]*\n)+',lambda _:main+'\n',text)
     assert count==1
     core='All values are **accuracy (%)**, averaged over severities 1-5. **Bold** marks the best and <ins>underline</ins> marks the second-best score in each column, ranked using unrounded values. Objectives are **classifier consistency / mixer objective**; all methods include CE + DER++.\n'
     for metric,title in [('class_il','Class-IL — all ten classes'),('task_il','Task-IL — correct class pair supplied')]:
@@ -88,11 +90,16 @@ def main():
         assert cfg['seed']==17 and cfg['epochs_per_task']==10 and cfg['images_per_class']==5000
         assert done['updates']==15650 and done['presentations']==500000 and not done['pipeline_test']
         results[run]=aggregate(json.loads((folder/'evaluation.json').read_text()))
+    imported = ROOT/'results'/IMPORTED/'evaluation.json'
+    results[IMPORTED] = aggregate(json.loads(imported.read_text()))
     output={'groups':GROUPS,'units':'fraction; Markdown tables show percentages','aggregation':'average five severities per corruption, then average corruptions within category; overall gives each of the 15 corruptions equal weight','task_pairs':[[0,1],[2,3],[4,5],[6,7],[8,9]],'results':results}
     (BASE/'corruption_categories.json').write_text(json.dumps(output,indent=2)+'\n')
     text="""# CIFAR-10-C results by category: Class-IL and Task-IL
 
-These tables aggregate the saved full evaluations of eight completed seed-17 runs;
+These tables compare eight documented seed-17 runs and one imported evaluation.
+*The imported feature-matching result contains scores only. Both SmallCNN feature-matching recipes use classifier InfoNCE. The run configuration is needed to distinguish feature MSE alone from seen-view JS plus feature MSE. [Raw scores](../results/feature_matching_evaluation/evaluation.json).
+
+For the eight documented runs,
 no model was retrained and no new inference or substitute corruptions were needed.
 Method labels show **classifier consistency / mixer objective**; all include CE + DER++.
 MetaMix-guided denotes our paper-guided implementation, not verified author code.
@@ -104,9 +111,9 @@ the mixer objective. All InfoNCE objectives use class-aware negatives.
 
 ## Splits and interpretation
 
-- All configurations use five sequential tasks: (0,1), (2,3), (4,5), (6,7), (8,9).
+- The eight documented configurations use five sequential tasks: (0,1), (2,3), (4,5), (6,7), (8,9).
   These are airplane/automobile, bird/cat, deer/dog, frog/horse, ship/truck in CIFAR-10.
-- Each run uses all 50,000 clean training images, the custom CNN, and 10 epochs/task.
+- Each documented run uses all 50,000 clean training images, the custom CNN, and 10 epochs/task.
 - **Class-IL:** predict among all ten output classes without a task identity.
 - **Task-IL:** mask outputs to the true class pair. Correct task information is supplied at evaluation; it is not inferred by the model.
 - Evaluate the final checkpoint on 10,000 clean and 750,000 corrupted test images;
@@ -139,14 +146,14 @@ All values below are **percent accuracy**; calculations use unrounded values.
     for metric,title in [('task_il','Task-IL'),('class_il','Class-IL')]:
         text+='\n## '+title+' category summary\n\n'
         rows=[]
-        for run,label in RUNS.items():
+        for run,label in COMPARISON.items():
             a=results[run][metric]
             rows.append([label]+[f'{100*v:.2f}' for v in [a['clean'],*[a['categories'][g] for g in GROUPS],a['overall']]])
         text+=table(['Method','Clean',*GROUPS,'Overall corrupted'],rows)+'\n'
         text+='\n### '+title+' per-corruption results\n'
         for group,names in GROUPS.items():
             text+='\n#### '+group+'\n\n'
-            rows=[[label]+[f'{100*results[run][metric]["per_corruption"][c]:.2f}' for c in names] for run,label in RUNS.items()]
+            rows=[[label]+[f'{100*results[run][metric]["per_corruption"][c]:.2f}' for c in names] for run,label in COMPARISON.items()]
             text+=table(['Method',*[LABELS[c] for c in names]],rows)+'\n'
     text+='\n## Reproduce the report\n\n```sh\npython scripts/summarize_corruption_categories.py\n```\n\n[Machine-readable category results](../results/corrected_mixing_seed17/corruption_categories.json) retain fractional accuracies. Original evaluation.json files retain all 75 corruption/severity combinations for both evaluation modes.\n'
     (ROOT/'docs/corruption_category_results.md').write_text(text)

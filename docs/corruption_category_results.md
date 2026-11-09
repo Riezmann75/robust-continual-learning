@@ -1,6 +1,9 @@
 # CIFAR-10-C results by category: Class-IL and Task-IL
 
-These tables aggregate the saved full evaluations of eight completed seed-17 runs;
+These tables compare eight documented seed-17 runs and one imported evaluation.
+*The imported feature-matching result contains scores only. Both SmallCNN feature-matching recipes use classifier InfoNCE. The run configuration is needed to distinguish feature MSE alone from seen-view JS plus feature MSE. [Raw scores](../results/feature_matching_evaluation/evaluation.json).
+
+For the eight documented runs,
 no model was retrained and no new inference or substitute corruptions were needed.
 Method labels show **classifier consistency / mixer objective**; all include CE + DER++.
 MetaMix-guided denotes our paper-guided implementation, not verified author code.
@@ -12,9 +15,9 @@ the mixer objective. All InfoNCE objectives use class-aware negatives.
 
 ## Splits and interpretation
 
-- All configurations use five sequential tasks: (0,1), (2,3), (4,5), (6,7), (8,9).
+- The eight documented configurations use five sequential tasks: (0,1), (2,3), (4,5), (6,7), (8,9).
   These are airplane/automobile, bird/cat, deer/dog, frog/horse, ship/truck in CIFAR-10.
-- Each run uses all 50,000 clean training images, the custom CNN, and 10 epochs/task.
+- Each documented run uses all 50,000 clean training images, the custom CNN, and 10 epochs/task.
 - **Class-IL:** predict among all ten output classes without a task identity.
 - **Task-IL:** mask outputs to the true class pair. Correct task information is supplied at evaluation; it is not inferred by the model.
 - Evaluate the final checkpoint on 10,000 clean and 750,000 corrupted test images;
@@ -56,6 +59,7 @@ All values below are **percent accuracy**; calculations use unrounded values.
 | Chain-aware mixer (m=0.5): InfoNCE / JS | 91.02 | 85.79 | 85.46 | 87.50 | 86.11 | 86.24 |
 | Chain-aware mixer (m=0.5): JS / JS | 90.50 | 82.96 | 85.78 | 86.92 | 86.30 | 85.66 |
 | Chain-aware mixer (m=0.5): InfoNCE / InfoNCE | 90.99 | 84.69 | 85.54 | 87.42 | 86.04 | 86.01 |
+| Feature-matching run*: InfoNCE / Feature MSE (JS unconfirmed) | 90.17 | 83.49 | 84.04 | 86.06 | 84.98 | 84.72 |
 
 ### Task-IL per-corruption results
 
@@ -71,6 +75,7 @@ All values below are **percent accuracy**; calculations use unrounded values.
 | Chain-aware mixer (m=0.5): InfoNCE / JS | 85.58 | 87.19 | 84.60 |
 | Chain-aware mixer (m=0.5): JS / JS | 83.11 | 84.97 | 80.79 |
 | Chain-aware mixer (m=0.5): InfoNCE / InfoNCE | 84.83 | 86.12 | 83.14 |
+| Feature-matching run*: InfoNCE / Feature MSE (JS unconfirmed) | 83.79 | 84.89 | 81.77 |
 
 #### Blur
 
@@ -84,6 +89,7 @@ All values below are **percent accuracy**; calculations use unrounded values.
 | Chain-aware mixer (m=0.5): InfoNCE / JS | 88.35 | 80.99 | 85.39 | 87.10 |
 | Chain-aware mixer (m=0.5): JS / JS | 88.88 | 79.55 | 86.79 | 87.89 |
 | Chain-aware mixer (m=0.5): InfoNCE / InfoNCE | 88.40 | 80.49 | 85.74 | 87.54 |
+| Feature-matching run*: InfoNCE / Feature MSE (JS unconfirmed) | 88.03 | 77.34 | 84.26 | 86.52 |
 
 #### Weather
 
@@ -97,6 +103,7 @@ All values below are **percent accuracy**; calculations use unrounded values.
 | Chain-aware mixer (m=0.5): InfoNCE / JS | 86.67 | 86.35 | 86.87 | 90.10 |
 | Chain-aware mixer (m=0.5): JS / JS | 85.32 | 85.75 | 86.98 | 89.63 |
 | Chain-aware mixer (m=0.5): InfoNCE / InfoNCE | 86.70 | 86.14 | 87.06 | 89.77 |
+| Feature-matching run*: InfoNCE / Feature MSE (JS unconfirmed) | 85.64 | 84.55 | 85.01 | 89.05 |
 
 #### Digital
 
@@ -110,6 +117,7 @@ All values below are **percent accuracy**; calculations use unrounded values.
 | Chain-aware mixer (m=0.5): InfoNCE / JS | 79.25 | 87.43 | 88.96 | 88.79 |
 | Chain-aware mixer (m=0.5): JS / JS | 81.13 | 87.84 | 87.47 | 88.77 |
 | Chain-aware mixer (m=0.5): InfoNCE / InfoNCE | 79.45 | 87.77 | 88.13 | 88.82 |
+| Feature-matching run*: InfoNCE / Feature MSE (JS unconfirmed) | 77.68 | 86.50 | 87.89 | 87.83 |
 
 ## Class-IL category summary
 
@@ -123,6 +131,7 @@ All values below are **percent accuracy**; calculations use unrounded values.
 | Chain-aware mixer (m=0.5): InfoNCE / JS | 56.22 | 45.06 | 47.26 | 47.51 | 48.31 | 47.17 |
 | Chain-aware mixer (m=0.5): JS / JS | 50.33 | 36.79 | 45.67 | 42.39 | 43.25 | 42.37 |
 | Chain-aware mixer (m=0.5): InfoNCE / InfoNCE | 50.15 | 39.84 | 44.79 | 42.53 | 43.26 | 42.79 |
+| Feature-matching run*: InfoNCE / Feature MSE (JS unconfirmed) | 54.96 | 42.02 | 46.40 | 44.95 | 46.08 | 45.05 |
 
 ### Class-IL per-corruption results
 
@@ -138,6 +147,7 @@ All values below are **percent accuracy**; calculations use unrounded values.
 | Chain-aware mixer (m=0.5): InfoNCE / JS | 45.16 | 47.92 | 42.08 |
 | Chain-aware mixer (m=0.5): JS / JS | 37.75 | 39.82 | 32.79 |
 | Chain-aware mixer (m=0.5): InfoNCE / InfoNCE | 41.11 | 42.84 | 35.57 |
+| Feature-matching run*: InfoNCE / Feature MSE (JS unconfirmed) | 42.64 | 44.64 | 38.78 |
 
 #### Blur
 
@@ -151,6 +161,7 @@ All values below are **percent accuracy**; calculations use unrounded values.
 | Chain-aware mixer (m=0.5): InfoNCE / JS | 52.44 | 40.98 | 45.35 | 50.27 |
 | Chain-aware mixer (m=0.5): JS / JS | 50.77 | 36.39 | 45.93 | 49.59 |
 | Chain-aware mixer (m=0.5): InfoNCE / InfoNCE | 48.95 | 38.01 | 43.66 | 48.52 |
+| Feature-matching run*: InfoNCE / Feature MSE (JS unconfirmed) | 52.78 | 35.64 | 45.87 | 51.32 |
 
 #### Weather
 
@@ -164,6 +175,7 @@ All values below are **percent accuracy**; calculations use unrounded values.
 | Chain-aware mixer (m=0.5): InfoNCE / JS | 47.50 | 42.61 | 48.49 | 51.44 |
 | Chain-aware mixer (m=0.5): JS / JS | 39.77 | 37.84 | 44.17 | 47.76 |
 | Chain-aware mixer (m=0.5): InfoNCE / InfoNCE | 41.20 | 38.63 | 44.44 | 45.85 |
+| Feature-matching run*: InfoNCE / Feature MSE (JS unconfirmed) | 44.12 | 40.23 | 45.47 | 49.99 |
 
 #### Digital
 
@@ -177,6 +189,7 @@ All values below are **percent accuracy**; calculations use unrounded values.
 | Chain-aware mixer (m=0.5): InfoNCE / JS | 38.75 | 50.65 | 51.21 | 52.62 |
 | Chain-aware mixer (m=0.5): JS / JS | 37.94 | 48.22 | 39.21 | 47.62 |
 | Chain-aware mixer (m=0.5): InfoNCE / InfoNCE | 35.55 | 47.34 | 42.63 | 47.54 |
+| Feature-matching run*: InfoNCE / Feature MSE (JS unconfirmed) | 36.04 | 49.83 | 48.36 | 50.08 |
 
 ## Reproduce the report
 
