@@ -146,6 +146,38 @@ chain-aware InfoNCE / JS. It reaches 50.15% clean and 42.79% corrupted class-IL,
 respectively 6.07 and 4.38 percentage points lower. Reproduce it with
 `python scripts/run_experiment.py configs/chain_aware_infonce_infonce.json --run`.
 
+### ResNet18 results (seed 17, trained from scratch)
+
+The following eight runs use CIFAR-adapted ResNet18 with **no pretrained weights**,
+native 512-dimensional features, and 11,173,962 classifier parameters. Each run
+completed **10 epochs per task across five tasks**, 15,650 classifier updates,
+and 500,000 current-image presentations, retaining the CE + DER++ settings above.
+These are single-seed results with inherited settings, not ResNet18-tuned results
+or a reproduction of the paper's 50-epochs-per-task budget.
+
+All values are **accuracy (%)** from the final checkpoint, evaluated on 10,000
+clean test images and 750,000 CIFAR-10-C images (15 corruptions x 5 severities).
+Class-IL predicts among all ten classes; Task-IL receives the correct class pair.
+**Bold** marks the best score in each reported accuracy column.
+
+| Mixer | Classifier consistency | Mixer objective | Clean class-IL | CIFAR-10-C class-IL | CIFAR-10-C task-IL |
+| --- | --- | --- | ---: | ---: | ---: |
+| MetaMix-guided mixer | JS | JS | 25.79% | 24.15% | 76.86% |
+| Random mixer | JS | None | 33.46% | 31.29% | 83.57% |
+| Random mixer | Class-aware InfoNCE | None | **41.73%** | **38.96%** | **84.30%** |
+| MetaMix-guided mixer | Class-aware InfoNCE | Class-aware InfoNCE | 28.93% | 26.86% | 76.16% |
+| MetaMix-guided mixer | Class-aware InfoNCE | JS | 29.28% | 26.90% | 77.73% |
+| Chain-aware mixer (`m = 0.5`) | Class-aware InfoNCE | JS | 32.47% | 30.39% | 80.52% |
+| Chain-aware mixer (`m = 0.5`) | JS | JS | 28.03% | 26.37% | 79.93% |
+| Chain-aware mixer (`m = 0.5`) | Class-aware InfoNCE | Class-aware InfoNCE | 31.40% | 29.41% | 80.65% |
+
+Run provenance: PBS array `26155568[]`, NVIDIA A100-SXM4-40GB, Python 3.12.11,
+PyTorch 2.8.0+cu129 and torchvision 0.23.0+cu129. These versions differ from the
+pinned setup versions. Downloaded evaluations and logs were checked locally;
+the HPC artifacts are not committed to Git. See the
+[ResNet18 HPC instructions](jobs/resnet18_readme/README.md) for the eight-setting
+mapping and reproduction commands.
+
 ### Class-IL and Task-IL by corruption category
 
 [Category and per-corruption tables](docs/corruption_category_results.md) report
@@ -335,8 +367,8 @@ python scripts/run_experiment.py configs/matched_random_infonce.json \
 Use a fresh output directory when changing backbones. Configuration metadata
 records the architecture, scratch initialization and actual parameter counts;
 resume guards reject incompatible runs. Existing optimizer settings are retained
-as starting recipes and have not been tuned for ResNet18. Published SmallCNN
-results do not represent ResNet18 performance.
+as starting recipes and have not been tuned for ResNet18. The earlier SmallCNN results and the separate ResNet18 table above report
+different backbones and should be interpreted accordingly.
 
 PBS jobs for all eight main-comparison settings with scratch ResNet18, including
 post-clone setup and submission commands: [HPC instructions](jobs/resnet18_readme/README.md).
