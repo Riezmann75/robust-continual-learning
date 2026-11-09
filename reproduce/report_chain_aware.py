@@ -47,6 +47,10 @@ def report(output, committed_updates):
                   classifier_consistency=consistency,
                   outer_consistency=outer_consistency,
                   caveat=f"New chain-aware method; seen {consistency}, unseen {outer_consistency}, fixed m=.5; direct consistency minimization is not a retention hypergradient or a guarantee of robustness.")
+    if outer_consistency == 'feature_match':
+        result['caveat'] = 'Seen mixtures match detached unmixed unseen target features; fixed m=.5; no hypergradient or robustness guarantee.'
+        for epoch in epochs:
+            epoch['feature_match_after_mean'] = epoch['outer_consistency_after_mean']
     temp = output/'progress.json.tmp'
     temp.write_text(json.dumps(result, indent=2))
     os.replace(temp, output/'progress.json')

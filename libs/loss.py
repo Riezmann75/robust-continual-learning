@@ -112,3 +112,16 @@ def diversity_loss(h):
     gram = u @ u.transpose(1, 2)
     mask = ~torch.eye(h.shape[1], device=h.device, dtype=torch.bool)
     return gram[:, mask].square().mean()
+
+
+def seen_unseen_feature_loss(mixed_features, target_features):
+    """Raw-feature MSE: (V,N,D) seen mixtures vs (V,K,N,D) unseen chains.
+
+    Every seen view matches all K independently sampled targets for that view.
+    Mean reduction covers views, targets, examples and feature coordinates.
+    """
+    if (mixed_features.ndim != 3 or target_features.ndim != 4
+            or target_features.shape[0] != mixed_features.shape[0]
+            or target_features.shape[2:] != mixed_features.shape[1:]):
+        raise ValueError('Expected mixed (V,N,D) and targets (V,K,N,D)')
+    return (mixed_features[:, None] - target_features.detach()).square().mean()

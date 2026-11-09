@@ -84,7 +84,7 @@ from libs.loss import contrastive_scores
 from libs.loss import infonce_loss
 
 
-from libs.loss import consistency_loss
+from libs.loss import consistency_loss, seen_unseen_feature_loss
 
 # Extra random mixture draws never consume the historical shuffle/operator RNG.
 MIXTURE_RNG = np.random.default_rng(170501)
@@ -155,7 +155,7 @@ def initial_state(device):
 def active_slots(b,r,device):
     return torch.cat((torch.arange(b,device=device),32+torch.arange(r,device=device)))
 
-def outer_objective(model,controller,context,incoming,x,branches,params,buffers,labels,kind='js',temperature=.1,candidates=None):
+def outer_objective(model,controller,context,incoming,x,branches,params,buffers,labels,kind='js',temperature=.1,candidates=None,target_features=None):
     assert not model.training
     om,ow,_=controller(context,incoming,candidates)
     joined=torch.cat((x,*mixed_views(x,branches,om,ow)))
@@ -163,6 +163,11 @@ def outer_objective(model,controller,context,incoming,x,branches,params,buffers,
     zs=list(z.chunk(3));hs=list(h.chunk(3))
     zs[0]=zs[0].detach();hs[0]=hs[0].detach()
     ce=F.cross_entropy(zs[0],labels)
+    if kind == 'feature_match':
+        if target_features is None:
+            raise ValueError('feature_match requires independent unseen targets')
+        penalty = seen_unseen_feature_loss(torch.stack(hs[1:]), target_features)
+        return penalty,penalty,om,ow,ce
     penalty=consistency_loss(zs,hs,labels,kind,temperature)
     return ce+penalty,penalty,om,ow,ce
 
@@ -250,7 +255,7 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument('--mixer',choices=['learned'],default='learned')
     p.add_argument('--consistency',choices=['infonce','js'],default='infonce')
-    p.add_argument('--outer-consistency',choices=['infonce','js'],default='js')
+    p.add_argument('--outer-consistency',choices=['infonce','js','feature_match'],default='js')
     p.add_argument('--temperature',type=float,default=.1)
     p.add_argument('--device', choices=['cuda'], default='cuda')
     p.add_argument('--root', type=Path, default=Path('experiments/metamix_cifar10/data'))
@@ -291,6 +296,15 @@ def main():
         torch=torch.__version__, torchvision=torchvision.__version__, numpy=np.__version__,
         pillow=PIL.__version__, cuda=torch.version.cuda, cudnn=torch.backends.cudnn.version(),
         threads=4, deterministic_cudnn=True, tf32=False, root=str(a.root.resolve()))
+    if a.outer_consistency == 'feature_match':
+        config.update(
+            method=f'Chain-aware fixed-m mixer: seen {classifier_objective} + seen-to-unseen feature MSE + DER++',
+            mixer_objective='seen-to-unseen raw pooled feature MSE',
+            target_policy='six unmixed unseen chains; each seen view matches its three unseen targets; detached; reused for J steps',
+            feature_match_coefficient=1., old_unseen_consistency_coefficient=0.,
+            matching_limit='feature matching may average incompatible targets; fixed m=.5 restricts reachability; no robustness guarantee',
+            solver='fixed updated classifier; gradients through seen mixtures only; no hypergradient; no outer clean CE term',
+            bn='classifier joint clean+seen train; outer eval; seen descriptors recomputed after classifier update; six unseen target features cached without gradients')
     config.update(backbone_metadata(a.backbone))
     config['candidate_features'] = f"{config['feature_dimension']} raw feature deltas and 10 softmax probability deltas; detached eval joint7N forward"
     config['scorer'] = f"shared Linear({5 + config['feature_dimension'] + 10},32),ReLU,Linear(32,1); zero final layer; softmax per image/view"
