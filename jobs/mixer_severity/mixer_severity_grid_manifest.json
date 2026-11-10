@@ -1,0 +1,262 @@
+{
+  "size": 18,
+  "experiment_path": "experiments/mixer_severity",
+  "output_pattern": "experiments/mixer_severity/<EXP_NAME>/<ARRAY_JOB_ID[]>/<EXP_NAME>_<INDEX>",
+  "pbs": "jobs/mixer_severity/mixer_severity.pbs",
+  "submit": "jobs/mixer_severity/submit_mixer_severity.sh",
+  "download": "jobs/mixer_severity/download_mixer_severity.sh",
+  "points": [
+    {
+      "index": 1,
+      "arguments": {
+        "objective": "metamix",
+        "severity-upperbound": 3,
+        "seed": 17
+      },
+      "scheduling": {
+        "gpus_per_job": 1,
+        "tasks_per_gpu": 1,
+        "gpu_slot": 0,
+        "array_task": 1
+      }
+    },
+    {
+      "index": 2,
+      "arguments": {
+        "objective": "metamix",
+        "severity-upperbound": 3,
+        "seed": 28
+      },
+      "scheduling": {
+        "gpus_per_job": 1,
+        "tasks_per_gpu": 1,
+        "gpu_slot": 0,
+        "array_task": 2
+      }
+    },
+    {
+      "index": 3,
+      "arguments": {
+        "objective": "metamix",
+        "severity-upperbound": 3,
+        "seed": 39
+      },
+      "scheduling": {
+        "gpus_per_job": 1,
+        "tasks_per_gpu": 1,
+        "gpu_slot": 0,
+        "array_task": 3
+      }
+    },
+    {
+      "index": 4,
+      "arguments": {
+        "objective": "metamix",
+        "severity-upperbound": 5,
+        "seed": 17
+      },
+      "scheduling": {
+        "gpus_per_job": 1,
+        "tasks_per_gpu": 1,
+        "gpu_slot": 0,
+        "array_task": 4
+      }
+    },
+    {
+      "index": 5,
+      "arguments": {
+        "objective": "metamix",
+        "severity-upperbound": 5,
+        "seed": 28
+      },
+      "scheduling": {
+        "gpus_per_job": 1,
+        "tasks_per_gpu": 1,
+        "gpu_slot": 0,
+        "array_task": 5
+      }
+    },
+    {
+      "index": 6,
+      "arguments": {
+        "objective": "metamix",
+        "severity-upperbound": 5,
+        "seed": 39
+      },
+      "scheduling": {
+        "gpus_per_job": 1,
+        "tasks_per_gpu": 1,
+        "gpu_slot": 0,
+        "array_task": 6
+      }
+    },
+    {
+      "index": 7,
+      "arguments": {
+        "objective": "metamix",
+        "severity-upperbound": 7,
+        "seed": 17
+      },
+      "scheduling": {
+        "gpus_per_job": 1,
+        "tasks_per_gpu": 1,
+        "gpu_slot": 0,
+        "array_task": 7
+      }
+    },
+    {
+      "index": 8,
+      "arguments": {
+        "objective": "metamix",
+        "severity-upperbound": 7,
+        "seed": 28
+      },
+      "scheduling": {
+        "gpus_per_job": 1,
+        "tasks_per_gpu": 1,
+        "gpu_slot": 0,
+        "array_task": 8
+      }
+    },
+    {
+      "index": 9,
+      "arguments": {
+        "objective": "metamix",
+        "severity-upperbound": 7,
+        "seed": 39
+      },
+      "scheduling": {
+        "gpus_per_job": 1,
+        "tasks_per_gpu": 1,
+        "gpu_slot": 0,
+        "array_task": 9
+      }
+    },
+    {
+      "index": 10,
+      "arguments": {
+        "objective": "feature_mse",
+        "severity-upperbound": 3,
+        "seed": 17
+      },
+      "scheduling": {
+        "gpus_per_job": 1,
+        "tasks_per_gpu": 1,
+        "gpu_slot": 0,
+        "array_task": 10
+      }
+    },
+    {
+      "index": 11,
+      "arguments": {
+        "objective": "feature_mse",
+        "severity-upperbound": 3,
+        "seed": 28
+      },
+      "scheduling": {
+        "gpus_per_job": 1,
+        "tasks_per_gpu": 1,
+        "gpu_slot": 0,
+        "array_task": 11
+      }
+    },
+    {
+      "index": 12,
+      "arguments": {
+        "objective": "feature_mse",
+        "severity-upperbound": 3,
+        "seed": 39
+      },
+      "scheduling": {
+        "gpus_per_job": 1,
+        "tasks_per_gpu": 1,
+        "gpu_slot": 0,
+        "array_task": 12
+      }
+    },
+    {
+      "index": 13,
+      "arguments": {
+        "objective": "feature_mse",
+        "severity-upperbound": 5,
+        "seed": 17
+      },
+      "scheduling": {
+        "gpus_per_job": 1,
+        "tasks_per_gpu": 1,
+        "gpu_slot": 0,
+        "array_task": 13
+      }
+    },
+    {
+      "index": 14,
+      "arguments": {
+        "objective": "feature_mse",
+        "severity-upperbound": 5,
+        "seed": 28
+      },
+      "scheduling": {
+        "gpus_per_job": 1,
+        "tasks_per_gpu": 1,
+        "gpu_slot": 0,
+        "array_task": 14
+      }
+    },
+    {
+      "index": 15,
+      "arguments": {
+        "objective": "feature_mse",
+        "severity-upperbound": 5,
+        "seed": 39
+      },
+      "scheduling": {
+        "gpus_per_job": 1,
+        "tasks_per_gpu": 1,
+        "gpu_slot": 0,
+        "array_task": 15
+      }
+    },
+    {
+      "index": 16,
+      "arguments": {
+        "objective": "feature_mse",
+        "severity-upperbound": 7,
+        "seed": 17
+      },
+      "scheduling": {
+        "gpus_per_job": 1,
+        "tasks_per_gpu": 1,
+        "gpu_slot": 0,
+        "array_task": 16
+      }
+    },
+    {
+      "index": 17,
+      "arguments": {
+        "objective": "feature_mse",
+        "severity-upperbound": 7,
+        "seed": 28
+      },
+      "scheduling": {
+        "gpus_per_job": 1,
+        "tasks_per_gpu": 1,
+        "gpu_slot": 0,
+        "array_task": 17
+      }
+    },
+    {
+      "index": 18,
+      "arguments": {
+        "objective": "feature_mse",
+        "severity-upperbound": 7,
+        "seed": 39
+      },
+      "scheduling": {
+        "gpus_per_job": 1,
+        "tasks_per_gpu": 1,
+        "gpu_slot": 0,
+        "array_task": 18
+      }
+    }
+  ]
+}

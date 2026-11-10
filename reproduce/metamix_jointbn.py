@@ -4,6 +4,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from libs.trainer import BiLevelTrainer
 from libs import library_source_hashes, snapshot_source
+from functools import partial
 import argparse
 import hashlib
 import json
@@ -64,7 +65,7 @@ def norm(x):
 
 from libs.loss import js
 
-def chains(raw, pool, device):
+def chains(raw, pool, device, *, severity_upperbound=3):
     views = []
     for _ in range(2):
         branches = []
@@ -73,7 +74,7 @@ def chains(raw, pool, device):
             for image in raw:
                 im = Image.fromarray(image)
                 for _ in range(int(np.random.randint(1, 4))):
-                    im = pool[int(np.random.randint(len(pool)))](im, 3)
+                    im = pool[int(np.random.randint(len(pool)))](im, severity_upperbound)
                 batch.append(np.array(im, copy=True))
             branches.append(tensor(np.stack(batch), device))
         views.append(torch.stack(branches))
@@ -132,8 +133,8 @@ def outer_objective(model,controller,context,incoming,x,branches,params,buffers,
     # Original-input CE is constant w.r.t. phi under this first-order convention.
     return outer_ce+outer_js,outer_js,om,ow,outer_ce
 
-def step(model, controller, optimizer, mixer_optimizer, memory, state, raw, labels, device, j=3,debug=False):
-    return BiLevelTrainer.update_metamix_jointbn(model, controller, optimizer, mixer_optimizer, memory, state, raw, labels, device, j, debug, active_slots=active_slots, blend=blend, chains=chains, clone_buffers=clone_buffers, context_for=context_for, forward=forward, js=js, ops=ops, outer_objective=outer_objective, tensor=tensor)
+def step(model, controller, optimizer, mixer_optimizer, memory, state, raw, labels, device, j=3,debug=False,severity_upperbound=3):
+    return BiLevelTrainer.update_metamix_jointbn(model, controller, optimizer, mixer_optimizer, memory, state, raw, labels, device, j, debug, active_slots=active_slots, blend=blend, chains=partial(chains, severity_upperbound=severity_upperbound), clone_buffers=clone_buffers, context_for=context_for, forward=forward, js=js, ops=ops, outer_objective=outer_objective, tensor=tensor)
 
 def atomic_json(path, value):
     temp = path.with_suffix(path.suffix+'.tmp')
@@ -211,6 +212,8 @@ def evaluate(model, root, output, device, synthetic=None):
 
 def main():
     p = argparse.ArgumentParser()
+    p.add_argument('--seed', type=int, default=17)
+    p.add_argument('--severity-upperbound', type=float, default=3)
     p.add_argument('--device', choices=['cuda'], default='cuda')
     p.add_argument('--root', type=Path, default=Path('experiments/metamix_cifar10/data'))
     p.add_argument('--output', type=Path, default=Path('experiments/metamix_jointbn/seed17'))
@@ -219,11 +222,15 @@ def main():
     p.add_argument('--pipeline-test', action='store_true')
     p.add_argument('--backbone', choices=['smallcnn', 'resnet18'], default='smallcnn')
     a = p.parse_args()
+    if not 0 <= a.seed < 2**32:
+        p.error('--seed must be in [0, 2**32)')
+    if not .1 <= a.severity_upperbound <= 10:
+        p.error('--severity-upperbound must be in [0.1, 10]')
     if a.epochs_per_task < 1:
         p.error('--epochs-per-task must be positive')
     if a.stop_after_epochs and not a.pipeline_test:
         p.error('stop-after-epochs is validation only')
-    setup(17, a.device)
+    setup(a.seed, a.device)
     a.output.mkdir(parents=True, exist_ok=True)
     checkpoint_path = a.output/'MetaMix'/'checkpoint.pt'
     checkpoint_path.parent.mkdir(exist_ok=True)
@@ -234,11 +241,11 @@ def main():
         bn='joint clean+two seen views train forward then separate distillation; context cloned buffers; joint clean+two unseen outer eval forward',
         unresolved='paper lacks precise feature pairing and autograd details; first-order interpretation not verified author code',
         parent_run_sha256='b45bad8e80b06ab9579cf72f81df7e1c93055944c544adb3e5239a25534fd41e',
-        seed=17, device=a.device, gpu=torch.cuda.get_device_name(), epochs_per_task=1 if a.pipeline_test else a.epochs_per_task,
+        seed=a.seed, device=a.device, gpu=torch.cuda.get_device_name(), epochs_per_task=1 if a.pipeline_test else a.epochs_per_task,
         images_per_class=17 if a.pipeline_test else 5000, tasks=[[0,1],[2,3],[4,5],[6,7],[8,9]],
         batch=32, replay_batch=32, reservoir_capacity=500, J=3, classifier_lr=.03, mixer_lr=.05,
         alpha=.2, beta=.5, js_coefficient=1., channels=[32,64,128], parameters=288746,
-        resolution=32, hidden_size=5, context_size=258, severity=3, views=2, chains=3, depth=[1,3],
+        resolution=32, hidden_size=5, context_size=258, severity=a.severity_upperbound, views=2, chains=3, depth=[1,3],
         normalization_mean=[.4914,.4822,.4465], normalization_std=[.2470,.2435,.2616],
         pipeline_test=a.pipeline_test, source_hashes=source_hashes(), python=platform.python_version(),
         torch=torch.__version__, torchvision=torchvision.__version__, numpy=np.__version__,
@@ -275,6 +282,7 @@ def main():
     optimizer = torch.optim.SGD(model.parameters(), lr=.03)
     mixer_optimizer = torch.optim.SGD(controller.parameters(), lr=.05)
     memory = Reservoir()
+    memory.rng = np.random.default_rng(a.seed + 1)
     state = initial_state(a.device)
     next_task = next_epoch = updates = 0
     trace_path = a.output/'trace.jsonl'
@@ -316,7 +324,7 @@ def main():
             with trace_path.open('a', buffering=1) as trace:
                 for batch, pos in enumerate(range(0, len(order), 32)):
                     ix = order[pos:pos+32]
-                    row = trainer.step(raw[ix], labels[ix], j=3)
+                    row = trainer.step(raw[ix], labels[ix], j=3, severity_upperbound=a.severity_upperbound)
                     state = trainer.state
                     updates += 1
                     row.update(task=task+1, epoch=epoch+1, global_epoch=task*epochs+epoch+1,

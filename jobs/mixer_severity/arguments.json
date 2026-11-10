@@ -1,0 +1,16 @@
+{
+  "objective": [
+    "metamix",
+    "feature_mse"
+  ],
+  "severity-upperbound": [
+    3,
+    5,
+    7
+  ],
+  "seed": [
+    17,
+    28,
+    39
+  ]
+}
