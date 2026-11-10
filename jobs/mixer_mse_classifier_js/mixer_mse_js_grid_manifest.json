@@ -1,0 +1,91 @@
+{
+  "size": 9,
+  "experiment_path": "experiments/mixer_mse_classifier_js",
+  "output_pattern": "experiments/mixer_mse_classifier_js/<EXP_NAME>/<ARRAY_JOB_ID[]>/<EXP_NAME>_<INDEX>",
+  "pbs": "jobs/mixer_mse_classifier_js/mixer_mse_js.pbs",
+  "submit": "jobs/mixer_mse_classifier_js/submit_mixer_mse_js.sh",
+  "download": "jobs/mixer_mse_classifier_js/download_mixer_mse_js.sh",
+  "points": [
+    {
+      "index": 1,
+      "arguments": {
+        "objective": "feature_mse",
+        "classifier-consistency": "js",
+        "severity-upperbound": 3,
+        "seed": 17
+      }
+    },
+    {
+      "index": 2,
+      "arguments": {
+        "objective": "feature_mse",
+        "classifier-consistency": "js",
+        "severity-upperbound": 3,
+        "seed": 28
+      }
+    },
+    {
+      "index": 3,
+      "arguments": {
+        "objective": "feature_mse",
+        "classifier-consistency": "js",
+        "severity-upperbound": 3,
+        "seed": 39
+      }
+    },
+    {
+      "index": 4,
+      "arguments": {
+        "objective": "feature_mse",
+        "classifier-consistency": "js",
+        "severity-upperbound": 5,
+        "seed": 17
+      }
+    },
+    {
+      "index": 5,
+      "arguments": {
+        "objective": "feature_mse",
+        "classifier-consistency": "js",
+        "severity-upperbound": 5,
+        "seed": 28
+      }
+    },
+    {
+      "index": 6,
+      "arguments": {
+        "objective": "feature_mse",
+        "classifier-consistency": "js",
+        "severity-upperbound": 5,
+        "seed": 39
+      }
+    },
+    {
+      "index": 7,
+      "arguments": {
+        "objective": "feature_mse",
+        "classifier-consistency": "js",
+        "severity-upperbound": 7,
+        "seed": 17
+      }
+    },
+    {
+      "index": 8,
+      "arguments": {
+        "objective": "feature_mse",
+        "classifier-consistency": "js",
+        "severity-upperbound": 7,
+        "seed": 28
+      }
+    },
+    {
+      "index": 9,
+      "arguments": {
+        "objective": "feature_mse",
+        "classifier-consistency": "js",
+        "severity-upperbound": 7,
+        "seed": 39
+      }
+    }
+  ]
+}
