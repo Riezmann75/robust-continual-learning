@@ -45,14 +45,14 @@ def candidate_descriptors(model, x, branches):
 
 
 class Reservoir:
-    def __init__(self, capacity=500):
+    def __init__(self, capacity=500, seed=18):
         self.capacity = capacity
         self.seen = 0
         self.size = 0
         self.x = torch.empty(capacity, 32, 32, 3, dtype=torch.uint8)
         self.y = torch.empty(capacity, dtype=torch.long)
         self.logits = torch.empty(capacity, 10)
-        self.rng = np.random.default_rng(18)
+        self.rng = np.random.default_rng(seed)
 
     def add(self, x, y, logits):
         for image, label, logit in zip(x, y, logits.detach().cpu()):
@@ -207,7 +207,7 @@ def setup(seed, device):
     if device != 'cuda' or not torch.cuda.is_available():
         raise RuntimeError('This run requires an available CUDA device; no fallback')
     global MIXTURE_RNG
-    MIXTURE_RNG=np.random.default_rng(170501)
+    MIXTURE_RNG=np.random.default_rng(seed * 10000 + 501)
     torch.set_num_threads(4)
     random.seed(seed)
     np.random.seed(seed)
@@ -255,6 +255,7 @@ def evaluate(model, root, output, device, synthetic=None):
 
 def main(*, bilevel_step=None, split_indices=None):
     p = argparse.ArgumentParser()
+    p.add_argument('--seed', type=int, default=17)
     p.add_argument('--mixer',choices=['learned'],default='learned')
     p.add_argument('--consistency',choices=['infonce','js'],default='infonce')
     if bilevel_step:
@@ -264,13 +265,18 @@ def main(*, bilevel_step=None, split_indices=None):
     p.add_argument('--temperature',type=float,default=.1)
     p.add_argument('--device', choices=['cuda'], default='cuda')
     p.add_argument('--root', type=Path, default=Path('experiments/metamix_cifar10/data'))
-    p.add_argument('--output', type=Path, default=Path('experiments/virtual_mixer/seed17' if bilevel_step else 'experiments/chain_aware_mixing/seed17'))
+    p.add_argument('--output', type=Path, default=None)
     p.add_argument('--epochs-per-task', type=int, default=10)
     p.add_argument('--stop-after-epochs',type=int,default=0)
     p.add_argument('--pipeline-test', action='store_true')
     p.add_argument('--backbone', choices=['smallcnn', 'resnet18'], default='smallcnn')
     p.add_argument('--batch-size', type=int, default=256 if bilevel_step else 32)
     a = p.parse_args()
+    if not 0 <= a.seed < 2**32:
+        p.error('--seed must be between 0 and 2**32 - 1')
+    if a.output is None:
+        family = 'virtual_mixer' if bilevel_step else 'chain_aware_mixing'
+        a.output = Path('experiments') / family / f'seed{a.seed}'
     batch_size = a.batch_size
     if batch_size < 1:
         p.error('batch-size must be positive')
@@ -279,7 +285,7 @@ def main(*, bilevel_step=None, split_indices=None):
         p.error('--epochs-per-task must be positive')
     if a.stop_after_epochs and not a.pipeline_test:
         p.error('stop-after-epochs is validation only')
-    setup(17, a.device)
+    setup(a.seed, a.device)
     a.output.mkdir(parents=True, exist_ok=True)
     checkpoint_path = a.output/'MetaMix'/'checkpoint.pt'
     checkpoint_path.parent.mkdir(exist_ok=True)
@@ -295,7 +301,7 @@ def main(*, bilevel_step=None, split_indices=None):
         bn='joint clean+two seen views train forward then separate distillation; context cloned buffers; joint clean+two unseen outer eval forward; candidate descriptors joint original+six chains eval before classifier and after classifier for unseen',
         unresolved='paper lacks precise feature pairing and autograd details; first-order interpretation not verified author code',
         parent_run_sha256='b45bad8e80b06ab9579cf72f81df7e1c93055944c544adb3e5239a25534fd41e',
-        seed=17, device=a.device, gpu=torch.cuda.get_device_name(), epochs_per_task=1 if a.pipeline_test else a.epochs_per_task,
+        seed=a.seed, device=a.device, gpu=torch.cuda.get_device_name(), epochs_per_task=1 if a.pipeline_test else a.epochs_per_task,
         images_per_class=17 if a.pipeline_test else 5000, tasks=[[0,1],[2,3],[4,5],[6,7],[8,9]],
         batch=batch_size, replay_batch=32, reservoir_capacity=500, J=3 if a.mixer=='learned' else 0, classifier_lr=.03, mixer_lr=.05,
         alpha=.2, beta=.5, js_coefficient=1., channels=[32,64,128], parameters=288746,
@@ -328,7 +334,7 @@ def main(*, bilevel_step=None, split_indices=None):
                       method=f'One-step bilevel mixer: seen {classifier_objective} + DER++',
                       J=1, mixer_objective='query clean CE + query unseen CE',
                       solver='differentiate through one plain classifier SGD update',
-                      sampling='seed-17 stratified 10% query holdout per task; query sampled without replacement per batch',
+                      sampling=f'seed-{a.seed} stratified 10% query holdout per task; query sampled without replacement per batch',
                       matching_limit='one-step approximation on training-set query holdout',
                       bn='one committed support training pass plus distillation; virtual query in eval mode',
                       implementation='one virtual SGD step committed using detached support gradients',
@@ -359,7 +365,7 @@ def main(*, bilevel_step=None, split_indices=None):
         assert len(raw) == 50000 and all((labels == c).sum() == 5000 for c in range(10))
     indices = [np.flatnonzero(np.isin(labels, pair)).tolist() for pair in config['tasks']]
     if bilevel_step:
-        indices, query_indices = split_indices(labels, config['tasks'])
+        indices, query_indices = split_indices(labels, config['tasks'], seed=a.seed)
         atomic_json(a.output/'query_indices.json', query_indices)
     index_path = a.output/'train_indices.json'
     if index_path.exists():
@@ -370,7 +376,7 @@ def main(*, bilevel_step=None, split_indices=None):
     assert sum(p.numel() for p in model.parameters()) == config['parameters']
     optimizer = torch.optim.SGD(model.parameters(), lr=.03)
     mixer_optimizer = torch.optim.SGD(controller.parameters(), lr=.05)
-    memory = Reservoir()
+    memory = Reservoir(seed=a.seed + 1)
     state = initial_state(a.device, batch_size, config['replay_batch'])
     next_task = next_epoch = updates = 0
     trace_path = a.output/'trace.jsonl'

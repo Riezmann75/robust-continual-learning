@@ -6,9 +6,9 @@ from torch.nn import functional as F
 import chain_aware_mixing as base
 
 
-def split_task_indices(labels, tasks):
+def split_task_indices(labels, tasks, seed=17):
     """Reserve 10% per class for mixer queries, disjoint from classifier/replay."""
-    rng = np.random.default_rng(17)
+    rng = np.random.default_rng(seed)
     support, queries = [], []
     for pair in tasks:
         train, query = [], []
