@@ -1,0 +1,30 @@
+{
+  "size": 1,
+  "experiment_path": "experiments/prediction_match_js_smallcnn",
+  "output_pattern": "experiments/prediction_match_js_smallcnn/<EXP_NAME>/<ARRAY_JOB_ID[]>/<EXP_NAME>_<INDEX>",
+  "pbs": "jobs/prediction_js/prediction_js.pbs",
+  "submit": "jobs/prediction_js/submit_prediction_js.sh",
+  "download": "jobs/prediction_js/download_prediction_js.sh",
+  "points": [
+    {
+      "index": 1,
+      "arguments": {
+        "device": "cuda",
+        "backbone": "smallcnn",
+        "epochs-per-task": 10,
+        "consistency": "infonce",
+        "outer-consistency": "prediction_match_js",
+        "temperature": 0.1,
+        "root": "experiments/metamix_cifar10/data",
+        "batch-size": 32,
+        "seed": 17
+      },
+      "scheduling": {
+        "gpus_per_job": 1,
+        "tasks_per_gpu": 1,
+        "gpu_slot": 0,
+        "array_task": 1
+      }
+    }
+  ]
+}

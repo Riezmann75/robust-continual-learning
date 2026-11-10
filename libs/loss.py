@@ -114,6 +114,16 @@ def diversity_loss(h):
     return gram[:, mask].square().mean()
 
 
+def seen_unseen_prediction_js(mixed, targets):
+    """Mean pairwise JS over views, target chains and examples (class axis last)."""
+    if (mixed.ndim != 3 or targets.ndim != 4
+            or targets.shape[0] != mixed.shape[0] or targets.shape[2:] != mixed.shape[1:]):
+        raise ValueError('Expected mixed logits (V,N,C) and target logits (V,K,N,C)')
+    classes = mixed.shape[-1]
+    paired = mixed[:, None].expand_as(targets)
+    return js(paired.reshape(-1, classes), targets.detach().reshape(-1, classes))
+
+
 def seen_unseen_feature_loss(mixed_features, target_features):
     """Raw-feature MSE: (V,N,D) seen mixtures vs (V,K,N,D) unseen chains.
 

@@ -84,7 +84,7 @@ from libs.loss import contrastive_scores
 from libs.loss import infonce_loss
 
 
-from libs.loss import consistency_loss, seen_unseen_feature_loss
+from libs.loss import consistency_loss, seen_unseen_feature_loss, seen_unseen_prediction_js
 
 # Extra random mixture draws never consume the historical shuffle/operator RNG.
 MIXTURE_RNG = np.random.default_rng(170501)
@@ -156,7 +156,7 @@ def initial_state(device, current_capacity=32, replay_capacity=32):
 def active_slots(b,r,device,current_capacity=32):
     return torch.cat((torch.arange(b,device=device),current_capacity+torch.arange(r,device=device)))
 
-def outer_objective(model,controller,context,incoming,x,branches,params,buffers,labels,kind='js',temperature=.1,candidates=None,target_features=None):
+def outer_objective(model,controller,context,incoming,x,branches,params,buffers,labels,kind='js',temperature=.1,candidates=None,target_features=None,target_logits=None):
     assert not model.training
     om,ow,_=controller(context,incoming,candidates)
     joined=torch.cat((x,*mixed_views(x,branches,om,ow)))
@@ -164,6 +164,11 @@ def outer_objective(model,controller,context,incoming,x,branches,params,buffers,
     zs=list(z.chunk(3));hs=list(h.chunk(3))
     zs[0]=zs[0].detach();hs[0]=hs[0].detach()
     ce=F.cross_entropy(zs[0],labels)
+    if kind == 'prediction_match_js':
+        if target_logits is None:
+            raise ValueError('prediction_match_js requires unmixed unseen logits')
+        penalty = seen_unseen_prediction_js(torch.stack(zs[1:]), target_logits)
+        return penalty,penalty,om,ow,ce
     if kind in ('feature_match', 'seen_js_feature_match'):
         if target_features is None:
             raise ValueError('feature_match requires independent unseen targets')
@@ -261,11 +266,11 @@ def main(*, bilevel_step=None, split_indices=None):
     if bilevel_step:
         p.set_defaults(outer_consistency='virtual_query_ce')
     else:
-        p.add_argument('--outer-consistency',choices=['infonce','js','feature_match','seen_js_feature_match'],default='js')
+        p.add_argument('--outer-consistency',choices=['infonce','js','feature_match','seen_js_feature_match','prediction_match_js'],default='js')
     p.add_argument('--temperature',type=float,default=.1)
     p.add_argument('--device', choices=['cuda'], default='cuda')
     p.add_argument('--root', type=Path, default=Path('experiments/metamix_cifar10/data'))
-    p.add_argument('--output', type=Path, default=None)
+    p.add_argument('--output','--output-dir', type=Path, default=None)
     p.add_argument('--epochs-per-task', type=int, default=10)
     p.add_argument('--stop-after-epochs',type=int,default=0)
     p.add_argument('--pipeline-test', action='store_true')
@@ -311,7 +316,7 @@ def main(*, bilevel_step=None, split_indices=None):
         torch=torch.__version__, torchvision=torchvision.__version__, numpy=np.__version__,
         pillow=PIL.__version__, cuda=torch.version.cuda, cudnn=torch.backends.cudnn.version(),
         threads=4, deterministic_cudnn=True, tf32=False, root=str(a.root.resolve()))
-    if a.outer_consistency in ('feature_match', 'seen_js_feature_match'):
+    if a.outer_consistency in ('feature_match', 'seen_js_feature_match', 'prediction_match_js'):
         config.update(
             method=f'Chain-aware fixed-m mixer: seen {classifier_objective} + seen-to-unseen feature MSE + DER++',
             mixer_objective='seen-to-unseen raw pooled feature MSE',
@@ -324,6 +329,13 @@ def main(*, bilevel_step=None, split_indices=None):
             matching_limit='feature matching may average incompatible targets; fixed m=.5 restricts reachability; no robustness guarantee',
             solver='fixed updated classifier; gradients through seen mixtures only; no hypergradient; no outer clean CE term',
             bn='classifier joint clean+seen train; outer eval; seen descriptors recomputed after classifier update; six unseen target features cached without gradients')
+    if a.outer_consistency == 'prediction_match_js':
+        config.pop('feature_match_coefficient')
+        config.update(method=f'Chain-aware fixed-m mixer: seen {classifier_objective} + seen-to-unseen prediction JS + DER++',
+                      mixer_objective='mean pairwise JS on seen mixtures and unmixed unseen target predictions',
+                      prediction_match_coefficient=1., mixer_softmax_temperature=1.,
+                      matching_limit='confident or invariant query predictions can supply little gradient',
+                      bn='classifier joint clean+seen train; outer eval; six detached unseen target logits cached')
     if a.outer_consistency == 'seen_js_feature_match':
         config['method'] += ' + mixer seen-view JS'
         config['mixer_objective'] = 'seen-view prediction JS + seen-to-unseen raw pooled feature MSE'

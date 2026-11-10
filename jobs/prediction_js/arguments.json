@@ -1,0 +1,29 @@
+{
+  "device": [
+    "cuda"
+  ],
+  "backbone": [
+    "smallcnn"
+  ],
+  "epochs-per-task": [
+    10
+  ],
+  "consistency": [
+    "infonce"
+  ],
+  "outer-consistency": [
+    "prediction_match_js"
+  ],
+  "temperature": [
+    0.1
+  ],
+  "root": [
+    "experiments/metamix_cifar10/data"
+  ],
+  "batch-size": [
+    32
+  ],
+  "seed": [
+    17
+  ]
+}

@@ -620,8 +620,8 @@ class BiLevelTrainer:
     def update_chain_aware_mixing(model,controller,optimizer,mixer_optimizer,memory,state,raw,labels,device,j=3,debug=False,mixer='learned',kind='infonce',temperature=.1, *, outer_kind='js', active_slots, candidate_descriptors, chains, clone_buffers, consistency_loss, context_for, forward, mixed_views, ops, outer_objective, tensor):
         if mixer!='learned' or kind not in ('infonce','js'):
             raise ValueError('This variant requires a learned mixer and seen InfoNCE or JS')
-        if outer_kind not in ('infonce','js','feature_match','seen_js_feature_match'):
-            raise ValueError('Outer objective must be InfoNCE, JS, feature_match or seen_js_feature_match')
+        if outer_kind not in ('infonce','js','feature_match','seen_js_feature_match','prediction_match_js'):
+            raise ValueError(f'Unsupported chain-aware outer objective: {outer_kind}')
         x=tensor(raw,device);y=torch.as_tensor(labels,device=device)
         ce_raw=memory.sample(32,device,raw=True) if memory.size else None
         replay=(tensor(ce_raw[0],device),ce_raw[1],ce_raw[2]) if ce_raw is not None else None
@@ -657,16 +657,18 @@ class BiLevelTrainer:
         if not torch.isfinite(loss) or not all(p.grad is None or torch.isfinite(p.grad).all() for p in model.parameters()):raise RuntimeError('Nonfinite classifier loss/gradient')
         optimizer.step();optimizer.zero_grad(set_to_none=True)
         model.eval();params={k:v.detach() for k,v in model.named_parameters()};buffers=clone_buffers(model)
-        if outer_kind in ('feature_match', 'seen_js_feature_match'):
+        if outer_kind in ('feature_match', 'seen_js_feature_match', 'prediction_match_js'):
             # Score seen candidates with the updated classifier. Unseen chains
             # are independent, unmixed targets and never enter the controller.
             outer_branches = seen
             outer_candidates = candidate_descriptors(model, xa, seen)
             with torch.no_grad():
                 target_images = torch.cat([chain for view in unseen for chain in view])
-                target_features = forward(model, target_images, params, buffers)[1]
-                target_features = target_features.reshape(2, 3, len(xa), -1).detach()
-            outer_options = dict(target_features=target_features)
+                target_logits, target_features = forward(model, target_images, params, buffers)
+                if outer_kind == 'prediction_match_js':
+                    outer_options = dict(target_logits=target_logits.reshape(2, 3, len(xa), -1))
+                else:
+                    outer_options = dict(target_features=target_features.reshape(2, 3, len(xa), -1))
         else:
             outer_branches = unseen
             outer_candidates = candidate_descriptors(model, xa, unseen)
@@ -698,6 +700,8 @@ class BiLevelTrainer:
             current_ce=ce.item(),replay_ce=replay_ce.item(),replay_mse=replay_mse.item(),classifier_loss=loss.item(),
             outer_ce=outer_ce.item(),mixer_updates=outer_rows,q=q,batch_size=b,replay_batch=r,augmented_batch=b+r,
             memory_size=memory.size,presentations=memory.seen)
+        if outer_kind == 'prediction_match_js':
+            row['prediction_match_js_after'] = after_penalty.item()
         if outer_kind in ('feature_match', 'seen_js_feature_match'):
             row['feature_match_after'] = after_penalty.item()
             if outer_kind == 'seen_js_feature_match':

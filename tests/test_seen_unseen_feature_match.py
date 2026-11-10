@@ -71,7 +71,26 @@ class FeatureMatchTests(unittest.TestCase):
         for key, value in before.items():
             torch.testing.assert_close(net.state_dict()[key], value, rtol=0, atol=0)
 
+    def test_pairwise_prediction_js(self):
+        mixed = torch.randn(2, 4, 10, dtype=torch.double, requires_grad=True)
+        targets = torch.randn(2, 3, 4, 10, dtype=torch.double, requires_grad=True)
+        loss = m.seen_unseen_prediction_js(mixed, targets)
+        p, q = mixed.softmax(-1)[:, None], targets.softmax(-1)
+        midpoint = (p + q) / 2
+        expected = ((p * (p.log() - midpoint.log()) +
+                     q * (q.log() - midpoint.log())).sum(-1) / 2).mean()
+        torch.testing.assert_close(loss, expected)
+        loss.backward()
+        self.assertIsNone(targets.grad)
+        self.assertGreater(mixed.grad.norm().item(), 0)
+
+    def test_prediction_js_with_replay(self):
+        self.check_training_step('prediction_match_js')
+
     def test_training_step_seen_only_outer_and_replay(self):
+        self.check_training_step('seen_js_feature_match')
+
+    def check_training_step(self, kind):
         net = m.SmallCNN(backbone=getattr(self, 'backbone', 'smallcnn')).to(self.device)
         ctl = m.Controller(feature_dimension=net.feature_dimension).to(self.device)
         opt = torch.optim.SGD(net.parameters(), lr=.03)
@@ -88,7 +107,7 @@ class FeatureMatchTests(unittest.TestCase):
             return value
         def outer(*args, **kwargs):
             self.assertIs(args[5], sampled[0])  # seen, never unseen
-            targets = kwargs['target_features']
+            targets = kwargs['target_logits' if kind == 'prediction_match_js' else 'target_features']
             self.assertFalse(targets.requires_grad)
             self.assertEqual(targets.shape[:2], (2, 3))
             if outer_calls:
@@ -100,11 +119,11 @@ class FeatureMatchTests(unittest.TestCase):
             before = copy.deepcopy(ctl.state_dict())
             with patch.object(m, 'chains', sample), patch.object(m, 'outer_objective', outer):
                 state, row = m.step(net, ctl, opt, mo, memory, state, raw[:n], labels[:n],
-                                    self.device, outer_kind='seen_js_feature_match')
+                                    self.device, outer_kind=kind)
             self.assertEqual(len(outer_calls), 4)
             self.assertEqual(len(row['mixer_updates']), 3)
             self.assertEqual(row['m_after'], .5)
-            self.assertTrue(np.isfinite(row['feature_match_after']))
+            self.assertTrue(np.isfinite(row['prediction_match_js_after' if kind == 'prediction_match_js' else 'feature_match_after']))
             self.assertTrue(all(u['grad_norm'] > 0 for u in row['mixer_updates']))
             self.assertTrue(any(not torch.equal(v, before[k]) for k, v in ctl.state_dict().items()))
             self.assertTrue(all(p.grad is None for p in net.parameters()))
