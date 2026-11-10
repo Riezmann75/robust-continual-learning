@@ -5,6 +5,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from libs.trainer import BiLevelTrainer
 from libs import library_source_hashes, snapshot_source
 import argparse
+from functools import partial
 import hashlib
 import json
 import os
@@ -97,7 +98,7 @@ def random_weights(n,device):
 def mixed_views(x,branches,m,w):
     return [blend(x,v,m[i] if m.ndim==2 else m,w[i] if w.ndim==3 else w) for i,v in enumerate(branches)]
 
-def chains(raw, pool, device, views_count=2, branch_count=3):
+def chains(raw, pool, device, views_count=2, branch_count=3, *, chain_severity=False):
     views = []
     for _ in range(views_count):
         branches = []
@@ -105,8 +106,11 @@ def chains(raw, pool, device, views_count=2, branch_count=3):
             batch = []
             for image in raw:
                 im = Image.fromarray(image)
-                for _ in range(int(np.random.randint(1, 4))):
-                    im = pool[int(np.random.randint(len(pool)))](im, 3)
+                depth = int(np.random.randint(1, 4))
+                level = ops.sample_level(3) if chain_severity else 3
+                for _ in range(depth):
+                    op = pool[int(np.random.randint(len(pool)))]
+                    im = op(im, level, level_is_sampled=True) if chain_severity else op(im, level)
                 batch.append(np.array(im, copy=True))
             branches.append(tensor(np.stack(batch), device))
         views.append(torch.stack(branches))
@@ -178,8 +182,9 @@ def outer_objective(model,controller,context,incoming,x,branches,params,buffers,
     penalty=consistency_loss(zs,hs,labels,kind,temperature)
     return ce+penalty,penalty,om,ow,ce
 
-def step(model,controller,optimizer,mixer_optimizer,memory,state,raw,labels,device,j=3,debug=False,mixer='learned',kind='infonce',temperature=.1,outer_kind='js'):
-    return BiLevelTrainer.update_chain_aware_mixing(model, controller, optimizer, mixer_optimizer, memory, state, raw, labels, device, j, debug, mixer, kind, temperature, outer_kind=outer_kind, active_slots=active_slots, candidate_descriptors=candidate_descriptors, chains=chains, clone_buffers=clone_buffers, consistency_loss=consistency_loss, context_for=context_for, forward=forward, mixed_views=mixed_views, ops=ops, outer_objective=outer_objective, tensor=tensor)
+def step(model,controller,optimizer,mixer_optimizer,memory,state,raw,labels,device,j=3,debug=False,mixer='learned',kind='infonce',temperature=.1,outer_kind='js',chain_severity=False):
+    sample_chains = partial(chains, chain_severity=True) if chain_severity else chains
+    return BiLevelTrainer.update_chain_aware_mixing(model, controller, optimizer, mixer_optimizer, memory, state, raw, labels, device, j, debug, mixer, kind, temperature, outer_kind=outer_kind, active_slots=active_slots, candidate_descriptors=candidate_descriptors, chains=sample_chains, clone_buffers=clone_buffers, consistency_loss=consistency_loss, context_for=context_for, forward=forward, mixed_views=mixed_views, ops=ops, outer_objective=outer_objective, tensor=tensor)
 
 def atomic_json(path, value):
     temp = path.with_suffix(path.suffix+'.tmp')
@@ -266,6 +271,8 @@ def main(*, bilevel_step=None, split_indices=None):
     if bilevel_step:
         p.set_defaults(outer_consistency='virtual_query_ce')
     else:
+        p.add_argument('--chain-severity', action='store_true',
+                       help='Draw one magnitude level uniformly from 0.1 to 3 per image-chain')
         p.add_argument('--outer-consistency',choices=['infonce','js','feature_match','seen_js_feature_match','prediction_match_js'],default='js')
     p.add_argument('--temperature',type=float,default=.1)
     p.add_argument('--device', choices=['cuda'], default='cuda')
@@ -353,6 +360,9 @@ def main(*, bilevel_step=None, split_indices=None):
                       query_unseen_chains=1, query_unseen_coefficient=1.)
         config['source_hashes']['virtual_mixer.py'] = hashlib.sha256(
             Path(__file__).with_name('virtual_mixer.py').read_bytes()).hexdigest()
+    if not bilevel_step and a.chain_severity:
+        config.update(severity_sampling='uniform per image-chain, shared across operations',
+                      severity_range=[0.1, 3.0])
     config.update(backbone_metadata(a.backbone))
     config['candidate_features'] = f"{config['feature_dimension']} raw feature deltas and 10 softmax probability deltas; detached eval joint7N forward"
     config['scorer'] = f"shared Linear({5 + config['feature_dimension'] + 10},32),ReLU,Linear(32,1); zero final layer; softmax per image/view"
@@ -436,6 +446,8 @@ def main(*, bilevel_step=None, split_indices=None):
                         qix = np.random.choice(pool, min(config['query_batch'], len(pool)), replace=False)
                         extra['query_batch'] = raw[qix], labels[qix]
                         extra['current_capacity'] = batch_size
+                    elif a.chain_severity:
+                        extra['chain_severity'] = True
                     row = trainer.step(raw[ix], labels[ix], mixer=a.mixer, kind=a.consistency, temperature=a.temperature, outer_kind=a.outer_consistency, j=config['J'], **extra)
                     state = trainer.state
                     updates += 1
