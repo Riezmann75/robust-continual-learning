@@ -1,7 +1,7 @@
 {
   "size": 18,
-  "experiment_path": "experiments/mixer_severity",
-  "output_pattern": "experiments/mixer_severity/<EXP_NAME>/<ARRAY_JOB_ID[]>/<EXP_NAME>_<INDEX>",
+  "experiment_path": "experiments/mixer_severity_bs128_cosine",
+  "output_pattern": "experiments/mixer_severity_bs128_cosine/<EXP_NAME>/<ARRAY_JOB_ID[]>/<EXP_NAME>_<INDEX>",
   "pbs": "jobs/mixer_severity/mixer_severity.pbs",
   "submit": "jobs/mixer_severity/submit_mixer_severity.sh",
   "download": "jobs/mixer_severity/download_mixer_severity.sh",
@@ -11,7 +11,13 @@
       "arguments": {
         "objective": "metamix",
         "severity-upperbound": 3,
-        "seed": 17
+        "seed": 17,
+        "classifier-lr": 0.012,
+        "mixer-lr": 0.02,
+        "batch-size": 128,
+        "momentum": 0.9,
+        "scheduler": "cosine",
+        "scheduler-period": 10
       },
       "scheduling": {
         "gpus_per_job": 1,
@@ -25,7 +31,13 @@
       "arguments": {
         "objective": "metamix",
         "severity-upperbound": 3,
-        "seed": 28
+        "seed": 28,
+        "classifier-lr": 0.012,
+        "mixer-lr": 0.02,
+        "batch-size": 128,
+        "momentum": 0.9,
+        "scheduler": "cosine",
+        "scheduler-period": 10
       },
       "scheduling": {
         "gpus_per_job": 1,
@@ -39,7 +51,13 @@
       "arguments": {
         "objective": "metamix",
         "severity-upperbound": 3,
-        "seed": 39
+        "seed": 39,
+        "classifier-lr": 0.012,
+        "mixer-lr": 0.02,
+        "batch-size": 128,
+        "momentum": 0.9,
+        "scheduler": "cosine",
+        "scheduler-period": 10
       },
       "scheduling": {
         "gpus_per_job": 1,
@@ -53,7 +71,13 @@
       "arguments": {
         "objective": "metamix",
         "severity-upperbound": 5,
-        "seed": 17
+        "seed": 17,
+        "classifier-lr": 0.012,
+        "mixer-lr": 0.02,
+        "batch-size": 128,
+        "momentum": 0.9,
+        "scheduler": "cosine",
+        "scheduler-period": 10
       },
       "scheduling": {
         "gpus_per_job": 1,
@@ -67,7 +91,13 @@
       "arguments": {
         "objective": "metamix",
         "severity-upperbound": 5,
-        "seed": 28
+        "seed": 28,
+        "classifier-lr": 0.012,
+        "mixer-lr": 0.02,
+        "batch-size": 128,
+        "momentum": 0.9,
+        "scheduler": "cosine",
+        "scheduler-period": 10
       },
       "scheduling": {
         "gpus_per_job": 1,
@@ -81,7 +111,13 @@
       "arguments": {
         "objective": "metamix",
         "severity-upperbound": 5,
-        "seed": 39
+        "seed": 39,
+        "classifier-lr": 0.012,
+        "mixer-lr": 0.02,
+        "batch-size": 128,
+        "momentum": 0.9,
+        "scheduler": "cosine",
+        "scheduler-period": 10
       },
       "scheduling": {
         "gpus_per_job": 1,
@@ -95,7 +131,13 @@
       "arguments": {
         "objective": "metamix",
         "severity-upperbound": 7,
-        "seed": 17
+        "seed": 17,
+        "classifier-lr": 0.012,
+        "mixer-lr": 0.02,
+        "batch-size": 128,
+        "momentum": 0.9,
+        "scheduler": "cosine",
+        "scheduler-period": 10
       },
       "scheduling": {
         "gpus_per_job": 1,
@@ -109,7 +151,13 @@
       "arguments": {
         "objective": "metamix",
         "severity-upperbound": 7,
-        "seed": 28
+        "seed": 28,
+        "classifier-lr": 0.012,
+        "mixer-lr": 0.02,
+        "batch-size": 128,
+        "momentum": 0.9,
+        "scheduler": "cosine",
+        "scheduler-period": 10
       },
       "scheduling": {
         "gpus_per_job": 1,
@@ -123,7 +171,13 @@
       "arguments": {
         "objective": "metamix",
         "severity-upperbound": 7,
-        "seed": 39
+        "seed": 39,
+        "classifier-lr": 0.012,
+        "mixer-lr": 0.02,
+        "batch-size": 128,
+        "momentum": 0.9,
+        "scheduler": "cosine",
+        "scheduler-period": 10
       },
       "scheduling": {
         "gpus_per_job": 1,
@@ -137,7 +191,13 @@
       "arguments": {
         "objective": "feature_mse",
         "severity-upperbound": 3,
-        "seed": 17
+        "seed": 17,
+        "classifier-lr": 0.012,
+        "mixer-lr": 0.02,
+        "batch-size": 128,
+        "momentum": 0.9,
+        "scheduler": "cosine",
+        "scheduler-period": 10
       },
       "scheduling": {
         "gpus_per_job": 1,
@@ -151,7 +211,13 @@
       "arguments": {
         "objective": "feature_mse",
         "severity-upperbound": 3,
-        "seed": 28
+        "seed": 28,
+        "classifier-lr": 0.012,
+        "mixer-lr": 0.02,
+        "batch-size": 128,
+        "momentum": 0.9,
+        "scheduler": "cosine",
+        "scheduler-period": 10
       },
       "scheduling": {
         "gpus_per_job": 1,
@@ -165,7 +231,13 @@
       "arguments": {
         "objective": "feature_mse",
         "severity-upperbound": 3,
-        "seed": 39
+        "seed": 39,
+        "classifier-lr": 0.012,
+        "mixer-lr": 0.02,
+        "batch-size": 128,
+        "momentum": 0.9,
+        "scheduler": "cosine",
+        "scheduler-period": 10
       },
       "scheduling": {
         "gpus_per_job": 1,
@@ -179,7 +251,13 @@
       "arguments": {
         "objective": "feature_mse",
         "severity-upperbound": 5,
-        "seed": 17
+        "seed": 17,
+        "classifier-lr": 0.012,
+        "mixer-lr": 0.02,
+        "batch-size": 128,
+        "momentum": 0.9,
+        "scheduler": "cosine",
+        "scheduler-period": 10
       },
       "scheduling": {
         "gpus_per_job": 1,
@@ -193,7 +271,13 @@
       "arguments": {
         "objective": "feature_mse",
         "severity-upperbound": 5,
-        "seed": 28
+        "seed": 28,
+        "classifier-lr": 0.012,
+        "mixer-lr": 0.02,
+        "batch-size": 128,
+        "momentum": 0.9,
+        "scheduler": "cosine",
+        "scheduler-period": 10
       },
       "scheduling": {
         "gpus_per_job": 1,
@@ -207,7 +291,13 @@
       "arguments": {
         "objective": "feature_mse",
         "severity-upperbound": 5,
-        "seed": 39
+        "seed": 39,
+        "classifier-lr": 0.012,
+        "mixer-lr": 0.02,
+        "batch-size": 128,
+        "momentum": 0.9,
+        "scheduler": "cosine",
+        "scheduler-period": 10
       },
       "scheduling": {
         "gpus_per_job": 1,
@@ -221,7 +311,13 @@
       "arguments": {
         "objective": "feature_mse",
         "severity-upperbound": 7,
-        "seed": 17
+        "seed": 17,
+        "classifier-lr": 0.012,
+        "mixer-lr": 0.02,
+        "batch-size": 128,
+        "momentum": 0.9,
+        "scheduler": "cosine",
+        "scheduler-period": 10
       },
       "scheduling": {
         "gpus_per_job": 1,
@@ -235,7 +331,13 @@
       "arguments": {
         "objective": "feature_mse",
         "severity-upperbound": 7,
-        "seed": 28
+        "seed": 28,
+        "classifier-lr": 0.012,
+        "mixer-lr": 0.02,
+        "batch-size": 128,
+        "momentum": 0.9,
+        "scheduler": "cosine",
+        "scheduler-period": 10
       },
       "scheduling": {
         "gpus_per_job": 1,
@@ -249,7 +351,13 @@
       "arguments": {
         "objective": "feature_mse",
         "severity-upperbound": 7,
-        "seed": 39
+        "seed": 39,
+        "classifier-lr": 0.012,
+        "mixer-lr": 0.02,
+        "batch-size": 128,
+        "momentum": 0.9,
+        "scheduler": "cosine",
+        "scheduler-period": 10
       },
       "scheduling": {
         "gpus_per_job": 1,

@@ -8,7 +8,7 @@ PROJECT_DIR="$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel)"
 cd "$PROJECT_DIR"
 
 PBS_FILE=jobs/mixer_mse_classifier_js/mixer_mse_js.pbs
-EXPERIMENT_PATH=experiments/mixer_mse_classifier_js
+EXPERIMENT_PATH=experiments/mixer_mse_js_bs128_cosine
 DRY_RUN="${DRY_RUN:-0}"
 
 EXP_NAME="${1:-}"

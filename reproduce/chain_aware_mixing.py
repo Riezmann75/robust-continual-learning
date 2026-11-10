@@ -260,6 +260,9 @@ def evaluate(model, root, output, device, synthetic=None):
     atomic_json(output/'evaluation.json', result)
     return result
 
+from libs.training_schedule import cosine_for_epoch
+
+
 def main(*, bilevel_step=None, split_indices=None):
     p = argparse.ArgumentParser()
     p.add_argument('--seed', type=int, default=17)
@@ -269,6 +272,11 @@ def main(*, bilevel_step=None, split_indices=None):
         p.set_defaults(outer_consistency='virtual_query_ce')
     else:
         p.add_argument('--outer-consistency',choices=['infonce','js','feature_match','seen_js_feature_match','prediction_match_js'],default='js')
+    p.add_argument('--classifier-lr', type=float, default=.03)
+    p.add_argument('--mixer-lr', type=float, default=.05)
+    p.add_argument('--momentum', type=float, default=0.)
+    p.add_argument('--scheduler', choices=['none', 'cosine'], default='none')
+    p.add_argument('--scheduler-period', type=int, default=10)
     p.add_argument('--temperature',type=float,default=.1)
     p.add_argument('--device', choices=['cuda'], default='cuda')
     p.add_argument('--root', type=Path, default=Path('experiments/metamix_cifar10/data'))
@@ -288,6 +296,12 @@ def main(*, bilevel_step=None, split_indices=None):
     if a.output is None:
         family = 'virtual_mixer' if bilevel_step else 'chain_aware_mixing'
         a.output = Path('experiments') / family / f'seed{a.seed}'
+    if any(not np.isfinite(lr) or lr <= 0 for lr in (a.classifier_lr, a.mixer_lr)):
+        p.error('learning rates must be positive and finite')
+    if not 0 <= a.momentum < 1 or a.scheduler_period < 1:
+        p.error('momentum must be in [0, 1) and scheduler-period must be positive')
+    if bilevel_step and a.momentum:
+        p.error('the virtual SGD runner currently requires momentum=0')
     batch_size = a.batch_size
     if batch_size < 1:
         p.error('batch-size must be positive')
@@ -314,7 +328,7 @@ def main(*, bilevel_step=None, split_indices=None):
         parent_run_sha256='b45bad8e80b06ab9579cf72f81df7e1c93055944c544adb3e5239a25534fd41e',
         seed=a.seed, device=a.device, gpu=torch.cuda.get_device_name(), epochs_per_task=1 if a.pipeline_test else a.epochs_per_task,
         images_per_class=17 if a.pipeline_test else 5000, tasks=[[0,1],[2,3],[4,5],[6,7],[8,9]],
-        batch=batch_size, replay_batch=32, reservoir_capacity=500, J=3 if a.mixer=='learned' else 0, classifier_lr=.03, mixer_lr=.05,
+        batch=batch_size, replay_batch=32, reservoir_capacity=500, J=3 if a.mixer=='learned' else 0, classifier_lr=a.classifier_lr, mixer_lr=a.mixer_lr, momentum=a.momentum, scheduler=a.scheduler, scheduler_period=a.scheduler_period,
         alpha=.2, beta=.5, js_coefficient=1., channels=[32,64,128], parameters=288746,
         resolution=32, hidden_size=5, context_size=258, severity=a.severity_upperbound, views=2, chains=3, depth=[1,3],
         normalization_mean=[.4914,.4822,.4465], normalization_std=[.2470,.2435,.2616],
@@ -392,8 +406,8 @@ def main(*, bilevel_step=None, split_indices=None):
         atomic_json(index_path, indices)
     model, controller = SmallCNN(backbone=a.backbone).to(a.device), Controller(feature_dimension=config['feature_dimension']).to(a.device)
     assert sum(p.numel() for p in model.parameters()) == config['parameters']
-    optimizer = torch.optim.SGD(model.parameters(), lr=.03)
-    mixer_optimizer = torch.optim.SGD(controller.parameters(), lr=.05)
+    optimizer = torch.optim.SGD(model.parameters(), lr=a.classifier_lr, momentum=a.momentum)
+    mixer_optimizer = torch.optim.SGD(controller.parameters(), lr=a.mixer_lr, momentum=a.momentum)
     memory = Reservoir(seed=a.seed + 1)
     state = initial_state(a.device, batch_size, config['replay_batch'])
     next_task = next_epoch = updates = 0
@@ -431,6 +445,13 @@ def main(*, bilevel_step=None, split_indices=None):
     for task in range(next_task, 5):
         first = next_epoch if task == next_task else 0
         for epoch in range(first, epochs):
+            schedulers = []
+            if a.scheduler == 'cosine':
+                schedulers = [cosine_for_epoch(opt, lr, a.scheduler_period, epoch)
+                              for opt, lr in ((optimizer, a.classifier_lr),
+                                              (mixer_optimizer, a.mixer_lr))]
+            classifier_lr = optimizer.param_groups[0]['lr']
+            mixer_lr = mixer_optimizer.param_groups[0]['lr']
             start = time.monotonic()
             order = np.random.permutation(indices[task])
             with trace_path.open('a', buffering=1) as trace:
@@ -446,10 +467,12 @@ def main(*, bilevel_step=None, split_indices=None):
                     state = trainer.state
                     updates += 1
                     row.update(task=task+1, epoch=epoch+1, global_epoch=task*epochs+epoch+1,
-                               batch=batch, update=updates, time=time.time())
+                               batch=batch, update=updates, time=time.time(), classifier_lr=classifier_lr, mixer_lr=mixer_lr)
                     trace.write(json.dumps(row)+'\n')
                 trace.flush()
                 os.fsync(trace.fileno())
+            for scheduler in schedulers:
+                scheduler.step()
             nt, ne = (task+1, 0) if epoch+1 == epochs else (task, epoch+1)
             save(checkpoint_path, dict(config=config, model=model.state_dict(),
                 controller=controller.state_dict(), optimizer=optimizer.state_dict(),

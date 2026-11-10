@@ -11,7 +11,7 @@ PBS_FILES=(jobs/mixer_severity/mixer_severity.pbs)
 GPU_COUNTS=(1)
 TASK_COUNTS=(18)
 EXPERIMENT_COUNTS=(18)
-EXPERIMENT_PATH=experiments/mixer_severity
+EXPERIMENT_PATH=experiments/mixer_severity_bs128_cosine
 DRY_RUN="${DRY_RUN:-0}"
 
 EXP_NAME="${1:-}"

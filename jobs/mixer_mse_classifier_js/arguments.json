@@ -14,5 +14,23 @@
     17,
     28,
     39
+  ],
+  "classifier-lr": [
+    0.012
+  ],
+  "mixer-lr": [
+    0.02
+  ],
+  "batch-size": [
+    128
+  ],
+  "momentum": [
+    0.9
+  ],
+  "scheduler": [
+    "cosine"
+  ],
+  "scheduler-period": [
+    10
   ]
 }

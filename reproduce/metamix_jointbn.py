@@ -5,6 +5,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from libs.trainer import BiLevelTrainer
 from libs import library_source_hashes, snapshot_source
 from functools import partial
+from libs.training_schedule import cosine_for_epoch
 import argparse
 import hashlib
 import json
@@ -116,12 +117,12 @@ def context_for(model, x, y, replay):
     n = len(et)
     return torch.cat((dot.detach().expand(n,1),rce.detach().expand(n,1),er,et),dim=1)
 
-def initial_state(device):
+def initial_state(device, current_capacity=32):
     # Separate fixed slots for current [0:32] and replay [32:64]. Not image IDs.
-    return (torch.randn(64,5,device=device),torch.randn(64,5,device=device))
+    return (torch.randn(current_capacity+32,5,device=device),torch.randn(current_capacity+32,5,device=device))
 
-def active_slots(b,r,device):
-    return torch.cat((torch.arange(b,device=device),32+torch.arange(r,device=device)))
+def active_slots(b,r,device,current_capacity=32):
+    return torch.cat((torch.arange(b,device=device),current_capacity+torch.arange(r,device=device)))
 
 def outer_objective(model,controller,context,incoming,x,branches,params,buffers,labels):
     assert not model.training, 'Mixer stage uses fixed running BN statistics'
@@ -134,7 +135,7 @@ def outer_objective(model,controller,context,incoming,x,branches,params,buffers,
     return outer_ce+outer_js,outer_js,om,ow,outer_ce
 
 def step(model, controller, optimizer, mixer_optimizer, memory, state, raw, labels, device, j=3,debug=False,severity_upperbound=3):
-    return BiLevelTrainer.update_metamix_jointbn(model, controller, optimizer, mixer_optimizer, memory, state, raw, labels, device, j, debug, active_slots=active_slots, blend=blend, chains=partial(chains, severity_upperbound=severity_upperbound), clone_buffers=clone_buffers, context_for=context_for, forward=forward, js=js, ops=ops, outer_objective=outer_objective, tensor=tensor)
+    return BiLevelTrainer.update_metamix_jointbn(model, controller, optimizer, mixer_optimizer, memory, state, raw, labels, device, j, debug, active_slots=partial(active_slots, current_capacity=len(state[0])-32), blend=blend, chains=partial(chains, severity_upperbound=severity_upperbound), clone_buffers=clone_buffers, context_for=context_for, forward=forward, js=js, ops=ops, outer_objective=outer_objective, tensor=tensor)
 
 def atomic_json(path, value):
     temp = path.with_suffix(path.suffix+'.tmp')
@@ -220,8 +221,20 @@ def main():
     p.add_argument('--epochs-per-task', type=int, default=10)
     p.add_argument('--stop-after-epochs',type=int,default=0)
     p.add_argument('--pipeline-test', action='store_true')
+    p.add_argument('--batch-size', type=int, default=32)
+    p.add_argument('--classifier-lr', type=float, default=.03)
+    p.add_argument('--mixer-lr', type=float, default=.05)
+    p.add_argument('--momentum', type=float, default=0.)
+    p.add_argument('--scheduler', choices=['none', 'cosine'], default='none')
+    p.add_argument('--scheduler-period', type=int, default=10)
     p.add_argument('--backbone', choices=['smallcnn', 'resnet18'], default='smallcnn')
     a = p.parse_args()
+    if a.batch_size < 1 or a.scheduler_period < 1:
+        p.error('batch-size and scheduler-period must be positive')
+    if any(not np.isfinite(lr) or lr <= 0 for lr in (a.classifier_lr, a.mixer_lr)):
+        p.error('learning rates must be positive and finite')
+    if not 0 <= a.momentum < 1:
+        p.error('momentum must be in [0, 1)')
     if not 0 <= a.seed < 2**32:
         p.error('--seed must be in [0, 2**32)')
     if not .1 <= a.severity_upperbound <= 10:
@@ -237,13 +250,13 @@ def main():
     config = dict(method='MetaMix joint-view BN first-order', implementation='joint three-view forwards; replay augmentation; per-example slot state; pre-solver state advance',
         solver='Algorithm 2 explicit fixed-updated-classifier partial gradient; original CE contributes zero mixer gradient; no unrolled hypergradient',
         context_alignment='broadcast batch dot/replay CE; individual er,et cyclic positional pairing for unequal batch sizes; zero er when empty',
-        recurrent_state='64 persistent batch slots: current0:32 replay32:64; inactive slots unchanged; detach between batches; save pre-solver transition',
+        recurrent_state=f'{a.batch_size} current slots followed by 32 replay slots',
         bn='joint clean+two seen views train forward then separate distillation; context cloned buffers; joint clean+two unseen outer eval forward',
         unresolved='paper lacks precise feature pairing and autograd details; first-order interpretation not verified author code',
         parent_run_sha256='b45bad8e80b06ab9579cf72f81df7e1c93055944c544adb3e5239a25534fd41e',
         seed=a.seed, device=a.device, gpu=torch.cuda.get_device_name(), epochs_per_task=1 if a.pipeline_test else a.epochs_per_task,
         images_per_class=17 if a.pipeline_test else 5000, tasks=[[0,1],[2,3],[4,5],[6,7],[8,9]],
-        batch=32, replay_batch=32, reservoir_capacity=500, J=3, classifier_lr=.03, mixer_lr=.05,
+        batch=a.batch_size, replay_batch=32, reservoir_capacity=500, J=3, classifier_lr=a.classifier_lr, mixer_lr=a.mixer_lr, momentum=a.momentum, scheduler=a.scheduler, scheduler_period=a.scheduler_period,
         alpha=.2, beta=.5, js_coefficient=1., channels=[32,64,128], parameters=288746,
         resolution=32, hidden_size=5, context_size=258, severity=a.severity_upperbound, views=2, chains=3, depth=[1,3],
         normalization_mean=[.4914,.4822,.4465], normalization_std=[.2470,.2435,.2616],
@@ -279,11 +292,11 @@ def main():
         atomic_json(index_path, indices)
     model, controller = SmallCNN(backbone=a.backbone).to(a.device), Controller(feature_dimension=config['feature_dimension']).to(a.device)
     assert sum(p.numel() for p in model.parameters()) == config['parameters']
-    optimizer = torch.optim.SGD(model.parameters(), lr=.03)
-    mixer_optimizer = torch.optim.SGD(controller.parameters(), lr=.05)
+    optimizer = torch.optim.SGD(model.parameters(), lr=a.classifier_lr, momentum=a.momentum)
+    mixer_optimizer = torch.optim.SGD(controller.parameters(), lr=a.mixer_lr, momentum=a.momentum)
     memory = Reservoir()
     memory.rng = np.random.default_rng(a.seed + 1)
-    state = initial_state(a.device)
+    state = initial_state(a.device, a.batch_size)
     next_task = next_epoch = updates = 0
     trace_path = a.output/'trace.jsonl'
     if checkpoint_path.exists():
@@ -319,19 +332,28 @@ def main():
     for task in range(next_task, 5):
         first = next_epoch if task == next_task else 0
         for epoch in range(first, epochs):
+            schedulers = []
+            if a.scheduler == 'cosine':
+                schedulers = [cosine_for_epoch(opt, lr, a.scheduler_period, epoch)
+                              for opt, lr in ((optimizer, a.classifier_lr),
+                                              (mixer_optimizer, a.mixer_lr))]
+            classifier_lr = optimizer.param_groups[0]['lr']
+            mixer_lr = mixer_optimizer.param_groups[0]['lr']
             start = time.monotonic()
             order = np.random.permutation(indices[task])
             with trace_path.open('a', buffering=1) as trace:
-                for batch, pos in enumerate(range(0, len(order), 32)):
-                    ix = order[pos:pos+32]
+                for batch, pos in enumerate(range(0, len(order), a.batch_size)):
+                    ix = order[pos:pos+a.batch_size]
                     row = trainer.step(raw[ix], labels[ix], j=3, severity_upperbound=a.severity_upperbound)
                     state = trainer.state
                     updates += 1
                     row.update(task=task+1, epoch=epoch+1, global_epoch=task*epochs+epoch+1,
-                               batch=batch, update=updates, time=time.time())
+                               batch=batch, update=updates, time=time.time(), classifier_lr=classifier_lr, mixer_lr=mixer_lr)
                     trace.write(json.dumps(row)+'\n')
                 trace.flush()
                 os.fsync(trace.fileno())
+            for scheduler in schedulers:
+                scheduler.step()
             nt, ne = (task+1, 0) if epoch+1 == epochs else (task, epoch+1)
             save(checkpoint_path, dict(config=config, model=model.state_dict(),
                 controller=controller.state_dict(), optimizer=optimizer.state_dict(),
@@ -345,7 +367,8 @@ def main():
             if a.stop_after_epochs and task*epochs+epoch+1>=a.stop_after_epochs:
                 return
     if not a.pipeline_test:
-        assert updates == 5*epochs*313 and memory.seen == 5*epochs*10000
+        assert updates == epochs * sum((len(ids)+a.batch_size-1)//a.batch_size for ids in indices)
+        assert memory.seen == epochs * sum(map(len, indices))
     report(a.output, updates)
     if not (a.output/'evaluation.json').exists():
         evaluate(model, a.root, a.output, a.device, (raw, labels) if a.pipeline_test else None)

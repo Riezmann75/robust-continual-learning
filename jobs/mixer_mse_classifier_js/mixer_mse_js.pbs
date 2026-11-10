@@ -37,7 +37,7 @@ ARRAY_JOB_NUMBER="${RAW_JOB_ID%%[*}"
 ARRAY_JOB_NUMBER="${ARRAY_JOB_NUMBER%%.*}"
 ARRAY_JOB_TAG="${ARRAY_JOB_NUMBER}[]"
 RUN_NAME="${EXP_NAME}_${GRID_INDEX}"
-EXPERIMENT_PATH=experiments/mixer_mse_classifier_js
+EXPERIMENT_PATH=experiments/mixer_mse_js_bs128_cosine
 ARRAY_OUTPUT_ROOT="$PROJECT_DIR/$EXPERIMENT_PATH/$EXP_NAME/$ARRAY_JOB_TAG"
 OUTPUT_DIR="$ARRAY_OUTPUT_ROOT/$RUN_NAME"
 GRID_MANIFEST_REL=jobs/mixer_mse_classifier_js/mixer_mse_js_grid_manifest.json
@@ -57,6 +57,18 @@ case "$GRID_INDEX" in
   3
   --seed
   17
+  --classifier-lr
+  0.012
+  --mixer-lr
+  0.02
+  --batch-size
+  128
+  --momentum
+  0.9
+  --scheduler
+  cosine
+  --scheduler-period
+  10
       --output-dir "$OUTPUT_DIR"
     )
     ;;
@@ -73,6 +85,18 @@ case "$GRID_INDEX" in
   3
   --seed
   28
+  --classifier-lr
+  0.012
+  --mixer-lr
+  0.02
+  --batch-size
+  128
+  --momentum
+  0.9
+  --scheduler
+  cosine
+  --scheduler-period
+  10
       --output-dir "$OUTPUT_DIR"
     )
     ;;
@@ -89,6 +113,18 @@ case "$GRID_INDEX" in
   3
   --seed
   39
+  --classifier-lr
+  0.012
+  --mixer-lr
+  0.02
+  --batch-size
+  128
+  --momentum
+  0.9
+  --scheduler
+  cosine
+  --scheduler-period
+  10
       --output-dir "$OUTPUT_DIR"
     )
     ;;
@@ -105,6 +141,18 @@ case "$GRID_INDEX" in
   5
   --seed
   17
+  --classifier-lr
+  0.012
+  --mixer-lr
+  0.02
+  --batch-size
+  128
+  --momentum
+  0.9
+  --scheduler
+  cosine
+  --scheduler-period
+  10
       --output-dir "$OUTPUT_DIR"
     )
     ;;
@@ -121,6 +169,18 @@ case "$GRID_INDEX" in
   5
   --seed
   28
+  --classifier-lr
+  0.012
+  --mixer-lr
+  0.02
+  --batch-size
+  128
+  --momentum
+  0.9
+  --scheduler
+  cosine
+  --scheduler-period
+  10
       --output-dir "$OUTPUT_DIR"
     )
     ;;
@@ -137,6 +197,18 @@ case "$GRID_INDEX" in
   5
   --seed
   39
+  --classifier-lr
+  0.012
+  --mixer-lr
+  0.02
+  --batch-size
+  128
+  --momentum
+  0.9
+  --scheduler
+  cosine
+  --scheduler-period
+  10
       --output-dir "$OUTPUT_DIR"
     )
     ;;
@@ -153,6 +225,18 @@ case "$GRID_INDEX" in
   7
   --seed
   17
+  --classifier-lr
+  0.012
+  --mixer-lr
+  0.02
+  --batch-size
+  128
+  --momentum
+  0.9
+  --scheduler
+  cosine
+  --scheduler-period
+  10
       --output-dir "$OUTPUT_DIR"
     )
     ;;
@@ -169,6 +253,18 @@ case "$GRID_INDEX" in
   7
   --seed
   28
+  --classifier-lr
+  0.012
+  --mixer-lr
+  0.02
+  --batch-size
+  128
+  --momentum
+  0.9
+  --scheduler
+  cosine
+  --scheduler-period
+  10
       --output-dir "$OUTPUT_DIR"
     )
     ;;
@@ -185,6 +281,18 @@ case "$GRID_INDEX" in
   7
   --seed
   39
+  --classifier-lr
+  0.012
+  --mixer-lr
+  0.02
+  --batch-size
+  128
+  --momentum
+  0.9
+  --scheduler
+  cosine
+  --scheduler-period
+  10
       --output-dir "$OUTPUT_DIR"
     )
     ;;
