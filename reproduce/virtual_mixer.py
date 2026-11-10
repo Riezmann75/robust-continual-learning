@@ -35,7 +35,7 @@ def meta_loss(model, inner_loss, lr, query, unseen_query, labels):
 
 
 def step(model, controller, optimizer, mixer_optimizer, memory, state, raw,
-         labels, device, *, query_batch, kind, temperature, current_capacity=32, **options):
+         labels, device, *, query_batch, kind, temperature, current_capacity=32, severity_upperbound=3, **options):
     # The runner constructs both optimizers as plain SGD with one parameter group.
     x = base.tensor(raw, device)
     y = torch.as_tensor(labels, device=device)
@@ -51,10 +51,11 @@ def step(model, controller, optimizer, mixer_optimizer, memory, state, raw,
     incoming = tuple(v[slots].detach() for v in state)
     perm = np.random.permutation(9)
     cut = np.random.randint(5, 8)
-    seen = base.chains(raw_all, [base.ops.augmentations[i] for i in perm[:cut]], device)
+    seen = base.chains(raw_all, [base.ops.augmentations[i] for i in perm[:cut]], device,
+                       severity_upperbound=severity_upperbound)
     query_raw, query_labels = query_batch
     unseen = base.chains(query_raw, [base.ops.augmentations[i] for i in perm[cut:]],
-                         device, views_count=1, branch_count=1)[0][0]
+                         device, views_count=1, branch_count=1, severity_upperbound=severity_upperbound)[0][0]
     candidates = base.candidate_descriptors(model, xa, seen)
     m, w, advanced = controller(context, incoming, candidates)
     model.train()

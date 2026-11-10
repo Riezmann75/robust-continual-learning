@@ -20,6 +20,13 @@ class FeatureMatchTests(unittest.TestCase):
         np.random.seed(17)
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
+    def test_each_operation_receives_requested_upperbound(self):
+        raw = np.zeros((3, 32, 32, 3), dtype=np.uint8)
+        with patch.object(m.ops, 'sample_level', wraps=m.ops.sample_level) as draws:
+            m.chains(raw, [m.ops.rotate], self.device, severity_upperbound=7)
+            self.assertGreaterEqual(draws.call_count, 2 * 3 * len(raw))
+            self.assertTrue(all(call.args == (7,) for call in draws.call_args_list))
+
     def test_formula_detaches_targets(self):
         mixed = torch.randn(2, 4, 8, requires_grad=True)
         target = torch.randn(2, 3, 4, 8, requires_grad=True)
@@ -101,8 +108,9 @@ class FeatureMatchTests(unittest.TestCase):
         labels = np.array([0, 1, 0, 1])
         original_chains, original_outer = m.chains, m.outer_objective
         sampled, outer_calls = [], []
-        def sample(*args):
-            value = original_chains(*args)
+        def sample(*args, **kwargs):
+            self.assertEqual(kwargs['severity_upperbound'], 5)
+            value = original_chains(*args, **kwargs)
             sampled.append(value)
             return value
         def outer(*args, **kwargs):
@@ -119,7 +127,7 @@ class FeatureMatchTests(unittest.TestCase):
             before = copy.deepcopy(ctl.state_dict())
             with patch.object(m, 'chains', sample), patch.object(m, 'outer_objective', outer):
                 state, row = m.step(net, ctl, opt, mo, memory, state, raw[:n], labels[:n],
-                                    self.device, outer_kind=kind)
+                                    self.device, outer_kind=kind, severity_upperbound=5)
             self.assertEqual(len(outer_calls), 4)
             self.assertEqual(len(row['mixer_updates']), 3)
             self.assertEqual(row['m_after'], .5)
