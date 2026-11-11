@@ -1,0 +1,5 @@
+{
+  "runner": "unrolled_mixing.py",
+  "args": {"variant": "chain_random", "batch_size": 32, "consistency": "js", "outer_consistency": "js",
+           "classifier_lr": 0.003, "mixer_lr": 0.005, "output": "experiments/unrolled_chain_random_js_bs32/seed17"}
+}

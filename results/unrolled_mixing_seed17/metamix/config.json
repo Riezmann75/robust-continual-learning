@@ -1,0 +1,115 @@
+{
+  "method": "Unrolled metamix",
+  "mixer": "learned",
+  "consistency": "js",
+  "temperature": 0.1,
+  "consistency_coefficient": 1.0,
+  "fixed_m": null,
+  "outer_consistency": "js",
+  "outer_coefficient": 1.0,
+  "candidate_features": null,
+  "scorer": "context-only LSTM; learned sigmoid m and softmax w shared across views",
+  "random_mixture": "none",
+  "sampling": "preserve legacy global shuffle/ops and reservoir RNG; isolate mixture draws; generate both seen/unseen in all variants",
+  "matching_limit": "per-step pseudo-unseen operations; outer uses same labeled examples",
+  "implementation": "one-step hypergradient; pre-solver state advance",
+  "solver": "Three mixer updates through one virtual plain-SGD step recomputed from the same base; commit first classifier step",
+  "context_alignment": "broadcast batch dot/replay CE; individual er,et cyclic positional pairing for unequal batch sizes; zero er when empty",
+  "recurrent_state": "128 current slots followed by 32 replay slots",
+  "bn": "outer evaluation uses pre-step running buffers; commit first support buffers",
+  "unresolved": "Full one-step derivative is our interpretation of MetaMix Algorithm 2.",
+  "parent_run_sha256": "b45bad8e80b06ab9579cf72f81df7e1c93055944c544adb3e5239a25534fd41e",
+  "seed": 17,
+  "device": "cuda",
+  "gpu": "NVIDIA GeForce RTX 3060 Ti",
+  "epochs_per_task": 10,
+  "images_per_class": 5000,
+  "tasks": [
+    [
+      0,
+      1
+    ],
+    [
+      2,
+      3
+    ],
+    [
+      4,
+      5
+    ],
+    [
+      6,
+      7
+    ],
+    [
+      8,
+      9
+    ]
+  ],
+  "batch": 128,
+  "replay_batch": 32,
+  "reservoir_capacity": 500,
+  "J": 3,
+  "classifier_lr": 0.012,
+  "mixer_lr": 0.02,
+  "alpha": 0.2,
+  "beta": 0.5,
+  "js_coefficient": 1.0,
+  "channels": [
+    32,
+    64,
+    128
+  ],
+  "parameters": 288746,
+  "resolution": 32,
+  "hidden_size": 5,
+  "context_size": 258,
+  "severity": 3,
+  "views": 2,
+  "chains": 3,
+  "depth": [
+    1,
+    3
+  ],
+  "normalization_mean": [
+    0.4914,
+    0.4822,
+    0.4465
+  ],
+  "normalization_std": [
+    0.247,
+    0.2435,
+    0.2616
+  ],
+  "pipeline_test": false,
+  "source_hashes": {
+    "chain_aware_mixing.py": "e47d3adec6c58e00b0ec8292d1e283b8d55ab677ddc3d3d3ed80a09546d7e61f",
+    "report_chain_aware.py": "bda7cd7f2945bd7b6bbc97411c5947e8467f89bcbaed0526eb9e3e69ca617b26",
+    "augmix_operations.py": "44cb9e48b1ec872277d7278ea42ca16f88620a72e7f36459fc08f246c71c9325",
+    "AUGMIX_LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "download_cifar100_benchmark.py": "ef67249f442be6be8642ee7ce265a3ecf71f9884464296f5ef1e2cb8477d1cd6",
+    "download_cifar10_benchmark.py": "48a2767abb13d0530f915511dc2bfed45c0734a4dfe59742096e360a3f968e5e",
+    "libs/__init__.py": "187963275c14a158510154b856782ba61644b1edb198af54ec8d5dc98b05a90a",
+    "libs/loss.py": "7e3d4a50ada498e93f4d82832ca167889cd456981c7d15c7b5cb0c471ec4b3a2",
+    "libs/models.py": "7da0e4907be63bf9f228a25a2f3fc2d7dcd5533b19c5d60be91825c57aee5ce1",
+    "libs/trainer.py": "a04be668a1d21b16702e67b1cc84774f393b3240849972e0a7535eeb82dc0f90",
+    "unrolled_mixing.py": "f0e0a38ded6865c773b3888f2a81db2d070c3fe359d5b92b21c9d7d798dfc157"
+  },
+  "python": "3.13.11",
+  "torch": "2.10.0+cu128",
+  "torchvision": "0.25.0+cu128",
+  "numpy": "2.4.2",
+  "pillow": "12.1.1",
+  "cuda": "12.8",
+  "cudnn": 91002,
+  "threads": 4,
+  "deterministic_cudnn": true,
+  "tf32": false,
+  "root": "/home/riezmann/dev/robust-continual-learning/experiments/metamix_cifar10/data",
+  "backbone": "smallcnn",
+  "pretrained": false,
+  "feature_dimension": 128,
+  "architecture_provenance": "SmallCNN with 128 pooled features",
+  "solver_variant": "metamix",
+  "outer_objective": "clean CE + three-view JS on current and replay images"
+}

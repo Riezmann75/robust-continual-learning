@@ -21,7 +21,12 @@ def report(output, committed_updates):
             group['m'].append(row['m_after'])
             group['per_example'].extend(row['m_after_per_example'])
             group['seen'].append(row['seen_consistency'])
-            group['outer'].append(row['mixer_loss'] if row['outer_consistency'] == 'virtual_query_ce' else row['outer_consistency_after'])
+            outer_key = 'outer_consistency_after'
+            if 'solver_variant' in row:
+                outer_key = 'outer_query_js'
+            elif row['outer_consistency'] == 'virtual_query_ce':
+                outer_key = 'mixer_loss'
+            group['outer'].append(row[outer_key])
             group['entropy'].append(row['weight_entropy_after'])
             group['max_weight'].append(row['weight_max_after'])
             group['last'] = row
@@ -56,18 +61,25 @@ def report(output, committed_updates):
         for epoch in epochs:
             epoch['feature_match_after_mean'] = epoch['outer_consistency_after_mean']
     temp = output/'progress.json.tmp'
+    variant = group['last'].get('solver_variant') if epochs else None
+    if variant:
+        result.update(solver_variant=variant, summary_weighting='Epoch means over batches',
+                      caveat='Outer JS is measured at the final virtual step before its mixer update.')
+        for epoch in epochs:
+            epoch['outer_query_js_mean'] = epoch.pop('outer_consistency_after_mean')
     temp.write_text(json.dumps(result, indent=2))
     os.replace(temp, output/'progress.json')
     fig, ax = plt.subplots(figsize=(10, 4))
     ax.plot(batch_step, batch_m, color='steelblue', alpha=.35, linewidth=.4, label='Every batch mean (after mixer update)')
     ax.plot([r['updates'] for r in epochs], [r['m_mean'] for r in epochs],
             color='navy', linewidth=1.4, label='Epoch mean over batches')
-    ax.axhline(.5, color='gray', linestyle=':', label='Fixed m = 0.5')
+    if variant != 'metamix':
+        ax.axhline(.5, color='gray', linestyle=':', label='Fixed m = 0.5')
     for prev, cur in zip(epochs, epochs[1:]):
         if prev['task'] != cur['task']:
             ax.axvline(prev['updates'], color='gray', linestyle='--', linewidth=.8)
-    ax.set(xlabel='Classifier updates', ylabel='Original-image weight m (fixed)', ylim=(0,1),
-           title='Chain-aware mixer: fixed original-image weight')
+    ax.set(xlabel='Classifier updates', ylabel='Original-image weight m', ylim=(0,1),
+           title=variant or 'Chain-aware mixer')
     ax.legend(loc='best', fontsize=8)
     fig.tight_layout()
     temp = output/'m_progress.tmp.png'

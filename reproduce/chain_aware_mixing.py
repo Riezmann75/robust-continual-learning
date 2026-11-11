@@ -263,8 +263,10 @@ def evaluate(model, root, output, device, synthetic=None):
 from libs.training_schedule import cosine_for_epoch
 
 
-def main(*, bilevel_step=None, split_indices=None):
+def main(*, bilevel_step=None, split_indices=None, unrolled_step=None):
     p = argparse.ArgumentParser()
+    if unrolled_step:
+        p.add_argument('--variant', choices=['chain_random', 'metamix', 'metamix_fixed_m'], required=True)
     p.add_argument('--seed', type=int, default=17)
     p.add_argument('--mixer',choices=['learned'],default='learned')
     p.add_argument('--consistency',choices=['infonce','js'],default='infonce')
@@ -272,8 +274,8 @@ def main(*, bilevel_step=None, split_indices=None):
         p.set_defaults(outer_consistency='virtual_query_ce')
     else:
         p.add_argument('--outer-consistency',choices=['infonce','js','feature_match','seen_js_feature_match','prediction_match_js'],default='js')
-    p.add_argument('--classifier-lr', type=float, default=.03)
-    p.add_argument('--mixer-lr', type=float, default=.05)
+    p.add_argument('--classifier-lr', type=float, default=.012 if unrolled_step else .03)
+    p.add_argument('--mixer-lr', type=float, default=.02 if unrolled_step else .05)
     p.add_argument('--momentum', type=float, default=0.)
     p.add_argument('--scheduler', choices=['none', 'cosine'], default='none')
     p.add_argument('--scheduler-period', type=int, default=10)
@@ -285,7 +287,7 @@ def main(*, bilevel_step=None, split_indices=None):
     p.add_argument('--stop-after-epochs',type=int,default=0)
     p.add_argument('--pipeline-test', action='store_true')
     p.add_argument('--backbone', choices=['smallcnn', 'resnet18'], default='smallcnn')
-    p.add_argument('--batch-size', type=int, default=256 if bilevel_step else 32)
+    p.add_argument('--batch-size', type=int, default=256 if bilevel_step else (128 if unrolled_step else 32))
     p.add_argument('--severity-upperbound', type=float, default=3,
                    help='AugMix level upper bound (0.1 to 10); each magnitude-sensitive operation samples independently')
     a = p.parse_args()
@@ -295,12 +297,16 @@ def main(*, bilevel_step=None, split_indices=None):
         p.error('--seed must be between 0 and 2**32 - 1')
     if a.output is None:
         family = 'virtual_mixer' if bilevel_step else 'chain_aware_mixing'
+        if unrolled_step:
+            family = 'unrolled_' + a.variant
         a.output = Path('experiments') / family / f'seed{a.seed}'
     if any(not np.isfinite(lr) or lr <= 0 for lr in (a.classifier_lr, a.mixer_lr)):
         p.error('learning rates must be positive and finite')
     if not 0 <= a.momentum < 1 or a.scheduler_period < 1:
         p.error('momentum must be in [0, 1) and scheduler-period must be positive')
-    if bilevel_step and a.momentum:
+    if unrolled_step and (a.outer_consistency != 'js' or (a.variant != 'chain_random' and a.consistency != 'js')):
+        p.error('Unrolled runs require outer JS and MetaMix also requires seen JS.')
+    if (bilevel_step or unrolled_step) and a.momentum:
         p.error('the virtual SGD runner currently requires momentum=0')
     batch_size = a.batch_size
     if batch_size < 1:
@@ -377,6 +383,29 @@ def main(*, bilevel_step=None, split_indices=None):
     config['candidate_features'] = f"{config['feature_dimension']} raw feature deltas and 10 softmax probability deltas; detached eval joint7N forward"
     config['scorer'] = f"shared Linear({5 + config['feature_dimension'] + 10},32),ReLU,Linear(32,1); zero final layer; softmax per image/view"
     config['context_size'] = 2 * config['feature_dimension'] + 2
+    controller_type = Controller
+    update = step
+    if unrolled_step:
+        update = partial(unrolled_step, variant=a.variant)
+        guided = a.variant != 'chain_random'
+        if guided:
+            from libs.models import Controller as controller_type
+        config.update(method='Unrolled ' + a.variant, solver_variant=a.variant,
+            batch=batch_size, recurrent_state=f'{batch_size} current slots followed by 32 replay slots',
+            fixed_m=None if a.variant == 'metamix' else .5,
+            solver='Three mixer updates through one virtual plain-SGD step recomputed from the same base; commit first classifier step',
+            outer_objective='clean CE + three-view JS on current and replay images',
+            random_mixture='none' if guided else 'unseen Dirichlet(1,1,1) per image/view, fixed per batch',
+            bn='outer evaluation uses pre-step running buffers; commit first support buffers',
+            implementation='one-step hypergradient; pre-solver state advance',
+            matching_limit='per-step pseudo-unseen operations; outer uses same labeled examples',
+            unresolved='Full one-step derivative is our interpretation of MetaMix Algorithm 2.')
+        if guided:
+            config.update(candidate_features=None, scorer='context-only LSTM; learned sigmoid m and softmax w shared across views')
+            if a.variant == 'metamix_fixed_m':
+                config['scorer'] = 'context-only LSTM; fixed m=0.5 and learned softmax w shared across views and operation pools'
+        config['source_hashes']['unrolled_mixing.py'] = hashlib.sha256(
+            Path(__file__).with_name('unrolled_mixing.py').read_bytes()).hexdigest()
     config_path = a.output/'config.json'
     if config_path.exists():
         if json.loads(config_path.read_text()) != config:
@@ -404,7 +433,7 @@ def main(*, bilevel_step=None, split_indices=None):
         assert json.loads(index_path.read_text()) == indices
     else:
         atomic_json(index_path, indices)
-    model, controller = SmallCNN(backbone=a.backbone).to(a.device), Controller(feature_dimension=config['feature_dimension']).to(a.device)
+    model, controller = SmallCNN(backbone=a.backbone).to(a.device), controller_type(feature_dimension=config['feature_dimension']).to(a.device)
     assert sum(p.numel() for p in model.parameters()) == config['parameters']
     optimizer = torch.optim.SGD(model.parameters(), lr=a.classifier_lr, momentum=a.momentum)
     mixer_optimizer = torch.optim.SGD(controller.parameters(), lr=a.mixer_lr, momentum=a.momentum)
@@ -441,7 +470,7 @@ def main(*, bilevel_step=None, split_indices=None):
         next_epoch=next_epoch, updates=updates, config=config)), flush=True)
     atomic_json(a.output/'process.json', dict(pid=os.getpid(), host=platform.node(),
         started=time.time(), command=' '.join(__import__('sys').argv)))
-    trainer = BiLevelTrainer(model, controller, optimizer, mixer_optimizer, memory, state, a.device, update=bilevel_step or step)
+    trainer = BiLevelTrainer(model, controller, optimizer, mixer_optimizer, memory, state, a.device, update=bilevel_step or update)
     for task in range(next_task, 5):
         first = next_epoch if task == next_task else 0
         for epoch in range(first, epochs):
