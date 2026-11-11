@@ -50,7 +50,7 @@ w^S_k=\frac{\exp g_\phi(s_\phi,d_k)}
 {\sum_{j=1}^{3}\exp g_\phi(s_\phi,d_j)}.
 ```
 
-**Evaluate the classifier on mixtures sampled independently of the mixer.** We fix $m=0.5$ in both pools. The learned weights combine seen chains. For each image and each pseudo-unseen view, we draw three fresh chain weights using AugMix's Dirichlet rule and hold that draw fixed throughout the mini-batch's mixer updates.
+**Keep the pseudo-unseen evaluation views outside the mixer's control.** Our chain-aware mixer uses changes in the original image's representation and prediction to weight seen chains. If it also weighted pseudo-unseen chains, it could use those signals to favor mixtures that leave the prediction close to the original. This would lower the outer consistency loss by making the evaluation views easier rather than by improving the classifier update. We instead draw the three pseudo-unseen chain weights independently of the mixer using AugMix’s Dirichlet rule, once per image and view, and hold them fixed across the mini-batch’s mixer updates. We fix $m=0.5$ in both pools. The pseudo-unseen views then provide feedback on how the seen mixtures affected the classifier update.
 
 ```math
 u_v\sim\mathrm{Dirichlet}(1,1,1),\qquad
