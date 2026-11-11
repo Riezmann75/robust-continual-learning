@@ -111,7 +111,16 @@ Each row averages final accuracy (%) equally across the three seeds. The classif
 | MetaMix | JS | Learned | 46.16 | 36.43 | 86.65 | 79.83 |
 | MetaMix | InfoNCE | Learned | 45.48 | 35.26 | 86.51 | 79.14 |
 
-Values are approximate because the four original configurations combine the reported two-seed mean (17 and 43, weighted twice) with the seed-23 result. The two MetaMix InfoNCE rows use the three reported per-seed scores. Differences below are in percentage points and are calculated before rounding the displayed means.
+The two MetaMix InfoNCE rows were verified by averaging all three per-seed evaluation files on the HPC. For the other four rows, the HPC check found seeds 17 and 23 but could not locate the seed-43 evaluation file at its expected path. Those four means are approximate: they combine the previously reported two-seed mean (17 and 43, weighted twice) with seed 23. Differences below use percentage points.
+
+| Method | Seed missing from HPC file check | Clean class-IL | CIFAR-10-C class-IL | Clean task-IL | CIFAR-10-C task-IL |
+| --- | --- | ---: | ---: | ---: | ---: |
+| Chain-aware (classifier JS) | 43 | — | — | — | — |
+| Chain-aware (classifier InfoNCE) | 43 | — | — | — | — |
+| MetaMix (JS, fixed `m=0.5`) | 43 | — | — | — | — |
+| MetaMix (InfoNCE, fixed `m=0.5`) | None | 45.71% | 37.27% | 87.12% | 81.01% |
+| MetaMix (JS, learned `m`) | 43 | — | — | — | — |
+| MetaMix (InfoNCE, learned `m`) | None | 45.48% | 35.26% | 86.51% | 79.14% |
 
 1. **Effect of classifier InfoNCE.** Replacing JS with InfoNCE improved all four mean accuracy metrics for both fixed-`m` mixers. On CIFAR-10-C class-IL the gain was 0.93 points for chain-aware and 0.89 for MetaMix. With learned `m`, MetaMix instead lost 1.17 points on that metric.
 2. **Effect of chain-aware mixing.** With classifier InfoNCE and `m=0.5` matched, chain-aware led MetaMix by 0.55 points on clean class-IL and 0.23 on CIFAR-10-C class-IL. Corrupted task-IL slightly favored MetaMix (81.01% versus 80.92%). With classifier JS, the corrupted class-IL gap was also small (0.19 points in favor of chain-aware). These comparisons change both candidate scoring and pseudo-unseen weighting, so they cannot isolate the effect of chain descriptors.
