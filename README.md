@@ -6,27 +6,25 @@ Can a mixer learn which augmentation chains to emphasize from **how well the cla
 
 At each training step, MetaMix splits the augmentation operations into a pseudo-seen pool $S$ and a disjoint pseudo-unseen pool $U$. Both pools transform the same mini-batch of current and replay images. For an image $x$, the LSTM mixer with parameters $\phi$ uses learner context to produce an original-image weight $m$ and three chain weights $w_k$ that sum to one. MetaMix reuses those weights across the two views from each pool. For pool $P$ and view $v$, chain $a^P_{vk}$ contributes to the mixed image
 
-$$
+```math
 \tilde{x}^{P}_{v}
 = m x + (1-m)\sum_{k=1}^{3} w_k\,a^{P}_{vk}(x),
 \qquad P\in\{S,U\},\quad v\in\{1,2\}.
-$$
+```
 
 Let $p_\theta(x)$ be the classifier's predicted class probabilities. Write Equation 6 of the paper using $L_P$ for its objective on pool $P$. The expectation averages over sampled augmentations and examples, and $\lambda$ weights the consistency term.
 
-$$
-L_P(\theta,\phi)=\mathbb E\left[
-\ell_{\rm cls}(x,y;\theta)+\lambda\,\operatorname{JS}\left(
+```math
+L_P(\theta,\phi)=\mathbb{E}\left[
+\ell_{\mathrm{cls}}(x,y;\theta)+\lambda\,\mathrm{JS}\left(
 p_\theta(x),\,p_\theta(\tilde{x}^{P}_{1}),\,p_\theta(\tilde{x}^{P}_{2})
 \right)\right].
-$$
+```
 
-$$
-\begin{aligned}
-\theta_*(\phi)&\in\arg\min_\theta L_S(\theta,\phi),\\
-\phi_*&\in\arg\min_\phi L_U\bigl(\theta_*(\phi),\phi\bigr).
-\end{aligned}
-$$
+```math
+\theta_{\ast}(\phi)\in\arg\min_\theta L_S(\theta,\phi),\qquad
+\phi_{\ast}\in\arg\min_\phi L_U\bigl(\theta_{\ast}(\phi),\phi\bigr).
+```
 
 The inner objective fits the classifier on seen mixtures. The outer objective scores the resulting classifier on clean images and pseudo-unseen mixtures. The two appearances of $\phi$ in the outer objective matter. Changing the mixer can change **the classifier trained on seen views** and **the unseen mixtures used to evaluate it**. The paper describes a first-order solver. Our rerun implements the full derivative through one classifier step as an explicit interpretation of Algorithm 2. [Wang et al., CVPR 2023, §3.2 and Algorithms 1–3](https://openaccess.thecvf.com/content/CVPR2023/papers/Wang_MetaMix_Towards_Corruption-Robust_Continual_Learning_With_Temporally_Self-Adaptive_Data_Transformation_CVPR_2023_paper.pdf#page=5)
 
@@ -34,38 +32,38 @@ The inner objective fits the classifier on seen mixtures. The outer objective sc
 
 **Learn the weights on seen chains from their effects on the classifier.** For each candidate $a_k$ in a seen view, we compare its feature vector $h_\theta$ and prediction $p_\theta$ with those of the original. A shared scorer $g_\phi$ combines this descriptor with the LSTM's context state $s_\phi$ and assigns relative weights separately for each image and view.
 
-$$
-d_k=\operatorname{stopgrad}\!\begin{pmatrix}
+```math
+d_k=\mathrm{stopgrad}\!\begin{pmatrix}
 h_\theta(a_k(x))-h_\theta(x)\\
 p_\theta(a_k(x))-p_\theta(x)
 \end{pmatrix},
 \qquad
 w^S_k=\frac{\exp g_\phi(s_\phi,d_k)}
 {\sum_{j=1}^{3}\exp g_\phi(s_\phi,d_j)}.
-$$
+```
 
 **Evaluate the classifier on mixtures sampled independently of the mixer.** We fix $m=0.5$ in both pools. The learned weights combine seen chains. For each image and each pseudo-unseen view, we draw three fresh chain weights using AugMix's Dirichlet rule and hold that draw fixed throughout the mini-batch's mixer updates.
 
-$$
-u_v\sim\operatorname{Dirichlet}(1,1,1),\qquad
-\tilde x^U_v=\tfrac12 x+\tfrac12\sum_{k=1}^{3}u_{vk}\,a^U_{vk}(x).
-$$
+```math
+u_v\sim\mathrm{Dirichlet}(1,1,1),\qquad
+\tilde x^U_v=\frac{1}{2} x+\frac{1}{2}\sum_{k=1}^{3}u_{vk}\,a^U_{vk}(x).
+```
 
 **Train the mixer through one classifier step.** Our inner loss $L_S$ adds seen-view consistency to current-example cross-entropy and DER++ replay (replay cross-entropy weighted by 0.5 and stored-logit MSE by 0.2). The chain-aware experiments use either class-aware InfoNCE on features or JS on predictions. The outer loss $L_U$ always uses clean cross-entropy plus JS on the original and the two pseudo-unseen views.
 
-$$
+```math
 \theta^+(\phi)=\theta-\alpha\nabla_\theta L_S(\theta,\phi),
 \qquad
-J_{\rm chain}(\phi)=L_U\bigl(\theta^+(\phi)\bigr).
-$$
+J_{\mathrm{chain}}(\phi)=L_U\bigl(\theta^+(\phi)\bigr).
+```
 
 Because the outer images are independent of $\phi$, the mixer receives feedback entirely through the classifier update:
 
-$$
-\nabla_\phi J_{\rm chain}
+```math
+\nabla_\phi J_{\mathrm{chain}}
 =\left(\frac{\partial\theta^+}{\partial\phi}\right)^{\!T}
 \nabla_{\theta^+}L_U.
-$$
+```
 
 This trains the mixer to weight **seen** chains according to how the resulting classifier step affects clean classification and agreement on **pseudo-unseen** views. The operation split and candidate chains are resampled each mini-batch. CIFAR-10-C is reserved for final evaluation. For each of three mixer updates, we recompute the virtual SGD step from the same starting classifier. We commit the classifier step computed with the incoming mixer once per mini-batch. [Training loop](reproduce/unrolled_mixing.py)
 
