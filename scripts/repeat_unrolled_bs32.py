@@ -1,11 +1,10 @@
-"""Preview or run the four batch-32 replications, then summarize the two seeds."""
+"""Preview or run the four batch-32 replications for one seed."""
 import argparse
 from concurrent.futures import ThreadPoolExecutor
 import json
 import os
 from pathlib import Path
 import shlex
-import statistics
 import subprocess
 import sys
 
@@ -44,18 +43,15 @@ def run_on_gpu(device, jobs):
             result.check_returncode()
 
 
-def summarize(pairs):
-    print("Accuracy %, mean ± sample SD across two seeds")
+def summarize(seed, folders):
+    print(f"Accuracy (%) for seed {seed}")
     print("Method | Clean class-IL | Clean task-IL | Corrupted class-IL | Corrupted task-IL")
-    for name, folders in pairs.items():
-        if not all((p / "complete.json").exists() for p in folders):
+    for name, folder in folders.items():
+        if not (folder / "complete.json").exists():
             print(f"{name} | pending")
             continue
-        scores = [read(p / "evaluation.json") for p in folders]
-        cells = []
-        for dataset, mode in METRICS:
-            values = [100 * score[dataset][mode] for score in scores]
-            cells.append(f"{statistics.mean(values):.2f} ± {statistics.stdev(values):.2f}")
+        score = read(folder / "evaluation.json")
+        cells = [f"{100 * score[dataset][mode]:.2f}" for dataset, mode in METRICS]
         print(" | ".join([name, *cells]))
 
 
@@ -69,18 +65,21 @@ def main():
     action.add_argument("--run", action="store_true", help="Launch the experiments on the selected GPUs.")
     action.add_argument("--summary", action="store_true", help="Read completed results only.")
     args = parser.parse_args()
-    if args.seed == 17 or not 0 <= args.seed < 2**32:
-        parser.error("Choose a training seed distinct from 17 in the uint32 range.")
+    if not 0 <= args.seed < 2**32:
+        parser.error("Choose a seed in the uint32 range.")
+    if args.seed == 17 and not args.summary:
+        parser.error("Use --summary to read the original seed-17 results.")
 
-    pairs = {}
+    folders = {}
     jobs = []
     for name, config_name in CONFIGS.items():
         config = read(ROOT / "configs" / f"{config_name}.json")
         options = config["args"].copy()
         original = ROOT / options["output"]
         repeat = original.with_name(f"seed{args.seed}")
-        archive = ROOT / "results" / "unrolled_mixing_seed17" / config_name.removeprefix("unrolled_")
-        pairs[name] = (archive, repeat)
+        folders[name] = repeat
+        if args.seed == 17 and not (repeat / "complete.json").exists():
+            folders[name] = ROOT / "results" / "unrolled_mixing_seed17" / config_name.removeprefix("unrolled_")
         if args.summary:
             continue
         dataset = ROOT / "experiments/metamix_cifar10/data"
@@ -114,7 +113,7 @@ def main():
                 for future in futures:
                     future.result()
     if args.run or args.summary:
-        summarize(pairs)
+        summarize(args.seed, folders)
 
 
 if __name__ == "__main__":
