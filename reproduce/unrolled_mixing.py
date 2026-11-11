@@ -13,8 +13,8 @@ def step(model, controller, optimizer, mixer_optimizer, memory, state, raw, labe
     if outer_kind != 'js' or j < 1 or mixer != 'learned':
         raise ValueError('The unrolled experiment requires a learned mixer and outer JS.')
     chain_aware = variant == 'chain_random'
-    if variant not in ('chain_random', 'metamix', 'metamix_fixed_m') or (not chain_aware and kind != 'js'):
-        raise ValueError('MetaMix uses JS at both levels.')
+    if variant not in ('chain_random', 'metamix', 'metamix_fixed_m') or kind not in ('js', 'infonce'):
+        raise ValueError(f'Unsupported mixer or classifier consistency: {variant}, {kind}')
     group, = optimizer.param_groups
     if type(optimizer) is not torch.optim.SGD or any(
         group[key] for key in ('momentum', 'weight_decay', 'maximize')

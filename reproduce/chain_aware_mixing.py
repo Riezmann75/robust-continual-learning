@@ -304,8 +304,8 @@ def main(*, bilevel_step=None, split_indices=None, unrolled_step=None):
         p.error('learning rates must be positive and finite')
     if not 0 <= a.momentum < 1 or a.scheduler_period < 1:
         p.error('momentum must be in [0, 1) and scheduler-period must be positive')
-    if unrolled_step and (a.outer_consistency != 'js' or (a.variant != 'chain_random' and a.consistency != 'js')):
-        p.error('Unrolled runs require outer JS and MetaMix also requires seen JS.')
+    if unrolled_step and a.outer_consistency != 'js':
+        p.error('Unrolled runs require outer JS.')
     if (bilevel_step or unrolled_step) and a.momentum:
         p.error('the virtual SGD runner currently requires momentum=0')
     batch_size = a.batch_size

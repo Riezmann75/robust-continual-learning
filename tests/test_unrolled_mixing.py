@@ -26,7 +26,7 @@ class TinyClassifier(nn.Module):
 
 
 class GradientTest(unittest.TestCase):
-    def evaluate(self, variant, rate, shift=0., direction=None):
+    def evaluate(self, variant, rate, shift=0., direction=None, kind='js'):
         torch.manual_seed(42)
         np.random.seed(42)
         base = solver.base
@@ -47,7 +47,7 @@ class GradientTest(unittest.TestCase):
             _, row = solver.step(model, ctl, opt, mo, base.Reservoir(),
                                  tuple(v.double() for v in base.initial_state('cpu')),
                                  raw, [0,1,0], 'cpu', variant=variant, j=1,
-                                 kind='js', outer_kind='js', temperature=.1, mixer='learned')
+                                 kind=kind, outer_kind='js', temperature=.1, mixer='learned')
         if variant == 'metamix_fixed_m':
             self.assertEqual(len(blend.call_args_list), 2)
             for call in blend.call_args_list:
@@ -71,3 +71,9 @@ class GradientTest(unittest.TestCase):
                 self.assertAlmostEqual((plus-minus)/(2*eps), norm, delta=1e-9 + 1e-5*norm)
                 _, direct = self.evaluate(variant, 0)
                 self.assertEqual(any(g.abs().max() > 0 for g in direct), variant != 'chain_random')
+
+    def test_metamix_infonce(self):
+        for variant in ('metamix', 'metamix_fixed_m'):
+            objective, grad = self.evaluate(variant, .003, kind='infonce')
+            self.assertTrue(np.isfinite(objective))
+            self.assertGreater(sum(g.square().sum().item() for g in grad), 0)

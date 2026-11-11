@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+#PBS -N metamix_nce
+#PBS -P 12004268
+#PBS -q ai
+#PBS -J 1-6
+#PBS -l select=1:ncpus=8:mem=64gb:ngpus=1
+#PBS -l walltime=4:00:00
+#PBS -j oe
+set -eo pipefail
+cd "${PBS_O_WORKDIR:-.}"
+index=${PBS_ARRAY_INDEX:-${PBS_ARRAYID:-}}
+[[ "$index" =~ ^[1-6]$ ]] || { echo "Expected PBS array index 1-6" >&2; exit 2; }
+seeds=(17 23 43)
+variants=(metamix metamix_fixed_m)
+seed=${seeds[(index-1)/2]}
+variant=${variants[(index-1)%2]}
+out="experiments/unrolled_${variant}_infonce_bs32/seed${seed}"
+args=(reproduce/unrolled_mixing.py --variant "$variant" --seed "$seed"
+      --consistency infonce --temperature 0.1 --outer-consistency js
+      --batch-size 32 --classifier-lr 0.003 --mixer-lr 0.005
+      --root "${DATA_ROOT:-experiments/metamix_cifar10/data}" --output "$out")
+if [[ ${DRY_RUN:-0} == 1 ]]; then
+    printf 'python %q ' "${args[0]}"; printf '%q ' "${args[@]:1}"; printf '\n'
+    exit 0
+fi
+[[ ! -f "$out/complete.json" ]] || exit 0
+source activate base
+conda activate "${TRAIN_ENV:-survival_analysis}"
+export MPLCONFIGDIR="${TMPDIR:-/tmp}/mpl-${PBS_JOBID}-${index}"
+mkdir -p "$MPLCONFIGDIR" "$out"
+exec python -u "${args[@]}" >>"$out/launcher.log" 2>&1
