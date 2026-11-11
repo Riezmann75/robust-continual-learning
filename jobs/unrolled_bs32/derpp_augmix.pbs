@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+#PBS -N derpp_augmix
+#PBS -P 12004268
+#PBS -q ai
+#PBS -J 1-3
+#PBS -l select=1:ncpus=8:mem=64gb:ngpus=1
+#PBS -l walltime=4:00:00
+#PBS -j oe
+set -eo pipefail
+cd "${PBS_O_WORKDIR:-.}"
+index=${PBS_ARRAY_INDEX:-${PBS_ARRAYID:-}}
+[[ "$index" =~ ^[1-3]$ ]] || { echo "Expected PBS array index 1-3" >&2; exit 2; }
+seeds=(17 23 43)
+seed=${seeds[index-1]}
+out="experiments/derpp_augmix_bs32/seed${seed}"
+args=(reproduce/matched_mixing.py --standard-augmix --mixer random --consistency js
+      --seed "$seed" --root "${DATA_ROOT:-experiments/metamix_cifar10/data}" --output "$out")
+if [[ ${DRY_RUN:-0} == 1 ]]; then
+    printf 'python '; printf '%q ' "${args[@]}"; printf '\n'; exit 0
+fi
+[[ ! -f "$out/complete.json" ]] || exit 0
+source activate base
+conda activate "${TRAIN_ENV:-survival_analysis}"
+export MPLCONFIGDIR="${TMPDIR:-/tmp}/mpl-${PBS_JOBID}-${index}"
+mkdir -p "$MPLCONFIGDIR" "$out"
+exec python -u "${args[@]}" >>"$out/launcher.log" 2>&1

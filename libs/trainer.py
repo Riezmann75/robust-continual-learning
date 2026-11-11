@@ -779,7 +779,7 @@ class BiLevelTrainer:
         return next_state,row
 
     @staticmethod
-    def update_matched_mixing(model,controller,optimizer,mixer_optimizer,memory,state,raw,labels,device,j=3,debug=False,mixer='learned',kind='js',temperature=.1, *, active_slots, chains, clone_buffers, consistency_loss, context_for, forward, mixed_views, ops, outer_objective, random_weights, tensor):
+    def update_matched_mixing(model,controller,optimizer,mixer_optimizer,memory,state,raw,labels,device,j=3,debug=False,mixer='learned',kind='js',temperature=.1, *, standard_augmix=False, active_slots, chains, clone_buffers, consistency_loss, context_for, forward, mixed_views, ops, outer_objective, random_weights, tensor):
         x=tensor(raw,device);y=torch.as_tensor(labels,device=device)
         ce_raw=memory.sample(32,device,raw=True) if memory.size else None
         replay=(tensor(ce_raw[0],device),ce_raw[1],ce_raw[2]) if ce_raw is not None else None
@@ -796,10 +796,16 @@ class BiLevelTrainer:
                 m,w,advanced=controller(context,incoming)
                 for target,value in zip(next_state,advanced):target[slots]=value
             else:m,w=random_weights(b+r,device)
-        perm=np.random.permutation(9);q=int(np.random.randint(5,8))
-        seen=chains(raw_a,[ops.augmentations[i] for i in perm[:q]],device)
-        # Generate unseen even for random-mixer controls to preserve RNG consumption.
-        unseen=chains(raw_a,[ops.augmentations[i] for i in perm[q:]],device)
+        if standard_augmix:
+            perm = np.arange(len(ops.augmentations))
+            q = len(perm)
+            seen = chains(raw_a, ops.augmentations, device)
+            unseen = []  # No outer pool or controller update.
+        else:
+            perm=np.random.permutation(9);q=int(np.random.randint(5,8))
+            seen=chains(raw_a,[ops.augmentations[i] for i in perm[:q]],device)
+            # Generate unseen even for random-mixer controls to preserve RNG consumption.
+            unseen=chains(raw_a,[ops.augmentations[i] for i in perm[q:]],device)
         digest=hashlib.sha256(raw_a.tobytes()+ya.cpu().numpy().tobytes()+perm.tobytes())
         for v in seen+unseen:digest.update(v.cpu().numpy().tobytes())
         model.train();optimizer.zero_grad(set_to_none=True)
@@ -810,7 +816,7 @@ class BiLevelTrainer:
         replay_ce=F.cross_entropy(logits[b:],replay[1]) if r else ce.new_zeros(())
         replay_mse=F.mse_loss(forward(model,distill[0])[0],distill[2]) if distill else ce.new_zeros(())
         penalty=consistency_loss(zs,hs,ya,kind,temperature)
-        loss=ce+.5*replay_ce+.2*replay_mse+penalty
+        loss=ce+.5*replay_ce+.2*replay_mse+(12 if standard_augmix else 1)*penalty
         loss.backward()
         if not torch.isfinite(loss) or not all(p.grad is None or torch.isfinite(p.grad).all() for p in model.parameters()):raise RuntimeError('Nonfinite classifier loss/gradient')
         optimizer.step();optimizer.zero_grad(set_to_none=True)
@@ -830,7 +836,7 @@ class BiLevelTrainer:
                 _,after_penalty,after_m,after_w,_=outer_objective(model,controller,context,incoming,xa,unseen,params,buffers,ya,kind,temperature)
         else:
             with torch.no_grad():
-                uz,uh=forward(model,torch.cat((xa,*mixed_views(xa,unseen,m,w))),params,buffers)
+                uz,uh=forward(model,torch.cat((xa,*mixed_views(xa,seen if standard_augmix else unseen,m,w))),params,buffers)
                 after_penalty=consistency_loss(uz.chunk(3),uh.chunk(3),ya,kind,temperature)
                 outer_ce=F.cross_entropy(uz.chunk(3)[0],ya)
             after_m,after_w=m,w

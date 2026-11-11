@@ -30,14 +30,14 @@ from libs.models import SmallCNN, backbone_metadata
 from libs.models import Controller as Controller
 
 class Reservoir:
-    def __init__(self, capacity=500):
+    def __init__(self, capacity=500, seed=18):
         self.capacity = capacity
         self.seen = 0
         self.size = 0
         self.x = torch.empty(capacity, 32, 32, 3, dtype=torch.uint8)
         self.y = torch.empty(capacity, dtype=torch.long)
         self.logits = torch.empty(capacity, 10)
-        self.rng = np.random.default_rng(18)
+        self.rng = np.random.default_rng(seed)
 
     def add(self, x, y, logits):
         for image, label, logit in zip(x, y, logits.detach().cpu()):
@@ -151,8 +151,8 @@ def outer_objective(model,controller,context,incoming,x,branches,params,buffers,
     penalty=consistency_loss(zs,hs,labels,kind,temperature)
     return ce+penalty,penalty,om,ow,ce
 
-def step(model,controller,optimizer,mixer_optimizer,memory,state,raw,labels,device,j=3,debug=False,mixer='learned',kind='js',temperature=.1):
-    return BiLevelTrainer.update_matched_mixing(model, controller, optimizer, mixer_optimizer, memory, state, raw, labels, device, j, debug, mixer, kind, temperature, active_slots=active_slots, chains=chains, clone_buffers=clone_buffers, consistency_loss=consistency_loss, context_for=context_for, forward=forward, mixed_views=mixed_views, ops=ops, outer_objective=outer_objective, random_weights=random_weights, tensor=tensor)
+def step(model,controller,optimizer,mixer_optimizer,memory,state,raw,labels,device,j=3,debug=False,mixer='learned',kind='js',temperature=.1,standard_augmix=False):
+    return BiLevelTrainer.update_matched_mixing(model, controller, optimizer, mixer_optimizer, memory, state, raw, labels, device, j, debug, mixer, kind, temperature, standard_augmix=standard_augmix, active_slots=active_slots, chains=chains, clone_buffers=clone_buffers, consistency_loss=consistency_loss, context_for=context_for, forward=forward, mixed_views=mixed_views, ops=ops, outer_objective=outer_objective, random_weights=random_weights, tensor=tensor)
 
 def atomic_json(path, value):
     temp = path.with_suffix(path.suffix+'.tmp')
@@ -185,7 +185,7 @@ def setup(seed, device):
     if device != 'cuda' or not torch.cuda.is_available():
         raise RuntimeError('This run requires an available CUDA device; no fallback')
     global MIXTURE_RNG
-    MIXTURE_RNG=np.random.default_rng(170501)
+    MIXTURE_RNG=np.random.default_rng(seed * 10000 + 501)
     torch.set_num_threads(4)
     random.seed(seed)
     np.random.seed(seed)
@@ -235,6 +235,8 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument('--mixer',choices=['random','learned'],required=True)
     p.add_argument('--consistency',choices=['js','infonce'],required=True)
+    p.add_argument('--standard-augmix', action='store_true', help='Full operation pool, random mixtures and 12 × JS')
+    p.add_argument('--seed', type=int, default=17)
     p.add_argument('--temperature',type=float,default=.1)
     p.add_argument('--device', choices=['cuda'], default='cuda')
     p.add_argument('--root', type=Path, default=Path('experiments/metamix_cifar10/data'))
@@ -249,7 +251,9 @@ def main():
         p.error('--epochs-per-task must be positive')
     if a.stop_after_epochs and not a.pipeline_test:
         p.error('stop-after-epochs is validation only')
-    setup(17, a.device)
+    if a.standard_augmix and (a.mixer, a.consistency) != ('random', 'js'):
+        p.error('Standard AugMix requires --mixer random --consistency js')
+    setup(a.seed, a.device)
     a.output.mkdir(parents=True, exist_ok=True)
     checkpoint_path = a.output/'MetaMix'/'checkpoint.pt'
     checkpoint_path.parent.mkdir(exist_ok=True)
@@ -263,7 +267,7 @@ def main():
         bn='joint clean+two seen views train forward then separate distillation; context cloned buffers; joint clean+two unseen outer eval forward',
         unresolved='paper lacks precise feature pairing and autograd details; first-order interpretation not verified author code',
         parent_run_sha256='b45bad8e80b06ab9579cf72f81df7e1c93055944c544adb3e5239a25534fd41e',
-        seed=17, device=a.device, gpu=torch.cuda.get_device_name(), epochs_per_task=1 if a.pipeline_test else a.epochs_per_task,
+        seed=a.seed, device=a.device, gpu=torch.cuda.get_device_name(), epochs_per_task=1 if a.pipeline_test else a.epochs_per_task,
         images_per_class=17 if a.pipeline_test else 5000, tasks=[[0,1],[2,3],[4,5],[6,7],[8,9]],
         batch=32, replay_batch=32, reservoir_capacity=500, J=3 if a.mixer=='learned' else 0, classifier_lr=.03, mixer_lr=.05,
         alpha=.2, beta=.5, js_coefficient=1., channels=[32,64,128], parameters=288746,
@@ -273,6 +277,15 @@ def main():
         torch=torch.__version__, torchvision=torchvision.__version__, numpy=np.__version__,
         pillow=PIL.__version__, cuda=torch.version.cuda, cudnn=torch.backends.cudnn.version(),
         threads=4, deterministic_cudnn=True, tf32=False, root=str(a.root.resolve()))
+    if a.standard_augmix:
+        config.update(method='DER++ + AugMix', sampling='full default nine-operation pool for both views',
+                      random_mixture=f'Beta(1,1) and Dirichlet(1,1,1), RNG seed {a.seed * 10000 + 501}',
+                      solver='classifier SGD only', classifier_lr=.003, mixer_lr=None,
+                      js_coefficient=12., consistency_coefficient=12.,
+                      implementation='joint clean and two random views on current and replay data',
+                      bn='joint training forward plus separate replay distillation; post-step eval on same views')
+        for key in ('context_alignment','recurrent_state','matching_limit','unresolved'):
+            config.pop(key)
     config.update(backbone_metadata(a.backbone))
     config['context_size'] = 2 * config['feature_dimension'] + 2
     config_path = a.output/'config.json'
@@ -301,9 +314,9 @@ def main():
         atomic_json(index_path, indices)
     model, controller = SmallCNN(backbone=a.backbone).to(a.device), Controller(feature_dimension=config['feature_dimension']).to(a.device)
     assert sum(p.numel() for p in model.parameters()) == config['parameters']
-    optimizer = torch.optim.SGD(model.parameters(), lr=.03)
+    optimizer = torch.optim.SGD(model.parameters(), lr=config['classifier_lr'])
     mixer_optimizer = torch.optim.SGD(controller.parameters(), lr=.05)
-    memory = Reservoir()
+    memory = Reservoir(seed=a.seed + 1)
     state = initial_state(a.device)
     next_task = next_epoch = updates = 0
     trace_path = a.output/'trace.jsonl'
@@ -345,7 +358,7 @@ def main():
             with trace_path.open('a', buffering=1) as trace:
                 for batch, pos in enumerate(range(0, len(order), 32)):
                     ix = order[pos:pos+32]
-                    row = trainer.step(raw[ix], labels[ix], mixer=a.mixer, kind=a.consistency, temperature=a.temperature, j=3)
+                    row = trainer.step(raw[ix], labels[ix], mixer=a.mixer, kind=a.consistency, temperature=a.temperature, j=3, standard_augmix=a.standard_augmix)
                     state = trainer.state
                     updates += 1
                     row.update(task=task+1, epoch=epoch+1, global_epoch=task*epochs+epoch+1,
