@@ -104,27 +104,18 @@ Each row averages final accuracy (%) equally across the three seeds. The classif
 
 | Mixer | Classifier consistency | Original-image weight `m` | Clean class-IL | CIFAR-10-C class-IL | Clean task-IL | CIFAR-10-C task-IL |
 | --- | --- | --- | ---: | ---: | ---: | ---: |
-| Chain-aware | JS | 0.5 | 44.59 | 36.57 | 86.26 | 79.15 |
+| Chain-aware | JS | 0.5 | 44.59 | 36.56 | 86.26 | 79.14 |
 | Chain-aware | InfoNCE | 0.5 | 46.26 | 37.49 | 87.12 | 80.92 |
 | MetaMix | JS | 0.5 | 43.51 | 36.38 | 86.89 | 80.05 |
 | MetaMix | InfoNCE | 0.5 | 45.71 | 37.27 | 87.12 | 81.01 |
 | MetaMix | JS | Learned | 46.16 | 36.43 | 86.65 | 79.83 |
 | MetaMix | InfoNCE | Learned | 45.48 | 35.26 | 86.51 | 79.14 |
 
-The two MetaMix InfoNCE rows were verified by averaging all three per-seed evaluation files on the HPC. For the other four rows, the HPC check found seeds 17 and 23 but could not locate the seed-43 evaluation file at its expected path. Those four means are approximate: they combine the previously reported two-seed mean (17 and 43, weighted twice) with seed 23. Differences below use percentage points.
-
-| Method | Seed missing from HPC file check | Clean class-IL | CIFAR-10-C class-IL | Clean task-IL | CIFAR-10-C task-IL |
-| --- | --- | ---: | ---: | ---: | ---: |
-| Chain-aware (classifier JS) | 43 | — | — | — | — |
-| Chain-aware (classifier InfoNCE) | 43 | — | — | — | — |
-| MetaMix (JS, fixed `m=0.5`) | 43 | — | — | — | — |
-| MetaMix (InfoNCE, fixed `m=0.5`) | None | 45.71% | 37.27% | 87.12% | 81.01% |
-| MetaMix (JS, learned `m`) | 43 | — | — | — | — |
-| MetaMix (InfoNCE, learned `m`) | None | 45.48% | 35.26% | 86.51% | 79.14% |
+All six means were computed from the per-seed evaluation files and rounded to two decimals. Differences below use the displayed means and are expressed in percentage points. [Seed-43 evaluation archive](results/unrolled_mixing_seed43/)
 
 1. **Effect of classifier InfoNCE.** Replacing JS with InfoNCE improved all four mean accuracy metrics for both fixed-`m` mixers. On CIFAR-10-C class-IL the gain was 0.93 points for chain-aware and 0.89 for MetaMix. With learned `m`, MetaMix instead lost 1.17 points on that metric.
-2. **Effect of chain-aware mixing.** With classifier InfoNCE and `m=0.5` matched, chain-aware led MetaMix by 0.55 points on clean class-IL and 0.23 on CIFAR-10-C class-IL. Corrupted task-IL slightly favored MetaMix (81.01% versus 80.92%). With classifier JS, the corrupted class-IL gap was also small (0.19 points in favor of chain-aware). These comparisons change both candidate scoring and pseudo-unseen weighting, so they cannot isolate the effect of chain descriptors.
-3. **Does fixing `m` help MetaMix with classifier InfoNCE?** Yes on average across these seeds. Fixing `m=0.5` raised CIFAR-10-C class-IL from 35.26% to 37.27% (+2.00 points) and CIFAR-10-C task-IL from 79.14% to 81.01% (+1.87 points). Corrupted task-IL improved on all three seeds. The class-IL effect varied by seed, as shown below.
+2. **Effect of chain-aware mixing.** With classifier InfoNCE and `m=0.5` matched, chain-aware led MetaMix by 0.55 points on clean class-IL and 0.22 on CIFAR-10-C class-IL. Corrupted task-IL slightly favored MetaMix (81.01% versus 80.92%). With classifier JS, the corrupted class-IL gap was also small (0.18 points in favor of chain-aware). These comparisons change both candidate scoring and pseudo-unseen weighting, so they cannot isolate the effect of chain descriptors.
+3. **Does fixing `m` help MetaMix with classifier InfoNCE?** Yes on average across these seeds. Fixing `m=0.5` raised CIFAR-10-C class-IL from 35.26% to 37.27% (+2.01 points) and CIFAR-10-C task-IL from 79.14% to 81.01% (+1.87 points). Corrupted task-IL improved on all three seeds. The class-IL effect varied by seed, as shown below.
 
 | MetaMix with classifier InfoNCE, CIFAR-10-C class-IL | Seed 17 | Seed 23 | Seed 43 |
 | --- | ---: | ---: | ---: |
