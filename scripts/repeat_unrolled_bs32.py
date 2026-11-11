@@ -58,6 +58,8 @@ def summarize(seed, folders):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--seed", type=int, default=43)
+    parser.add_argument("--method", choices=CONFIGS.values(),
+                        help="Run or summarize one configuration (default: all four).")
     parser.add_argument("--gpus", type=int, choices=range(1, 5), default=4,
                         help="Number of visible GPUs to use, one experiment per GPU (default 4).")
     parser.add_argument("--data-root", type=Path, help="Override the local CIFAR dataset directory.")
@@ -73,6 +75,8 @@ def main():
     folders = {}
     jobs = []
     for name, config_name in CONFIGS.items():
+        if args.method and args.method != config_name:
+            continue
         config = read(ROOT / "configs" / f"{config_name}.json")
         options = config["args"].copy()
         original = ROOT / options["output"]

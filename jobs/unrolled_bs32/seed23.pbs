@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+#PBS -N unrolled_bs32
+#PBS -P 12004268
+#PBS -q ai
+#PBS -J 1-4
+#PBS -l select=1:ncpus=8:mem=64gb:ngpus=1
+#PBS -l walltime=4:00:00
+#PBS -j oe
+set -eo pipefail
+cd "${PBS_O_WORKDIR:-.}"
+
+methods=(unrolled_chain_random_bs32 unrolled_chain_random_js_bs32
+         unrolled_metamix_bs32 unrolled_metamix_fixed_m_bs32)
+index=${PBS_ARRAY_INDEX:-${PBS_ARRAYID:-}}
+[[ "$index" =~ ^[1-4]$ ]] || { echo "Expected PBS array index 1-4" >&2; exit 2; }
+args=(scripts/repeat_unrolled_bs32.py --seed 23 --method "${methods[index-1]}"
+      --gpus 1 --data-root "${DATA_ROOT:-experiments/metamix_cifar10/data}")
+if [[ ${DRY_RUN:-0} == 1 ]]; then
+    exec python3 "${args[@]}"
+fi
+
+source activate base
+conda activate "${TRAIN_ENV:-survival_analysis}"
+export MPLCONFIGDIR="${TMPDIR:-/tmp}/mpl-${PBS_JOBID}-${index}"
+mkdir -p "$MPLCONFIGDIR"
+exec python -u "${args[@]}" --run
