@@ -1,0 +1,5 @@
+{
+  "runner": "unrolled_mixing.py",
+  "args": {"variant": "metamix", "batch_size": 128, "consistency": "js", "outer_consistency": "js",
+           "classifier_lr": 0.012, "mixer_lr": 0.02, "output": "experiments/unrolled_metamix/seed17"}
+}

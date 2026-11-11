@@ -148,12 +148,12 @@ def context_for(model, x, y, replay):
     n = len(et)
     return torch.cat((dot.detach().expand(n,1),rce.detach().expand(n,1),er,et),dim=1)
 
-def initial_state(device):
+def initial_state(device, current_capacity=32):
     # Separate fixed slots for current [0:32] and replay [32:64]. Not image IDs.
-    return (torch.randn(64,5,device=device),torch.randn(64,5,device=device))
+    return tuple(torch.randn(current_capacity+32,5,device=device) for _ in range(2))
 
-def active_slots(b,r,device):
-    return torch.cat((torch.arange(b,device=device),32+torch.arange(r,device=device)))
+def active_slots(b,r,device,current_capacity=32):
+    return torch.cat((torch.arange(b,device=device),current_capacity+torch.arange(r,device=device)))
 
 def outer_objective(model,controller,context,incoming,x,branches,params,buffers,labels,kind='js',temperature=.1,candidates=None):
     assert not model.training
@@ -246,8 +246,13 @@ def evaluate(model, root, output, device, synthetic=None):
     atomic_json(output/'evaluation.json', result)
     return result
 
-def main():
+def main(*, unrolled_step=None):
     p = argparse.ArgumentParser()
+    if unrolled_step:
+        p.add_argument('--variant', choices=['chain_random', 'metamix'], required=True)
+        p.add_argument('--batch-size', type=int, default=128)
+        p.add_argument('--classifier-lr', type=float, default=.012)
+        p.add_argument('--mixer-lr', type=float, default=.02)
     p.add_argument('--mixer',choices=['learned'],default='learned')
     p.add_argument('--consistency',choices=['infonce','js'],default='infonce')
     p.add_argument('--outer-consistency',choices=['infonce','js'],default='js')
@@ -260,6 +265,18 @@ def main():
     p.add_argument('--pipeline-test', action='store_true')
     p.add_argument('--backbone', choices=['smallcnn', 'resnet18'], default='smallcnn')
     a = p.parse_args()
+    batch_size = a.batch_size if unrolled_step else 32
+    classifier_lr = a.classifier_lr if unrolled_step else .03
+    mixer_lr = a.mixer_lr if unrolled_step else .05
+    if not all(np.isfinite(lr) and lr > 0 for lr in (classifier_lr, mixer_lr)):
+        p.error('learning rates must be positive and finite')
+    if batch_size < 1:
+        p.error('batch size must be positive')
+    if unrolled_step and (a.outer_consistency != 'js' or
+                          (a.variant == 'metamix' and a.consistency != 'js')):
+        p.error('Unrolled runs require outer JS and MetaMix also requires seen JS.')
+    if unrolled_step and a.output == Path('experiments/chain_aware_mixing/seed17'):
+        a.output = Path('experiments') / ('unrolled_' + a.variant) / 'seed17'
     if not np.isfinite(a.temperature) or a.temperature<=0:p.error('positive finite temperature required')
     if a.epochs_per_task < 1:
         p.error('--epochs-per-task must be positive')
@@ -283,7 +300,7 @@ def main():
         parent_run_sha256='b45bad8e80b06ab9579cf72f81df7e1c93055944c544adb3e5239a25534fd41e',
         seed=17, device=a.device, gpu=torch.cuda.get_device_name(), epochs_per_task=1 if a.pipeline_test else a.epochs_per_task,
         images_per_class=17 if a.pipeline_test else 5000, tasks=[[0,1],[2,3],[4,5],[6,7],[8,9]],
-        batch=32, replay_batch=32, reservoir_capacity=500, J=3 if a.mixer=='learned' else 0, classifier_lr=.03, mixer_lr=.05,
+        batch=32, replay_batch=32, reservoir_capacity=500, J=3 if a.mixer=='learned' else 0, classifier_lr=classifier_lr, mixer_lr=mixer_lr,
         alpha=.2, beta=.5, js_coefficient=1., channels=[32,64,128], parameters=288746,
         resolution=32, hidden_size=5, context_size=258, severity=3, views=2, chains=3, depth=[1,3],
         normalization_mean=[.4914,.4822,.4465], normalization_std=[.2470,.2435,.2616],
@@ -295,6 +312,28 @@ def main():
     config['candidate_features'] = f"{config['feature_dimension']} raw feature deltas and 10 softmax probability deltas; detached eval joint7N forward"
     config['scorer'] = f"shared Linear({5 + config['feature_dimension'] + 10},32),ReLU,Linear(32,1); zero final layer; softmax per image/view"
     config['context_size'] = 2 * config['feature_dimension'] + 2
+    controller_type = Controller
+    update = step
+    if unrolled_step:
+        from functools import partial
+        update = partial(unrolled_step, variant=a.variant)
+        guided = a.variant == 'metamix'
+        if guided:
+            from libs.models import Controller as controller_type
+        config.update(method='Unrolled ' + a.variant, solver_variant=a.variant,
+            batch=batch_size, recurrent_state=f'{batch_size} current slots followed by 32 replay slots',
+            fixed_m=None if guided else .5,
+            solver='Three mixer updates through one virtual plain-SGD step recomputed from the same base; commit first classifier step',
+            outer_objective='clean CE + three-view JS on current and replay images',
+            random_mixture='none' if guided else 'unseen Dirichlet(1,1,1) per image/view, fixed per batch',
+            bn='outer evaluation uses pre-step running buffers; commit first support buffers',
+            implementation='one-step hypergradient; pre-solver state advance',
+            matching_limit='per-step pseudo-unseen operations; outer uses same labeled examples',
+            unresolved='Full one-step derivative is our interpretation of MetaMix Algorithm 2.')
+        if guided:
+            config.update(candidate_features=None, scorer='context-only LSTM; learned sigmoid m and softmax w shared across views')
+        config['source_hashes']['unrolled_mixing.py'] = hashlib.sha256(
+            Path(__file__).with_name('unrolled_mixing.py').read_bytes()).hexdigest()
     config_path = a.output/'config.json'
     if config_path.exists():
         if json.loads(config_path.read_text()) != config:
@@ -319,12 +358,12 @@ def main():
         assert json.loads(index_path.read_text()) == indices
     else:
         atomic_json(index_path, indices)
-    model, controller = SmallCNN(backbone=a.backbone).to(a.device), Controller(feature_dimension=config['feature_dimension']).to(a.device)
+    model, controller = SmallCNN(backbone=a.backbone).to(a.device), controller_type(feature_dimension=config['feature_dimension']).to(a.device)
     assert sum(p.numel() for p in model.parameters()) == config['parameters']
-    optimizer = torch.optim.SGD(model.parameters(), lr=.03)
-    mixer_optimizer = torch.optim.SGD(controller.parameters(), lr=.05)
+    optimizer = torch.optim.SGD(model.parameters(), lr=classifier_lr)
+    mixer_optimizer = torch.optim.SGD(controller.parameters(), lr=mixer_lr)
     memory = Reservoir()
-    state = initial_state(a.device)
+    state = initial_state(a.device, batch_size)
     next_task = next_epoch = updates = 0
     trace_path = a.output/'trace.jsonl'
     if checkpoint_path.exists():
@@ -356,15 +395,15 @@ def main():
         next_epoch=next_epoch, updates=updates, config=config)), flush=True)
     atomic_json(a.output/'process.json', dict(pid=os.getpid(), host=platform.node(),
         started=time.time(), command=' '.join(__import__('sys').argv)))
-    trainer = BiLevelTrainer(model, controller, optimizer, mixer_optimizer, memory, state, a.device, update=step)
+    trainer = BiLevelTrainer(model, controller, optimizer, mixer_optimizer, memory, state, a.device, update=update)
     for task in range(next_task, 5):
         first = next_epoch if task == next_task else 0
         for epoch in range(first, epochs):
             start = time.monotonic()
             order = np.random.permutation(indices[task])
             with trace_path.open('a', buffering=1) as trace:
-                for batch, pos in enumerate(range(0, len(order), 32)):
-                    ix = order[pos:pos+32]
+                for batch, pos in enumerate(range(0, len(order), batch_size)):
+                    ix = order[pos:pos+batch_size]
                     row = trainer.step(raw[ix], labels[ix], mixer=a.mixer, kind=a.consistency, temperature=a.temperature, outer_kind=a.outer_consistency, j=3)
                     state = trainer.state
                     updates += 1
@@ -386,7 +425,7 @@ def main():
             if a.stop_after_epochs and task*epochs+epoch+1>=a.stop_after_epochs:
                 return
     if not a.pipeline_test:
-        assert updates == 5*epochs*313 and memory.seen == 5*epochs*10000
+        assert updates == epochs*sum((len(ids)+batch_size-1)//batch_size for ids in indices) and memory.seen == 5*epochs*10000
     report(a.output, updates)
     if not (a.output/'evaluation.json').exists():
         evaluate(model, a.root, a.output, a.device, (raw, labels) if a.pipeline_test else None)
