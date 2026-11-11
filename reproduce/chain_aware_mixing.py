@@ -267,6 +267,7 @@ def main(*, bilevel_step=None, split_indices=None, unrolled_step=None):
     p = argparse.ArgumentParser()
     if unrolled_step:
         p.add_argument('--variant', choices=['chain_random', 'metamix', 'metamix_fixed_m'], required=True)
+        p.add_argument('--fixed-m', type=float, help='Original-image fraction for fixed-m runs (default 0.5)')
     p.add_argument('--seed', type=int, default=17)
     p.add_argument('--mixer',choices=['learned'],default='learned')
     p.add_argument('--consistency',choices=['infonce','js'],default='infonce')
@@ -291,6 +292,9 @@ def main(*, bilevel_step=None, split_indices=None, unrolled_step=None):
     p.add_argument('--severity-upperbound', type=float, default=3,
                    help='AugMix level upper bound (0.1 to 10); each magnitude-sensitive operation samples independently')
     a = p.parse_args()
+    if unrolled_step and a.fixed_m is not None:
+        if a.variant == 'metamix' or not 0 <= a.fixed_m <= 1:
+            p.error('--fixed-m requires a fixed-m variant and a value in [0, 1]')
     if not 0.1 <= a.severity_upperbound <= 10:
         p.error('--severity-upperbound must be between 0.1 and 10')
     if not 0 <= a.seed < 2**32:
@@ -386,13 +390,14 @@ def main(*, bilevel_step=None, split_indices=None, unrolled_step=None):
     controller_type = Controller
     update = step
     if unrolled_step:
-        update = partial(unrolled_step, variant=a.variant)
+        fixed_m = .5 if a.fixed_m is None else a.fixed_m
+        update = partial(unrolled_step, variant=a.variant, fixed_m=fixed_m)
         guided = a.variant != 'chain_random'
         if guided:
             from libs.models import Controller as controller_type
         config.update(method='Unrolled ' + a.variant, solver_variant=a.variant,
             batch=batch_size, recurrent_state=f'{batch_size} current slots followed by 32 replay slots',
-            fixed_m=None if a.variant == 'metamix' else .5,
+            fixed_m=None if a.variant == 'metamix' else fixed_m,
             solver='Three mixer updates through one virtual plain-SGD step recomputed from the same base; commit first classifier step',
             outer_objective='clean CE + three-view JS on current and replay images',
             random_mixture='none' if guided else 'unseen Dirichlet(1,1,1) per image/view, fixed per batch',
@@ -403,7 +408,7 @@ def main(*, bilevel_step=None, split_indices=None, unrolled_step=None):
         if guided:
             config.update(candidate_features=None, scorer='context-only LSTM; learned sigmoid m and softmax w shared across views')
             if a.variant == 'metamix_fixed_m':
-                config['scorer'] = 'context-only LSTM; fixed m=0.5 and learned softmax w shared across views and operation pools'
+                config['scorer'] = f'context-only LSTM; fixed m={fixed_m} and learned softmax w shared across views and operation pools'
         config['source_hashes']['unrolled_mixing.py'] = hashlib.sha256(
             Path(__file__).with_name('unrolled_mixing.py').read_bytes()).hexdigest()
     config_path = a.output/'config.json'

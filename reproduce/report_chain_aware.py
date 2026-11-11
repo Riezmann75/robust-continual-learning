@@ -74,7 +74,8 @@ def report(output, committed_updates):
     ax.plot([r['updates'] for r in epochs], [r['m_mean'] for r in epochs],
             color='navy', linewidth=1.4, label='Epoch mean over batches')
     if variant != 'metamix':
-        ax.axhline(.5, color='gray', linestyle=':', label='Fixed m = 0.5')
+        fixed_m = group['last'].get('fixed_m', .5) if epochs else .5
+        ax.axhline(fixed_m, color='gray', linestyle=':', label=f'Fixed m = {fixed_m:g}')
     for prev, cur in zip(epochs, epochs[1:]):
         if prev['task'] != cur['task']:
             ax.axvline(prev['updates'], color='gray', linestyle='--', linewidth=.8)

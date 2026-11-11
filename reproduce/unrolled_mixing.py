@@ -9,7 +9,7 @@ import chain_aware_mixing as base
 
 
 def step(model, controller, optimizer, mixer_optimizer, memory, state, raw, labels,
-         device, *, variant, kind, temperature, outer_kind, j, mixer, severity_upperbound=3):
+         device, *, variant, kind, temperature, outer_kind, j, mixer, severity_upperbound=3, fixed_m=.5):
     if outer_kind != 'js' or j < 1 or mixer != 'learned':
         raise ValueError('The unrolled experiment requires a learned mixer and outer JS.')
     chain_aware = variant == 'chain_random'
@@ -39,13 +39,15 @@ def step(model, controller, optimizer, mixer_optimizer, memory, state, raw, labe
     seen, unseen = sample(permutation[:cut]), sample(permutation[cut:])
     if chain_aware:
         describe = base.candidate_descriptors(model, xa, seen)
-        score = partial(controller, context, incoming, describe)
+        def score():
+            original, weights, advanced = controller(context, incoming, describe)
+            return torch.full_like(original, fixed_m), weights, advanced
         weights = xa.new_tensor(base.MIXTURE_RNG.dirichlet(np.ones(3), (2, len(xa))))
-        fixed_views = base.mixed_views(xa, unseen, xa.new_full((2, len(xa)), .5), weights)
+        fixed_views = base.mixed_views(xa, unseen, xa.new_full((2, len(xa)), fixed_m), weights)
     elif variant == 'metamix_fixed_m':
         def score():
             learned_m, weights, advanced = controller(context, incoming)
-            return torch.full_like(learned_m, .5), weights, advanced
+            return torch.full_like(learned_m, fixed_m), weights, advanced
     else:
         score = partial(controller, context, incoming)
     params = dict(model.named_parameters())
@@ -105,7 +107,7 @@ def step(model, controller, optimizer, mixer_optimizer, memory, state, raw, labe
         weight_max_after=w.max(-1).values.mean().item(), outer_query_js=updates[-1]['js'],
         classifier_loss=support_value, seen_consistency=seen_value, consistency=kind,
         outer_consistency='js', mixer_updates=updates, presentations=memory.seen,
-        solver_variant=variant)
+        solver_variant=variant, fixed_m=None if variant == 'metamix' else fixed_m)
 
 
 if __name__ == '__main__':

@@ -26,7 +26,7 @@ class TinyClassifier(nn.Module):
 
 
 class GradientTest(unittest.TestCase):
-    def evaluate(self, variant, rate, shift=0., direction=None, kind='js'):
+    def evaluate(self, variant, rate, shift=0., direction=None, kind='js', fixed_m=.5):
         torch.manual_seed(42)
         np.random.seed(42)
         base = solver.base
@@ -47,16 +47,24 @@ class GradientTest(unittest.TestCase):
             _, row = solver.step(model, ctl, opt, mo, base.Reservoir(),
                                  tuple(v.double() for v in base.initial_state('cpu')),
                                  raw, [0,1,0], 'cpu', variant=variant, j=1,
-                                 kind=kind, outer_kind='js', temperature=.1, mixer='learned')
-        if variant == 'metamix_fixed_m':
+                                 kind=kind, outer_kind='js', temperature=.1, mixer='learned',
+                                 fixed_m=fixed_m)
+        if variant != 'metamix':
             self.assertEqual(len(blend.call_args_list), 2)
             for call in blend.call_args_list:
-                self.assertTrue((call.args[2] == .5).all())
+                self.assertTrue((call.args[2] == fixed_m).all())
+            self.assertAlmostEqual(row['m_after'], fixed_m)
+        if variant == 'metamix_fixed_m':
+            self.assertEqual(len(blend.call_args_list), 2)
             self.assertTrue(torch.equal(blend.call_args_list[0].args[3], blend.call_args_list[1].args[3]))
-            self.assertEqual(row['m_after'], .5)
             self.assertEqual(ctl.head.bias.grad[3].item(), 0.)
         entry = row['mixer_updates'][0]
         return entry['outer_ce'] + entry['js'], [p.grad for p in ctl.parameters()]
+
+    def test_sweep_strength_on_both_pools(self):
+        for variant in ('chain_random', 'metamix_fixed_m'):
+            for fixed_m in (.1, .3, .7, .9):
+                self.evaluate(variant, .003, fixed_m=fixed_m)
 
     def test_gradient_paths(self):
         for variant in ('metamix', 'chain_random', 'metamix_fixed_m'):
