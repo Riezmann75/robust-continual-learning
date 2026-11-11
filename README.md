@@ -123,6 +123,13 @@ All six means were computed from the per-seed evaluation files and rounded to tw
 | Fixed `m=0.5` | 41.32% | 40.50% | 29.98% |
 | Fixed minus learned (points) | +2.24 | +4.80 | −1.03 |
 
+### Per-corruption accuracy for the six batch-32 methods
+
+Each entry averages accuracy (%) over five severity levels within each seed, then equally over seeds 17, 23, and 43. On the checkout containing the evaluations, run `python3 scripts/report_unrolled_corruptions.py --update-readme` to populate the Class-IL and Task-IL tables.
+
+<!-- unrolled-corruptions-start -->
+<!-- unrolled-corruptions-end -->
+
 ## Reproduce a run
 
 From the repository root on a CUDA machine, install the tested PyTorch stack and download the benchmark. The downloader verifies the clean data and the CIFAR-10-C arrays.
