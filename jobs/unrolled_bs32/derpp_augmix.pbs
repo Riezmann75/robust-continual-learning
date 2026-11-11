@@ -13,7 +13,13 @@ index=${PBS_ARRAY_INDEX:-${PBS_ARRAYID:-}}
 seeds=(17 23 43)
 seed=${seeds[index-1]}
 out="experiments/derpp_augmix_bs32/seed${seed}"
-args=(reproduce/matched_mixing.py --standard-augmix --mixer random --consistency js
+coefficient=${JS_COEFFICIENT:-12}
+case "$coefficient" in
+    1) out="experiments/derpp_augmix_js1_bs32/seed${seed}" ;;
+    12) ;;
+    *) echo "Expected JS_COEFFICIENT=1 or 12" >&2; exit 2 ;;
+esac
+args=(reproduce/matched_mixing.py --standard-augmix --mixer random --consistency js --augmix-js-coefficient "$coefficient"
       --seed "$seed" --root "${DATA_ROOT:-experiments/metamix_cifar10/data}" --output "$out")
 if [[ ${DRY_RUN:-0} == 1 ]]; then
     printf 'python '; printf '%q ' "${args[@]}"; printf '\n'; exit 0

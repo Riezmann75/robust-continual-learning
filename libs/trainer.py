@@ -779,7 +779,7 @@ class BiLevelTrainer:
         return next_state,row
 
     @staticmethod
-    def update_matched_mixing(model,controller,optimizer,mixer_optimizer,memory,state,raw,labels,device,j=3,debug=False,mixer='learned',kind='js',temperature=.1, *, standard_augmix=False, active_slots, chains, clone_buffers, consistency_loss, context_for, forward, mixed_views, ops, outer_objective, random_weights, tensor):
+    def update_matched_mixing(model,controller,optimizer,mixer_optimizer,memory,state,raw,labels,device,j=3,debug=False,mixer='learned',kind='js',temperature=.1, *, standard_augmix=False, augmix_js_coefficient=12., active_slots, chains, clone_buffers, consistency_loss, context_for, forward, mixed_views, ops, outer_objective, random_weights, tensor):
         x=tensor(raw,device);y=torch.as_tensor(labels,device=device)
         ce_raw=memory.sample(32,device,raw=True) if memory.size else None
         replay=(tensor(ce_raw[0],device),ce_raw[1],ce_raw[2]) if ce_raw is not None else None
@@ -816,7 +816,7 @@ class BiLevelTrainer:
         replay_ce=F.cross_entropy(logits[b:],replay[1]) if r else ce.new_zeros(())
         replay_mse=F.mse_loss(forward(model,distill[0])[0],distill[2]) if distill else ce.new_zeros(())
         penalty=consistency_loss(zs,hs,ya,kind,temperature)
-        loss=ce+.5*replay_ce+.2*replay_mse+(12 if standard_augmix else 1)*penalty
+        loss=ce+.5*replay_ce+.2*replay_mse+(augmix_js_coefficient if standard_augmix else 1)*penalty
         loss.backward()
         if not torch.isfinite(loss) or not all(p.grad is None or torch.isfinite(p.grad).all() for p in model.parameters()):raise RuntimeError('Nonfinite classifier loss/gradient')
         optimizer.step();optimizer.zero_grad(set_to_none=True)

@@ -151,8 +151,8 @@ def outer_objective(model,controller,context,incoming,x,branches,params,buffers,
     penalty=consistency_loss(zs,hs,labels,kind,temperature)
     return ce+penalty,penalty,om,ow,ce
 
-def step(model,controller,optimizer,mixer_optimizer,memory,state,raw,labels,device,j=3,debug=False,mixer='learned',kind='js',temperature=.1,standard_augmix=False):
-    return BiLevelTrainer.update_matched_mixing(model, controller, optimizer, mixer_optimizer, memory, state, raw, labels, device, j, debug, mixer, kind, temperature, standard_augmix=standard_augmix, active_slots=active_slots, chains=chains, clone_buffers=clone_buffers, consistency_loss=consistency_loss, context_for=context_for, forward=forward, mixed_views=mixed_views, ops=ops, outer_objective=outer_objective, random_weights=random_weights, tensor=tensor)
+def step(model,controller,optimizer,mixer_optimizer,memory,state,raw,labels,device,j=3,debug=False,mixer='learned',kind='js',temperature=.1,standard_augmix=False,augmix_js_coefficient=12.):
+    return BiLevelTrainer.update_matched_mixing(model, controller, optimizer, mixer_optimizer, memory, state, raw, labels, device, j, debug, mixer, kind, temperature, standard_augmix=standard_augmix, augmix_js_coefficient=augmix_js_coefficient, active_slots=active_slots, chains=chains, clone_buffers=clone_buffers, consistency_loss=consistency_loss, context_for=context_for, forward=forward, mixed_views=mixed_views, ops=ops, outer_objective=outer_objective, random_weights=random_weights, tensor=tensor)
 
 def atomic_json(path, value):
     temp = path.with_suffix(path.suffix+'.tmp')
@@ -235,7 +235,8 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument('--mixer',choices=['random','learned'],required=True)
     p.add_argument('--consistency',choices=['js','infonce'],required=True)
-    p.add_argument('--standard-augmix', action='store_true', help='Full operation pool, random mixtures and 12 × JS')
+    p.add_argument('--augmix-js-coefficient', type=float, choices=(1., 12.), default=12.)
+    p.add_argument('--standard-augmix', action='store_true', help='Full operation pool, random mixtures and JS consistency')
     p.add_argument('--seed', type=int, default=17)
     p.add_argument('--temperature',type=float,default=.1)
     p.add_argument('--device', choices=['cuda'], default='cuda')
@@ -281,7 +282,7 @@ def main():
         config.update(method='DER++ + AugMix', sampling='full default nine-operation pool for both views',
                       random_mixture=f'Beta(1,1) and Dirichlet(1,1,1), RNG seed {a.seed * 10000 + 501}',
                       solver='classifier SGD only', classifier_lr=.003, mixer_lr=None,
-                      js_coefficient=12., consistency_coefficient=12.,
+                      js_coefficient=a.augmix_js_coefficient, consistency_coefficient=a.augmix_js_coefficient,
                       implementation='joint clean and two random views on current and replay data',
                       bn='joint training forward plus separate replay distillation; post-step eval on same views')
         for key in ('context_alignment','recurrent_state','matching_limit','unresolved'):
@@ -358,7 +359,7 @@ def main():
             with trace_path.open('a', buffering=1) as trace:
                 for batch, pos in enumerate(range(0, len(order), 32)):
                     ix = order[pos:pos+32]
-                    row = trainer.step(raw[ix], labels[ix], mixer=a.mixer, kind=a.consistency, temperature=a.temperature, j=3, standard_augmix=a.standard_augmix)
+                    row = trainer.step(raw[ix], labels[ix], mixer=a.mixer, kind=a.consistency, temperature=a.temperature, j=3, standard_augmix=a.standard_augmix, augmix_js_coefficient=a.augmix_js_coefficient)
                     state = trainer.state
                     updates += 1
                     row.update(task=task+1, epoch=epoch+1, global_epoch=task*epochs+epoch+1,
