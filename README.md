@@ -128,6 +128,49 @@ All six means were computed from the per-seed evaluation files and rounded to tw
 Each entry averages accuracy (%) over five severity levels within each seed, then equally over seeds 17, 23, and 43. On the checkout containing the evaluations, run `python3 scripts/report_unrolled_corruptions.py --update-readme` to populate the Class-IL and Task-IL tables.
 
 <!-- unrolled-corruptions-start -->
+
+#### Class-IL
+
+| Corruption | Chain-aware JS | Chain-aware InfoNCE | MetaMix JS, fixed m | MetaMix InfoNCE, fixed m | MetaMix JS, learned m | MetaMix InfoNCE, learned m |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Gaussian Noise | 28.76 | 33.76 | 30.49 | 33.61 | 29.49 | 30.42 |
+| Shot Noise | 32.53 | 36.57 | 33.82 | 36.38 | 32.92 | 33.06 |
+| Impulse Noise | 22.97 | 29.60 | 25.64 | 29.70 | 25.64 | 27.40 |
+| Defocus Blur | 44.85 | 43.99 | 44.19 | 43.57 | 42.32 | 40.62 |
+| Glass Blur | 34.00 | 36.04 | 34.17 | 36.01 | 35.28 | 34.27 |
+| Motion Blur | 41.58 | 38.66 | 40.59 | 38.50 | 38.26 | 34.97 |
+| Zoom Blur | 44.66 | 42.77 | 44.21 | 42.58 | 40.41 | 38.72 |
+| Snow | 33.57 | 36.51 | 33.41 | 36.27 | 35.99 | 35.09 |
+| Frost | 31.30 | 31.09 | 30.49 | 31.01 | 32.48 | 30.39 |
+| Fog | 39.47 | 35.90 | 37.97 | 35.81 | 37.59 | 34.91 |
+| Brightness | 39.68 | 40.77 | 38.47 | 40.34 | 42.22 | 40.50 |
+| Contrast | 30.16 | 28.86 | 29.45 | 28.99 | 29.37 | 27.61 |
+| Elastic Transform | 44.42 | 43.45 | 43.36 | 42.96 | 42.78 | 41.28 |
+| Pixelate | 37.71 | 39.74 | 37.20 | 39.10 | 37.96 | 36.84 |
+| Jpeg Compression | 42.79 | 44.68 | 42.26 | 44.17 | 43.75 | 42.88 |
+| Overall | 36.56 | 37.49 | 36.38 | 37.27 | 36.43 | 35.26 |
+
+#### Task-IL
+
+| Corruption | Chain-aware JS | Chain-aware InfoNCE | MetaMix JS, fixed m | MetaMix InfoNCE, fixed m | MetaMix JS, learned m | MetaMix InfoNCE, learned m |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Gaussian Noise | 73.07 | 77.64 | 75.04 | 77.69 | 74.89 | 73.52 |
+| Shot Noise | 76.24 | 80.28 | 77.99 | 80.56 | 77.69 | 76.28 |
+| Impulse Noise | 71.88 | 76.32 | 73.34 | 76.40 | 73.06 | 72.47 |
+| Defocus Blur | 84.20 | 84.62 | 84.76 | 84.79 | 83.76 | 83.58 |
+| Glass Blur | 73.70 | 77.05 | 75.27 | 77.34 | 75.58 | 74.83 |
+| Motion Blur | 82.33 | 81.72 | 83.09 | 82.12 | 81.86 | 80.39 |
+| Zoom Blur | 83.15 | 83.18 | 83.75 | 83.39 | 82.30 | 82.18 |
+| Snow | 78.97 | 81.59 | 79.92 | 81.55 | 79.90 | 80.89 |
+| Frost | 78.34 | 80.09 | 78.96 | 80.09 | 79.31 | 79.12 |
+| Fog | 80.01 | 80.95 | 80.07 | 81.00 | 80.57 | 79.14 |
+| Brightness | 83.97 | 84.71 | 84.60 | 84.54 | 84.56 | 84.43 |
+| Contrast | 70.05 | 70.82 | 70.28 | 70.71 | 71.21 | 68.55 |
+| Elastic Transform | 83.42 | 84.15 | 84.12 | 84.36 | 83.61 | 83.65 |
+| Pixelate | 83.92 | 85.66 | 84.60 | 85.55 | 84.50 | 83.69 |
+| Jpeg Compression | 83.90 | 85.01 | 84.98 | 85.10 | 84.69 | 84.36 |
+| Overall | 79.14 | 80.92 | 80.05 | 81.01 | 79.83 | 79.14 |
+
 <!-- unrolled-corruptions-end -->
 
 ## Reproduce a run
