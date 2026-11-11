@@ -36,6 +36,8 @@ The inner objective fits the classifier on seen mixtures. The outer objective sc
 
 ## Our contribution: chain-aware mixing with independent outer views
 
+We hypothesize that observing how each sampled chain changes the classifier's representation and prediction for an image helps the mixer prioritize chains that benefit training. The mixer learns their relative weights from the classifier step taken on the whole mixture. A shift in weight is favored when that step lowers the sum of two losses: classification error measured by cross-entropy on clean images, and prediction disagreement measured by JS on those images and their independently sampled pseudo-unseen views.
+
 **Learn the weights on seen chains from their effects on the classifier.** For each candidate $a_k$ in a seen view, we compare its feature vector $h_\theta$ and prediction $p_\theta$ with those of the original. A shared scorer $g_\phi$ combines this descriptor with the LSTM's context state $s_\phi$ and assigns relative weights separately for each image and view.
 
 ```math
