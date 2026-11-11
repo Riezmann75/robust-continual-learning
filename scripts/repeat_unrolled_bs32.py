@@ -40,7 +40,7 @@ def summarize(pairs):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--seed", type=int, default=18)
+    parser.add_argument("--seed", type=int, default=43)
     parser.add_argument("--data-root", type=Path, help="Override the local CIFAR dataset directory.")
     action = parser.add_mutually_exclusive_group()
     action.add_argument("--run", action="store_true", help="Execute sequentially on the GPU.")
