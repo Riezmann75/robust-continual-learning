@@ -29,9 +29,19 @@ def run_on_gpu(device, jobs):
     env = dict(os.environ, CUDA_VISIBLE_DEVICES=device)
     for command, folder in jobs:
         folder.mkdir(parents=True, exist_ok=True)
-        with (folder / "launcher.log").open("a") as log:
-            subprocess.run(command, cwd=ROOT, env=env, stdout=log,
-                           stderr=subprocess.STDOUT, check=True)
+        path = folder / "launcher.log"
+        with path.open("ab") as log:
+            start = log.tell()
+            result = subprocess.run(command, cwd=ROOT, env=env, stdout=log,
+                                    stderr=subprocess.STDOUT)
+        if result.returncode:
+            with path.open("rb") as log:
+                log.seek(max(start, path.stat().st_size - 8192))
+                tail = log.read().decode(errors="replace").splitlines()[-20:]
+            print(f"GPU {device}: {folder.parent.name}/{folder.name} exited with "
+                  f"status {result.returncode}. Log: {path}\n" + "\n".join(tail),
+                  file=sys.stderr, flush=True)
+            result.check_returncode()
 
 
 def summarize(pairs):
