@@ -33,10 +33,10 @@ The inner objective fits the classifier on seen mixtures. The outer objective sc
 **Learn the weights on seen chains from their effects on the classifier.** For each candidate $a_k$ in a seen view, we compare its feature vector $h_\theta$ and prediction $p_\theta$ with those of the original. A shared scorer $g_\phi$ combines this descriptor with the LSTM's context state $s_\phi$ and assigns relative weights separately for each image and view.
 
 ```math
-d_k=\mathrm{stopgrad}\!\begin{pmatrix}
-h_\theta(a_k(x))-h_\theta(x)\\
+d_k=\mathrm{stopgrad}\!\left(\mathrm{concat}\!\left(
+h_\theta(a_k(x))-h_\theta(x),\,
 p_\theta(a_k(x))-p_\theta(x)
-\end{pmatrix},
+\right)\right),
 \qquad
 w^S_k=\frac{\exp g_\phi(s_\phi,d_k)}
 {\sum_{j=1}^{3}\exp g_\phi(s_\phi,d_j)}.
