@@ -1,38 +1,5 @@
-CVPR-format research draft
-
-Main editable manuscript: main.tex
-References: references.bib
-Generated data tables: tables/*.tex
-Generated vector figure: figures/overview.pdf
-
-Build from this directory:
-  PYTHON=/home/riezmann/miniconda3/envs/liver_transplant/bin/python bash build.sh
-Or, with Python/matplotlib and a TeX Live distribution installed:
-  bash build.sh
-
-For Overleaf, upload all files in this folder except build logs and set main.tex
-as the main document. Tables and figures are included, so Python is not needed
-on Overleaf. Run generate_assets.py locally to refresh them from the repository.
-To compile the standalone ZIP locally without the repository data:
-  latexmk -pdf -interaction=nonstopmode -halt-on-error main.tex
-
-Template provenance:
-  Official https://github.com/cvpr-org/author-kit
-  Tag CVPR2027-v1, commit a2369342011145be8c85e5ad21a9b61f9fa53473
-  cvpr.sty and ieeenat_fullname.bst are copied without modification.
-  Original attribution headers are retained in those files.
-
-The draft uses CVPR's pagenumbers mode, with no margin/spacing overrides.
-It is not a submitted paper and does not claim acceptance or full reproduction.
-Author information must be supplied. For a submission, check the target year's
-requirements, change to review mode, anonymize identifying material, and submit
-the appendix separately if required. No author names or affiliations were guessed.
-
-Scope: the eight completed seed-17 controlled mixing experiments. Auxiliary
-reconstruction/Barlow/multi-head work is not included as a comparable result.
-Tables and the figure are calculated from archived evaluation/progress JSON.
-data_manifest.json records input hashes; generate_assets.py also verifies
-the archived source hashes and completion/evaluation counts before rendering.
-
-Limitations are explicit: exploratory single-seed results, no confidence
-intervals, coupled controller changes, and unverified MetaMix gradient fidelity.
+Compile main.tex with bash build.sh, or run latexmk -pdf main.tex in this folder.
+The manuscript includes the six-row batch-32 comparison across seeds 17, 23 and 43.
+Tables are transcribed from the README at GitHub revision 2bcca60. The historical
+generate_assets.py, figure, manifest and tables/ describe the previous study and
+are not inputs to this manuscript. The author field remains a placeholder.
