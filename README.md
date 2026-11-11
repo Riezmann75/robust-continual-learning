@@ -100,18 +100,19 @@ Batch 32 used constant classifier/mixer learning rates of 0.003/0.005 and 15,650
 
 ### Batch-32 comparison across seeds 17, 23, and 43
 
-Each row averages final accuracy (%) equally across the three seeds. The classifier uses clean cross-entropy and replay in every run. The classifier consistency column specifies the additional loss on pseudo-seen views. All mixers use clean cross-entropy and JS consistency in the outer objective. [Four-method replication runner](scripts/repeat_unrolled_bs32.py) · [MetaMix classifier InfoNCE jobs](jobs/unrolled_bs32/metamix_infonce.pbs)
+Each row averages final accuracy (%) equally across the three seeds. All classifiers use clean cross-entropy, DER++ replay, and the consistency loss listed below. AugMix samples chains from the full operation pool and uses random mixing weights. The learned mixers use pseudo-seen views for classifier consistency and optimize clean cross-entropy plus JS in the outer step. [AugMix baseline](jobs/unrolled_bs32/derpp_augmix.pbs) · [Four-method replication runner](scripts/repeat_unrolled_bs32.py) · [MetaMix classifier InfoNCE jobs](jobs/unrolled_bs32/metamix_infonce.pbs)
 
 | Mixer | Classifier consistency | Original-image weight `m` | Clean class-IL | CIFAR-10-C class-IL | Clean task-IL | CIFAR-10-C task-IL |
 | --- | --- | --- | ---: | ---: | ---: | ---: |
+| DER++ + AugMix | 12 × JS | Beta(1,1) | 45.94 | **40.00** | **88.33** | **84.15** |
 | Chain-aware | JS | 0.5 | 44.59 | 36.56 | 86.26 | 79.14 |
-| Chain-aware | InfoNCE | 0.5 | 46.26 | 37.49 | 87.12 | 80.92 |
+| Chain-aware | InfoNCE | 0.5 | **46.26** | 37.49 | 87.12 | 80.92 |
 | MetaMix | JS | 0.5 | 43.51 | 36.38 | 86.89 | 80.05 |
 | MetaMix | InfoNCE | 0.5 | 45.71 | 37.27 | 87.12 | 81.01 |
 | MetaMix | JS | Learned | 46.16 | 36.43 | 86.65 | 79.83 |
 | MetaMix | InfoNCE | Learned | 45.48 | 35.26 | 86.51 | 79.14 |
 
-All six means were computed from the per-seed evaluation files and rounded to two decimals. Differences below use the displayed means and are expressed in percentage points. [Seed-43 evaluation archive](results/unrolled_mixing_seed43/)
+Bold marks the highest mean in each column. The AugMix row averages the reported per-seed percentages. The six learned-mixer rows use the per-seed evaluation files, rounded after averaging. Differences below use the displayed means and are expressed in percentage points. [Seed-43 evaluation archive](results/unrolled_mixing_seed43/)
 
 1. **Effect of classifier InfoNCE.** Replacing JS with InfoNCE improved all four mean accuracy metrics for both fixed-`m` mixers. On CIFAR-10-C class-IL the gain was 0.93 points for chain-aware and 0.89 for MetaMix. With learned `m`, MetaMix instead lost 1.17 points on that metric.
 2. **Effect of chain-aware mixing.** With classifier InfoNCE and `m=0.5` matched, chain-aware led MetaMix by 0.55 points on clean class-IL and 0.22 on CIFAR-10-C class-IL. Corrupted task-IL slightly favored MetaMix (81.01% versus 80.92%). With classifier JS, the corrupted class-IL gap was also small (0.18 points in favor of chain-aware). These comparisons change both candidate scoring and pseudo-unseen weighting, so they cannot isolate the effect of chain descriptors.
