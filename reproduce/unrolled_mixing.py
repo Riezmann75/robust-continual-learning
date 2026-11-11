@@ -13,7 +13,7 @@ def step(model, controller, optimizer, mixer_optimizer, memory, state, raw, labe
     if outer_kind != 'js' or j < 1 or mixer != 'learned':
         raise ValueError('The unrolled experiment requires a learned mixer and outer JS.')
     chain_aware = variant == 'chain_random'
-    if variant not in ('chain_random', 'metamix') or (not chain_aware and kind != 'js'):
+    if variant not in ('chain_random', 'metamix', 'metamix_fixed_m') or (not chain_aware and kind != 'js'):
         raise ValueError('MetaMix uses JS at both levels.')
     group, = optimizer.param_groups
     if type(optimizer) is not torch.optim.SGD or any(
@@ -42,6 +42,10 @@ def step(model, controller, optimizer, mixer_optimizer, memory, state, raw, labe
         score = partial(controller, context, incoming, describe)
         weights = xa.new_tensor(base.MIXTURE_RNG.dirichlet(np.ones(3), (2, len(xa))))
         fixed_views = base.mixed_views(xa, unseen, xa.new_full((2, len(xa)), .5), weights)
+    elif variant == 'metamix_fixed_m':
+        def score():
+            learned_m, weights, advanced = controller(context, incoming)
+            return torch.full_like(learned_m, .5), weights, advanced
     else:
         score = partial(controller, context, incoming)
     params = dict(model.named_parameters())

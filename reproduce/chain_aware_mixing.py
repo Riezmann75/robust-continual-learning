@@ -249,7 +249,7 @@ def evaluate(model, root, output, device, synthetic=None):
 def main(*, unrolled_step=None):
     p = argparse.ArgumentParser()
     if unrolled_step:
-        p.add_argument('--variant', choices=['chain_random', 'metamix'], required=True)
+        p.add_argument('--variant', choices=['chain_random', 'metamix', 'metamix_fixed_m'], required=True)
         p.add_argument('--batch-size', type=int, default=128)
         p.add_argument('--classifier-lr', type=float, default=.012)
         p.add_argument('--mixer-lr', type=float, default=.02)
@@ -273,7 +273,7 @@ def main(*, unrolled_step=None):
     if batch_size < 1:
         p.error('batch size must be positive')
     if unrolled_step and (a.outer_consistency != 'js' or
-                          (a.variant == 'metamix' and a.consistency != 'js')):
+                          (a.variant != 'chain_random' and a.consistency != 'js')):
         p.error('Unrolled runs require outer JS and MetaMix also requires seen JS.')
     if unrolled_step and a.output == Path('experiments/chain_aware_mixing/seed17'):
         a.output = Path('experiments') / ('unrolled_' + a.variant) / 'seed17'
@@ -317,12 +317,12 @@ def main(*, unrolled_step=None):
     if unrolled_step:
         from functools import partial
         update = partial(unrolled_step, variant=a.variant)
-        guided = a.variant == 'metamix'
+        guided = a.variant != 'chain_random'
         if guided:
             from libs.models import Controller as controller_type
         config.update(method='Unrolled ' + a.variant, solver_variant=a.variant,
             batch=batch_size, recurrent_state=f'{batch_size} current slots followed by 32 replay slots',
-            fixed_m=None if guided else .5,
+            fixed_m=None if a.variant == 'metamix' else .5,
             solver='Three mixer updates through one virtual plain-SGD step recomputed from the same base; commit first classifier step',
             outer_objective='clean CE + three-view JS on current and replay images',
             random_mixture='none' if guided else 'unseen Dirichlet(1,1,1) per image/view, fixed per batch',
@@ -332,6 +332,8 @@ def main(*, unrolled_step=None):
             unresolved='Full one-step derivative is our interpretation of MetaMix Algorithm 2.')
         if guided:
             config.update(candidate_features=None, scorer='context-only LSTM; learned sigmoid m and softmax w shared across views')
+            if a.variant == 'metamix_fixed_m':
+                config['scorer'] = 'context-only LSTM; fixed m=0.5 and learned softmax w shared across views and operation pools'
         config['source_hashes']['unrolled_mixing.py'] = hashlib.sha256(
             Path(__file__).with_name('unrolled_mixing.py').read_bytes()).hexdigest()
     config_path = a.output/'config.json'

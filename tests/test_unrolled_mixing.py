@@ -31,7 +31,7 @@ class GradientTest(unittest.TestCase):
         np.random.seed(42)
         base = solver.base
         model = TinyClassifier().double()
-        ctor = Controller if variant == 'metamix' else ChainAwareController
+        ctor = ChainAwareController if variant == 'chain_random' else Controller
         ctl = ctor(feature_dimension=3).double()
         if direction is not None:
             with torch.no_grad():
@@ -42,16 +42,24 @@ class GradientTest(unittest.TestCase):
         raw = np.random.default_rng(34).integers(256, size=(3,32,32,3), dtype=np.uint8)
         tensor = base.tensor
         with patch.object(base, 'MIXTURE_RNG', np.random.default_rng(7)), patch.object(
-                base, 'tensor', lambda x, device: tensor(x, device).double()):
+                base, 'tensor', lambda x, device: tensor(x, device).double()), patch.object(
+                base, 'mixed_views', wraps=base.mixed_views) as blend:
             _, row = solver.step(model, ctl, opt, mo, base.Reservoir(),
                                  tuple(v.double() for v in base.initial_state('cpu')),
                                  raw, [0,1,0], 'cpu', variant=variant, j=1,
                                  kind='js', outer_kind='js', temperature=.1, mixer='learned')
+        if variant == 'metamix_fixed_m':
+            self.assertEqual(len(blend.call_args_list), 2)
+            for call in blend.call_args_list:
+                self.assertTrue((call.args[2] == .5).all())
+            self.assertTrue(torch.equal(blend.call_args_list[0].args[3], blend.call_args_list[1].args[3]))
+            self.assertEqual(row['m_after'], .5)
+            self.assertEqual(ctl.head.bias.grad[3].item(), 0.)
         entry = row['mixer_updates'][0]
         return entry['outer_ce'] + entry['js'], [p.grad for p in ctl.parameters()]
 
     def test_gradient_paths(self):
-        for variant in ('metamix', 'chain_random'):
+        for variant in ('metamix', 'chain_random', 'metamix_fixed_m'):
             with self.subTest(variant=variant):
                 _, grad = self.evaluate(variant, .012)
                 norm = sum(g.square().sum() for g in grad).sqrt().item()
@@ -62,4 +70,4 @@ class GradientTest(unittest.TestCase):
                 minus, _ = self.evaluate(variant, .012, -eps, direction)
                 self.assertAlmostEqual((plus-minus)/(2*eps), norm, delta=1e-9 + 1e-5*norm)
                 _, direct = self.evaluate(variant, 0)
-                self.assertEqual(any(g.abs().max() > 0 for g in direct), variant == 'metamix')
+                self.assertEqual(any(g.abs().max() > 0 for g in direct), variant != 'chain_random')
