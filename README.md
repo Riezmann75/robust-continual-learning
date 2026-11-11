@@ -85,7 +85,7 @@ This trains the mixer to weight **seen** chains according to how the resulting c
 
 ## Completed one-step experiments
 
-All runs below use seed 17, the small CNN, a 500-example replay buffer, up to 32 replay examples per update, and ten epochs per task. Class-IL predicts among all ten classes. Task-IL supplies the task's class pair. Each row reports final-checkpoint accuracy (%) on 10,000 clean images and the mean across 15 CIFAR-10-C corruptions and five severities. [Saved configurations and evaluations](results/unrolled_mixing_seed17/)
+The first table reports seed 17. The runs use the small CNN, a 500-example replay buffer, up to 32 replay examples per update, and ten epochs per task. Class-IL predicts among all ten classes. Task-IL supplies the task's class pair. Each row reports final-checkpoint accuracy (%) on 10,000 clean images and the mean across 15 CIFAR-10-C corruptions and five severities. [Saved configurations and evaluations](results/unrolled_mixing_seed17/)
 
 | Method | Current batch | Seen consistency | Clean class-IL | CIFAR-10-C class-IL | Clean task-IL | CIFAR-10-C task-IL |
 | --- | ---: | --- | ---: | ---: | ---: | ---: |
@@ -98,12 +98,30 @@ At batch 32, chain-aware scored **4.55 percentage points higher** on corrupted c
 
 Batch 32 used constant classifier/mixer learning rates of 0.003/0.005 and 15,650 classifier updates. Batch 128 used 0.012/0.02 and 3,950 updates. Both processed 500,000 current-image presentations. Comparisons across batch sizes therefore also change the learning rates and update count.
 
-### Follow-up comparisons at batch 32
+### Batch-32 comparison across seeds 17, 23, and 43
 
-| Run | Question | Status as of Nov 11, 2026 |
-| --- | --- | --- |
-| [Chain-aware with seen JS](configs/unrolled_chain_random_js_bs32.json) | How much does replacing InfoNCE with MetaMix's classifier consistency objective change accuracy? | Training |
-| [MetaMix with fixed m](configs/unrolled_metamix_fixed_m_bs32.json) | How much does fixing the original-image weight at 0.5 change MetaMix when it still learns the chain weights? | Queued behind chain-aware JS |
+Each row averages final accuracy (%) equally across the three seeds. The classifier uses clean cross-entropy and replay in every run. The classifier consistency column specifies the additional loss on pseudo-seen views. All mixers use clean cross-entropy and JS consistency in the outer objective. [Four-method replication runner](scripts/repeat_unrolled_bs32.py) · [MetaMix classifier InfoNCE jobs](jobs/unrolled_bs32/metamix_infonce.pbs)
+
+| Mixer | Classifier consistency | Original-image weight `m` | Clean class-IL | CIFAR-10-C class-IL | Clean task-IL | CIFAR-10-C task-IL |
+| --- | --- | --- | ---: | ---: | ---: | ---: |
+| Chain-aware | JS | 0.5 | 44.59 | 36.57 | 86.26 | 79.15 |
+| Chain-aware | InfoNCE | 0.5 | 46.26 | 37.49 | 87.12 | 80.92 |
+| MetaMix | JS | 0.5 | 43.51 | 36.38 | 86.89 | 80.05 |
+| MetaMix | InfoNCE | 0.5 | 45.71 | 37.27 | 87.12 | 81.01 |
+| MetaMix | JS | Learned | 46.16 | 36.43 | 86.65 | 79.83 |
+| MetaMix | InfoNCE | Learned | 45.48 | 35.26 | 86.51 | 79.14 |
+
+Values are approximate because the four original configurations combine the reported two-seed mean (17 and 43, weighted twice) with the seed-23 result. The two MetaMix InfoNCE rows use the three reported per-seed scores. Differences below are in percentage points and are calculated before rounding the displayed means.
+
+1. **Effect of classifier InfoNCE.** Replacing JS with InfoNCE improved all four mean accuracy metrics for both fixed-`m` mixers. On CIFAR-10-C class-IL the gain was 0.93 points for chain-aware and 0.89 for MetaMix. With learned `m`, MetaMix instead lost 1.17 points on that metric.
+2. **Effect of chain-aware mixing.** With classifier InfoNCE and `m=0.5` matched, chain-aware led MetaMix by 0.55 points on clean class-IL and 0.23 on CIFAR-10-C class-IL. Corrupted task-IL slightly favored MetaMix (81.01% versus 80.92%). With classifier JS, the corrupted class-IL gap was also small (0.19 points in favor of chain-aware). These comparisons change both candidate scoring and pseudo-unseen weighting, so they cannot isolate the effect of chain descriptors.
+3. **Does fixing `m` help MetaMix with classifier InfoNCE?** Yes on average across these seeds. Fixing `m=0.5` raised CIFAR-10-C class-IL from 35.26% to 37.27% (+2.00 points) and CIFAR-10-C task-IL from 79.14% to 81.01% (+1.87 points). Corrupted task-IL improved on all three seeds. The class-IL effect varied by seed, as shown below.
+
+| MetaMix with classifier InfoNCE, CIFAR-10-C class-IL | Seed 17 | Seed 23 | Seed 43 |
+| --- | ---: | ---: | ---: |
+| Learned `m` | 39.08% | 35.70% | 31.01% |
+| Fixed `m=0.5` | 41.32% | 40.50% | 29.98% |
+| Fixed minus learned (points) | +2.24 | +4.80 | −1.03 |
 
 ## Reproduce a run
 
