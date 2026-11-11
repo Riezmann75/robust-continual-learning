@@ -1,6 +1,8 @@
 """Preview or run the four batch-32 replications, then summarize the two seeds."""
 import argparse
+from concurrent.futures import ThreadPoolExecutor
 import json
+import os
 from pathlib import Path
 import shlex
 import statistics
@@ -23,6 +25,15 @@ def read(path):
     return json.loads(path.read_text())
 
 
+def run_on_gpu(device, jobs):
+    env = dict(os.environ, CUDA_VISIBLE_DEVICES=device)
+    for command, folder in jobs:
+        folder.mkdir(parents=True, exist_ok=True)
+        with (folder / "launcher.log").open("a") as log:
+            subprocess.run(command, cwd=ROOT, env=env, stdout=log,
+                           stderr=subprocess.STDOUT, check=True)
+
+
 def summarize(pairs):
     print("Accuracy %, mean ± sample SD across two seeds")
     print("Method | Clean class-IL | Clean task-IL | Corrupted class-IL | Corrupted task-IL")
@@ -41,15 +52,18 @@ def summarize(pairs):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--seed", type=int, default=43)
+    parser.add_argument("--gpus", type=int, choices=range(1, 5), default=4,
+                        help="Number of visible GPUs to use, one experiment per GPU (default 4).")
     parser.add_argument("--data-root", type=Path, help="Override the local CIFAR dataset directory.")
     action = parser.add_mutually_exclusive_group()
-    action.add_argument("--run", action="store_true", help="Execute sequentially on the GPU.")
+    action.add_argument("--run", action="store_true", help="Launch the experiments on the selected GPUs.")
     action.add_argument("--summary", action="store_true", help="Read completed results only.")
     args = parser.parse_args()
     if args.seed == 17 or not 0 <= args.seed < 2**32:
         parser.error("Choose a training seed distinct from 17 in the uint32 range.")
 
     pairs = {}
+    jobs = []
     for name, config_name in CONFIGS.items():
         config = read(ROOT / "configs" / f"{config_name}.json")
         options = config["args"].copy()
@@ -68,9 +82,27 @@ def main():
         command = [sys.executable, str(ROOT / "reproduce" / config["runner"])]
         for key, value in options.items():
             command.extend(["--" + key.replace("_", "-"), str(value)])
-        print(shlex.join(command), flush=True)
-        if args.run and not (repeat / "complete.json").exists():
-            subprocess.run(command, cwd=ROOT, check=True)
+        if not (repeat / "complete.json").exists():
+            jobs.append((command, repeat))
+    if jobs:
+        count = min(len(jobs), args.gpus)
+        mask = os.environ.get("CUDA_VISIBLE_DEVICES")
+        devices = ([str(i) for i in range(count)] if mask is None else
+                   [d.strip() for d in mask.split(",") if d.strip()][:count])
+        if len(set(devices)) != count or "-1" in devices:
+            parser.error(f"Need {count} distinct visible GPUs. Check CUDA_VISIBLE_DEVICES or reduce --gpus.")
+        if args.run:
+            import torch
+            if torch.cuda.device_count() < count:
+                parser.error(f"Requested {count} GPUs but PyTorch sees {torch.cuda.device_count()}.")
+        for i, (command, _) in enumerate(jobs):
+            print(f"CUDA_VISIBLE_DEVICES={devices[i % count]} {shlex.join(command)}", flush=True)
+        if args.run:
+            with ThreadPoolExecutor(max_workers=count) as pool:
+                futures = [pool.submit(run_on_gpu, device, jobs[i::count])
+                           for i, device in enumerate(devices)]
+                for future in futures:
+                    future.result()
     if args.run or args.summary:
         summarize(pairs)
 
