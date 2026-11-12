@@ -50,7 +50,7 @@ w^S_k=\frac{\exp g_\phi(s_\phi,d_k)}
 {\sum_{j=1}^{3}\exp g_\phi(s_\phi,d_j)}.
 ```
 
-**Keep the pseudo-unseen evaluation views outside the mixer's control.** Our chain-aware mixer uses changes in the original image's representation and prediction to weight seen chains. If it also weighted pseudo-unseen chains, it could use those signals to favor mixtures that leave the prediction close to the original. This would lower the outer consistency loss by making the evaluation views easier rather than by improving the classifier update. We instead draw the three pseudo-unseen chain weights independently of the mixer using AugMix’s Dirichlet rule, once per image and view, and hold them fixed across the mini-batch’s mixer updates. We fix $m=0.5$ in both pools. The pseudo-unseen views then provide feedback on how the seen mixtures affected the classifier update.
+**Keep the pseudo-unseen evaluation views outside the mixer's control.** Our chain-aware mixer uses changes in the original image's representation and prediction to weight seen chains. If it also weighted pseudo-unseen chains, it could use those signals to favor mixtures that leave the prediction close to the original. This would lower the outer consistency loss by making the evaluation views easier rather than by improving the classifier update. We instead draw the three pseudo-unseen chain weights independently of the mixer using AugMix’s Dirichlet rule, once per image and view, and hold them fixed across the mini-batch’s mixer updates. We use the same prescribed $m$ in both pools and sweep it from 0.1 to 0.9. The pseudo-unseen views then provide feedback on how the seen mixtures affected the classifier update.
 
 ```math
 u_v\sim\mathrm{Dirichlet}(1,1,1),\qquad
@@ -98,6 +98,37 @@ At batch 32, chain-aware scored **4.55 percentage points higher** on corrupted c
 
 Batch 32 used constant classifier/mixer learning rates of 0.003/0.005 and 15,650 classifier updates. Batch 128 used 0.012/0.02 and 3,950 updates. Both processed 500,000 current-image presentations. Comparisons across batch sizes therefore also change the learning rates and update count.
 
+### Full fixed-weight sweep across four metrics
+
+The [paper](paper/cvpr/main.pdf) compares both mixers at each original-image weight for classifier JS and InfoNCE. Entries below are final accuracy (%) as mean ± sample SD over seeds 17, 23, and 43. A smaller `m` gives more weight to the augmented chains.
+
+| Mixer | Classifier consistency | m | Clean class-IL | CIFAR-10-C class-IL | Clean task-IL | CIFAR-10-C task-IL |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| Chain-aware | JS | 0.1 | 43.99 ± 8.64 | 38.20 ± 6.12 | 86.05 ± 2.84 | 80.48 ± 1.92 |
+| Chain-aware | JS | 0.3 | 42.61 ± 5.12 | 36.33 ± 3.76 | 87.56 ± 1.01 | 81.29 ± 1.19 |
+| Chain-aware | JS | 0.5 | 44.59 ± 3.42 | 36.56 ± 3.15 | 86.26 ± 1.99 | 79.14 ± 1.77 |
+| Chain-aware | JS | 0.7 | 42.94 ± 7.54 | 34.96 ± 4.90 | 86.65 ± 1.00 | 79.63 ± 0.97 |
+| Chain-aware | JS | 0.9 | 42.87 ± 9.60 | 33.41 ± 7.11 | 85.58 ± 1.18 | 77.64 ± 1.91 |
+| Chain-aware | InfoNCE | 0.1 | 51.87 ± 7.29 | 43.89 ± 5.68 | 88.46 ± 0.72 | 83.24 ± 0.62 |
+| Chain-aware | InfoNCE | 0.3 | 50.27 ± 4.64 | 42.28 ± 3.03 | 87.87 ± 0.53 | 81.94 ± 0.29 |
+| Chain-aware | InfoNCE | 0.5 | 46.26 ± 7.46 | 37.49 ± 5.95 | 87.12 ± 1.47 | 80.92 ± 1.31 |
+| Chain-aware | InfoNCE | 0.7 | 46.08 ± 4.40 | 36.72 ± 3.01 | 86.96 ± 0.68 | 79.64 ± 1.22 |
+| Chain-aware | InfoNCE | 0.9 | 43.33 ± 6.16 | 34.18 ± 4.78 | 86.55 ± 0.63 | 79.43 ± 0.93 |
+| MetaMix | JS | 0.1 | 45.69 ± 7.10 | 39.23 ± 4.69 | 86.56 ± 1.79 | 80.88 ± 1.08 |
+| MetaMix | JS | 0.3 | 40.78 ± 6.02 | 34.31 ± 5.57 | 86.61 ± 2.68 | 79.82 ± 3.24 |
+| MetaMix | JS | 0.5 | 43.51 ± 4.55 | 36.38 ± 3.30 | 86.89 ± 0.94 | 80.05 ± 0.62 |
+| MetaMix | JS | 0.7 | 41.69 ± 4.83 | 34.26 ± 2.55 | 86.12 ± 1.35 | 79.07 ± 0.74 |
+| MetaMix | JS | 0.9 | 45.60 ± 7.86 | 36.34 ± 4.37 | 86.55 ± 1.09 | 78.88 ± 0.86 |
+| MetaMix | InfoNCE | 0.1 | 49.25 ± 9.09 | 41.66 ± 7.68 | 87.74 ± 1.88 | 82.17 ± 1.92 |
+| MetaMix | InfoNCE | 0.3 | 50.14 ± 5.61 | 42.51 ± 3.66 | 87.43 ± 1.42 | 81.85 ± 1.15 |
+| MetaMix | InfoNCE | 0.5 | 45.71 ± 8.40 | 37.27 ± 6.33 | 87.12 ± 1.80 | 81.01 ± 1.41 |
+| MetaMix | InfoNCE | 0.7 | 45.63 ± 5.83 | 36.20 ± 3.97 | 87.07 ± 0.76 | 79.59 ± 1.31 |
+| MetaMix | InfoNCE | 0.9 | 44.01 ± 5.66 | 34.60 ± 4.26 | 86.53 ± 0.51 | 79.19 ± 0.77 |
+
+Chain-aware InfoNCE had its highest observed mean on all four metrics at `m=0.1`. MetaMix InfoNCE had its highest class-IL means at `m=0.3` and its highest task-IL means at `m=0.1`. At matched InfoNCE the chain-aware margin on corrupted class-IL changed from +2.23 points at 0.1 to −0.23 at 0.3. Across the five weights, InfoNCE improved corrupted class-IL over JS five times for chain-aware and four for MetaMix. These comparisons use three seeds and the same evaluation for all tested settings.
+
+At `m=0.1`, the three-seed final-epoch mean maximum weight under InfoNCE was 38.24% for chain-aware and 34.37% for MetaMix (33.33% for equal weights). These measurements quantify how concentrated the weights were; they do not establish that the higher-weighted chains improved the classifier. [Sweep summary command](scripts/summarize_fixed_m_augmix.py)
+
 ### Batch-32 comparison across seeds 17, 23, and 43
 
 Each row averages final accuracy (%) equally across the three seeds. All classifiers use clean cross-entropy, DER++ replay, and the consistency loss listed below. AugMix samples chains from the full operation pool and uses random mixing weights. The learned mixers use pseudo-seen views for classifier consistency and optimize clean cross-entropy plus JS in the outer step. [AugMix baseline](jobs/unrolled_bs32/derpp_augmix.pbs) · [Four-method replication runner](scripts/repeat_unrolled_bs32.py) · [MetaMix classifier InfoNCE jobs](jobs/unrolled_bs32/metamix_infonce.pbs)
@@ -105,14 +136,15 @@ Each row averages final accuracy (%) equally across the three seeds. All classif
 | Mixer | Classifier consistency | Original-image weight `m` | Clean class-IL | CIFAR-10-C class-IL | Clean task-IL | CIFAR-10-C task-IL |
 | --- | --- | --- | ---: | ---: | ---: | ---: |
 | DER++ + AugMix | 12 × JS | Beta(1,1) | 45.94 | **40.00** | **88.33** | **84.15** |
+| DER++ + AugMix | 1 × JS | Beta(1,1) | **48.99** | 39.68 | 87.92 | 81.81 |
 | Chain-aware | JS | 0.5 | 44.59 | 36.56 | 86.26 | 79.14 |
-| Chain-aware | InfoNCE | 0.5 | **46.26** | 37.49 | 87.12 | 80.92 |
+| Chain-aware | InfoNCE | 0.5 | 46.26 | 37.49 | 87.12 | 80.92 |
 | MetaMix | JS | 0.5 | 43.51 | 36.38 | 86.89 | 80.05 |
 | MetaMix | InfoNCE | 0.5 | 45.71 | 37.27 | 87.12 | 81.01 |
 | MetaMix | JS | Learned | 46.16 | 36.43 | 86.65 | 79.83 |
 | MetaMix | InfoNCE | Learned | 45.48 | 35.26 | 86.51 | 79.14 |
 
-Bold marks the highest mean in each column. The AugMix row averages the reported per-seed percentages. The six learned-mixer rows use the per-seed evaluation files, rounded after averaging. Differences below use the displayed means and are expressed in percentage points. [Seed-43 evaluation archive](results/unrolled_mixing_seed43/)
+Bold marks the highest mean within each column of this reference table. The AugMix rows report the supplied three-seed summaries. The six learned-mixer rows use the per-seed evaluation files, rounded after averaging. Differences below use the displayed means and are expressed in percentage points. [Seed-43 evaluation archive](results/unrolled_mixing_seed43/)
 
 1. **Effect of classifier InfoNCE.** Replacing JS with InfoNCE improved all four mean accuracy metrics for both fixed-`m` mixers. On CIFAR-10-C class-IL the gain was 0.93 points for chain-aware and 0.89 for MetaMix. With learned `m`, MetaMix instead lost 1.17 points on that metric.
 2. **Effect of chain-aware mixing.** With classifier InfoNCE and `m=0.5` matched, chain-aware led MetaMix by 0.55 points on clean class-IL and 0.22 on CIFAR-10-C class-IL. Corrupted task-IL slightly favored MetaMix (81.01% versus 80.92%). With classifier JS, the corrupted class-IL gap was also small (0.18 points in favor of chain-aware). These comparisons change both candidate scoring and pseudo-unseen weighting, so they cannot isolate the effect of chain descriptors.

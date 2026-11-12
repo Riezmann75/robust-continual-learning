@@ -21,7 +21,8 @@
 \begin{document}
 \maketitle
 \begin{abstract}
-Can a continual learner improve robustness by scoring each sampled augmentation and learning its weight through a classifier update? We compare a chain-aware mixer with a recurrent MetaMix baseline on five sequential CIFAR-10 tasks. Both learn from clean cross-entropy and prediction consistency after one virtual classifier step. The chain-aware mixer scores individual training chains and uses independently weighted views to evaluate that step. Across three seeds at batch size 32, chain-aware mixing with class-aware InfoNCE reaches 37.49\% corrupted class-incremental accuracy. MetaMix with the same classifier loss and original-image weight reaches 37.27\%, and leads on corrupted task-incremental accuracy, 81.01\% to 80.92\%. Within MetaMix, fixing the original-image weight has a larger average effect on corrupted class-incremental accuracy under InfoNCE, although the direction varies by seed.
+How does the share of the original image in an augmented view affect corruption robustness in continual learning? We compare chain-aware mixing and a recurrent MetaMix baseline at five original-image weights on Split-CIFAR-10. Across three seeds, classifier InfoNCE improves mean corrupted class-incremental accuracy over Jensen--Shannon (JS) consistency at all five weights for chain-aware mixing and at four for MetaMix. At the strongest tested augmentation ($m=0.1$), the two InfoNCE classifiers reach 43.89\% and 41.66\%, respectively. At $m=0.3$ their order reverses (42.28\% and 42.51\%). The AugMix reference leads on corrupted task-incremental accuracy at 84.15\%. The results link classifier consistency to mixture strength and show why conclusions about mixer design depend on which metric and strength are compared.
+
 \end{abstract}
 
 \section{Introduction}
@@ -29,25 +30,8 @@ An augmentation controller can reduce disagreement between a clean image and its
 
 AugMix draws and blends short stochastic augmentation chains~\cite{hendrycks2020augmix}. MetaMix adapts mixture weights using a recurrent summary of the learner and splits training operations into pseudo-seen and pseudo-unseen pools~\cite{wang2023metamix}. We study a modification with two linked choices. First, the mixer observes how each sampled seen chain changes the image's representation and prediction. Second, independent random weights determine the pseudo-unseen views on which the classifier update is scored. This design lets the mixer influence the outer loss only through its choice of training views.
 
-Table~\ref{tab:main} compares six configurations. It crosses classifier consistency with three mixing rules: chain-aware mixing at fixed strength, MetaMix at the same strength, and MetaMix with learned strength. The matched comparison asks whether the chain-aware design improves mean accuracy once both the classifier objective and the share of the original image are held fixed.
-
-\begin{table*}[t]
-\centering\small
-\begin{tabular}{lllrrrr}
-\toprule
-Mixer & Classifier consistency & $m$ & Clean class-IL & Corrupted class-IL & Clean task-IL & Corrupted task-IL\\
-\midrule
-Chain-aware & JS & 0.5 & 44.59 & 36.56 & 86.26 & 79.14 \\
-Chain-aware & InfoNCE & 0.5 & \textbf{46.26} & \textbf{37.49} & \textbf{87.12} & 80.92 \\
-MetaMix & JS & 0.5 & 43.51 & 36.38 & 86.89 & 80.05 \\
-MetaMix & InfoNCE & 0.5 & 45.71 & 37.27 & \textbf{87.12} & \textbf{81.01} \\
-MetaMix & JS & Learned & 46.16 & 36.43 & 86.65 & 79.83 \\
-MetaMix & InfoNCE & Learned & 45.48 & 35.26 & 86.51 & 79.14 \\
-\bottomrule
-\end{tabular}
-\caption{Final accuracy (\%) on Split-CIFAR-10 and CIFAR-10-C, batch size 32. Each seed (17, 23, 43) receives equal weight. Bold marks the highest displayed mean in each column, including the clean task-IL tie at two decimal places. All six configurations use clean cross-entropy plus JS for the mixer objective.}
-\label{tab:main}
-\end{table*}
+We compare the two controllers at matched original-image weights $m\in\{0.1,0.3,0.5,0.7,0.9\}$. At each weight we cross controller choice with classifier consistency. Table~\ref{tab:main} reports all four evaluation metrics so the reader can compare controllers within a row and follow each controller as augmentation strength changes.
+\input{tables/sweep}
 
 \section{One-Step Mixing}
 Let $\theta$ denote classifier parameters and $\phi$ mixer parameters. At each batch we divide the augmentation operations into disjoint sets $S$ and $U$. Both pools transform the same current and replay examples. For each image $x$, pool $P$ and view $v\in\{1,2\}$, the mixed input is
@@ -57,12 +41,12 @@ Let $\theta$ denote classifier parameters and $\phi$ mixer parameters. At each b
 where $a^P_{vk}$ is a sampled chain and the nonnegative chain weights sum to one. The coefficient $m$ gives the original image's share of the blend.
 
 \paragraph{What the controller observes.}
-The MetaMix baseline uses an LSTM conditioned on current and replay features, replay loss and gradient alignment. For a given example it shares the three chain weights across views and pools. One variant also learns $m$ and the other fixes $m=0.5$. Resampling chains at fixed learner context leaves its weights unchanged.
+The MetaMix baseline uses an LSTM conditioned on current and replay features, replay loss and gradient alignment. For a given example it shares the three chain weights across views and pools. One variant also learns $m$ and the other uses the prescribed sweep value. Resampling chains at fixed learner context leaves its weights unchanged.
 
-The chain-aware controller fixes $m=0.5$. For each seen chain it concatenates the change in pooled features with the change in class probabilities relative to the clean input. A shared scorer combines this detached descriptor with the recurrent state, then a softmax over the three scores supplies weights separately for each example and seen view. For each pseudo-unseen view we draw $w^U_v\sim\mathrm{Dirichlet}(1,1,1)$ independently of the controller and keep the draw fixed throughout the batch's mixer updates.
+The chain-aware controller uses the prescribed $m$ for both operation pools. For each seen chain it concatenates the change in pooled features with the change in class probabilities relative to the clean input. A shared scorer combines this detached descriptor with the recurrent state, then a softmax over the three scores supplies weights separately for each example and seen view. For each pseudo-unseen view we draw $w^U_v\sim\mathrm{Dirichlet}(1,1,1)$ independently of the controller and keep the draw fixed throughout the batch's mixer updates.
 
 \paragraph{What the classifier learns.}
-The support loss $L_S$ combines current clean cross-entropy, replay cross-entropy with weight 0.5, and mean squared error against stored replay logits with weight 0.2, following DER++~\cite{buzzega2020dark}. An independent replay sample supplies the logit targets. Classifier consistency has coefficient one. JS averages the KL divergences from the clean and two seen-view prediction distributions to their mean. Class-aware InfoNCE uses normalized pooled features at temperature 0.1. For each anchor, the two other views of the same batch entry are positives. Only different-class entries contribute negatives.
+The support loss $L_S$ combines current clean cross-entropy, replay cross-entropy with weight 0.5, and mean squared error against stored replay logits with weight 0.2, following DER++~\cite{buzzega2020dark}. An independent replay sample supplies the logit targets. For both learned mixers, classifier consistency has coefficient one. JS averages the KL divergences from the clean and two seen-view prediction distributions to their mean. Class-aware InfoNCE uses normalized pooled features at temperature 0.1. For each anchor, the two other views of the same batch entry are positives. Only different-class entries contribute negatives.
 
 \paragraph{How the outer loss reaches the mixer.}
 With classifier learning rate $\alpha$, each mixer update evaluates
@@ -84,45 +68,36 @@ The 288,746-parameter SmallCNN learns five successive CIFAR-10 class pairs, $(0,
 
 Final evaluation uses 10,000 clean test images and 15 CIFAR-10-C corruptions at five severities~\cite{hendrycks2019benchmarking}. Each corruption and severity receives equal weight. Class-IL predicts among all ten outputs. Task-IL restricts prediction to the true class pair. The pseudo-unseen operations used in training are sampled training transformations. CIFAR-10-C supplies only the test measurements.
 
-\paragraph{Aggregation.}
-For every configuration and metric, we take the arithmetic mean of the final accuracies from the three per-seed evaluation files and round it to two decimal places. We calculate percentage-point differences from the displayed means.
+\paragraph{References and aggregation.}
+DER++ with AugMix samples two views from the full nine-operation pool, with independent $m\sim\mathrm{Beta}(1,1)$ and chain weights drawn from $\mathrm{Dirichlet}(1,1,1)$. We evaluate its original JS coefficient of 12 and a coefficient of one matched to the JS classifiers. Both use the same replay and classifier update budgets. Each mean gives equal weight to seeds 17, 23, and 43. We report sample SD across seeds in Table~\ref{tab:sd} and compute differences from the displayed means.
 
 \section{Results}
-\paragraph{Does candidate-aware mixing help at fixed strength?}
-With $m=0.5$ and classifier InfoNCE, chain-aware mixing has the highest observed clean and corrupted class-IL means (46.26\% and 37.49\%). Its margins over MetaMix are 0.55 and 0.22 percentage points, respectively. Both reach 87.12\% clean task-IL at displayed precision. On corrupted task-IL, MetaMix leads by 0.09 points. With classifier JS the corrupted class-IL margin for chain-aware mixing is also small (0.18 points). Each comparison changes both the scoring of seen chains and the weighting of pseudo-unseen views.
+\paragraph{Mixture strength across four metrics.}
+For chain-aware InfoNCE all four means decline as $m$ increases (Table~\ref{tab:main}). The largest class-IL difference occurs on corruptions: 43.89\% at $m=0.1$ versus 34.18\% at $m=0.9$. MetaMix InfoNCE reaches its highest class-IL means at $m=0.3$ and its highest task-IL means at $m=0.1$. With JS, the highest corrupted class-IL mean occurs at $m=0.1$ for both mixers, although intermediate values give a less regular ordering.
 
-\paragraph{Does classifier consistency matter?}
-At fixed $m$, switching from JS to class-aware InfoNCE improves all four mean accuracies for both controllers. On corrupted class-IL the increases are 0.93 points for chain-aware mixing and 0.89 for MetaMix. With learned $m$, the same switch reduces MetaMix corrupted class-IL by 1.17 points. The effect of the classifier loss therefore depends on how MetaMix allocates weight to the original image in these runs.
+\paragraph{What the chain-aware design adds.}
+With classifier InfoNCE and $m=0.1$, chain-aware leads on all four metrics. At $m=0.3$ MetaMix leads on corrupted class-IL by 0.23 points, while chain-aware leads on the other three metrics. At $m=0.5$ their clean task-IL means coincide to two decimals. The comparison changes both seen-chain scoring and pseudo-unseen mixture construction.
+
+\paragraph{Interaction with classifier consistency.}
+Table~\ref{tab:delta} holds the mixer and mixture strength fixed when comparing classifier losses. Chain-aware gains 5.69 and 5.95 points on corrupted class-IL from InfoNCE at $m=0.1$ and $0.3$, compared with 0.93 at $m=0.5$. MetaMix gains 8.20 points at $m=0.3$ but loses 1.74 at $m=0.9$. The gains also depend on task information: at $m=0.7$ the chain-aware task-IL gains are only 0.31 points clean and 0.01 corrupted.
+\input{tables/objective}
+
+\paragraph{Learned and random mixture strength.}
+Tables~\ref{tab:main} and~\ref{tab:reference} show how the fixed settings compare with learned $m$ and random AugMix. Within MetaMix with classifier InfoNCE, corrupted class-IL is 35.26\% with learned $m$, 42.51\% at fixed $m=0.3$, and 34.60\% at fixed $m=0.9$. Thus the value chosen matters even when $m$ is fixed. AugMix with its original JS coefficient reaches the highest corrupted task-IL mean (84.15\%). Reducing that coefficient to one raises clean class-IL from 45.94\% to 48.99\%, while corrupted class-IL changes from 40.00\% to 39.68\%. At the matched coefficient AugMix exceeds both controllers' best observed JS means on corrupted class-IL.
+\input{tables/references}
 
 \paragraph{Which corruptions account for the differences?}
 Tables~\ref{tab:class-detail} and~\ref{tab:task-detail} give the results for each corruption. With InfoNCE and $m=0.5$, chain-aware mixing exceeds MetaMix on 13 of 15 class-IL corruption means. The largest advantage is on pixelation (39.74\% versus 39.10\%). MetaMix leads on impulse noise and contrast. Changing the classifier loss within the chain-aware mixer produces larger differences: switching from JS to InfoNCE raises impulse-noise class-IL by 6.63 points but lowers fog class-IL by 3.57 points. When the true task is supplied, the same switch raises accuracy on 14 corruptions, with motion blur the exception (82.33\% with JS and 81.72\% with InfoNCE).
 
-\paragraph{Does the original-image weight explain a larger difference?}
-Within MetaMix with classifier InfoNCE, fixing $m=0.5$ increases mean corrupted class-IL by 2.01 points and corrupted task-IL by 1.87 points. The class-IL comparison varies across seeds (Table~\ref{tab:seeds}). With JS the corrupted class-IL means at fixed and learned $m$ are close, 36.38\% and 36.43\%.
-
-\begin{table}[ht]
-\centering\small
-\begin{tabular}{lrrr}
-\toprule
-Original share & Seed 17 & Seed 23 & Seed 43\\
-\midrule
-Learned $m$ & 39.08 & 35.70 & 31.01\\
-Fixed $m=0.5$ & 41.32 & 40.50 & 29.98\\
-Fixed minus learned & $+2.24$ & $+4.80$ & $-1.03$\\
-\bottomrule
-\end{tabular}
-\caption{Corrupted class-IL accuracy (\%) and within-seed difference (percentage points). Fixing $m$ improves two of the three paired runs.}
-\label{tab:seeds}
-\end{table}
-
-\paragraph{What weights did the mixers learn?}
-In the seed-17 MetaMix JS run, mean $m$ rose from 0.5050 in the first epoch to 0.9000 in the last. The three chains together then contributed 10\% of the average blend. The final-epoch mean largest chain weight was 33.46\% for this baseline and 34.39\% for chain-aware InfoNCE, close to the equal-weight value of $1/3$. These are diagnostics from individual runs. They do not measure the accuracy contribution of any particular chain.
+\paragraph{How concentrated are the learned weights?}
+At $m=0.1$ the chains supply 90\% of each mixed image. For InfoNCE, the most heavily weighted chain receives 38.24\% of that share on average with chain-aware mixing and 34.37\% with MetaMix (Table~\ref{tab:weights}). The lower entropy for chain-aware mixing likewise indicates a more uneven allocation. These final-epoch measurements establish a difference in weighting behavior at this strength. They do not identify which chains improved learning.
+\input{tables/diagnostics}
 
 \section{Limitations and Conclusion}
-The three-seed means favor chain-aware InfoNCE for class-IL and fixed-strength MetaMix InfoNCE for corrupted task-IL. The small class-IL margins and the seed-dependent response to fixing $m$ limit claims about the ordering on future runs. The matched rows change two mechanisms together. To identify the contribution of the descriptors, a comparison would need to vary descriptor access while holding outer-view sampling and per-view weight sharing fixed.
+The most consistent gain on corrupted class-IL is from classifier InfoNCE at stronger augmentation. Chain-aware InfoNCE attains the highest observed mean on this metric, while the advantage over MetaMix changes sign across matched strengths. The maximum is selected from five settings on the reported evaluation. With three seeds, dispersion is substantial: at $m=0.1$ the two InfoNCE corrupted class-IL means are $43.89\pm5.68$ and $41.66\pm7.68$ (sample SD). Isolating the effect of candidate descriptors would require holding outer-view sampling and per-view weight sharing fixed. The per-corruption breakdown below covers the original six configurations; the concentration measurements cover $m=0.1$.
 
 \paragraph{Reproducibility.}
-The \href{https://github.com/Riezmann75/robust-continual-learning/blob/4e7a34f77f7d7c7c128458f39b6aed72070ed3a8/README.md}{project README at revision \texttt{4e7a34f}} contains the three-seed means, per-corruption tables, aggregation notes and paired scores. The same revision provides the one-step training loop in \path{reproduce/unrolled_mixing.py}, the replication script in \path{scripts/repeat_unrolled_bs32.py}, and the MetaMix InfoNCE job in \path{jobs/unrolled_bs32/metamix_infonce.pbs}.
+The repository includes the \href{https://github.com/Riezmann75/robust-continual-learning/blob/f56de24/scripts/summarize_fixed_m_augmix.py}{three-seed reporting script}, the one-step trainer, and the PBS jobs for the fixed-strength sweep and AugMix coefficient comparison.
 
 {\small
 \bibliographystyle{ieeenat_fullname}
@@ -131,6 +106,9 @@ The \href{https://github.com/Riezmann75/robust-continual-learning/blob/4e7a34f77
 \clearpage
 \onecolumn
 \appendix
+\section{Variation across training seeds}
+\input{tables/sweep_sd}
+\clearpage
 \section{CIFAR-10-C accuracy by corruption}
 Each entry averages the five severity levels within a seed and then takes the arithmetic mean across seeds 17, 23 and 43. Overall gives equal weight to each of the 15 corruptions. Class-IL predicts among all ten classes. Task-IL predicts within the true class pair.
 \begin{table}[h]

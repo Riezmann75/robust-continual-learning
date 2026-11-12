@@ -1,0 +1,14 @@
+\begin{table*}[t]
+\centering\small
+\begin{tabular}{llrrrr}
+\toprule
+Mixer & Loss & Clean class-IL & Corrupt class-IL & Clean task-IL & Corrupt task-IL \\
+\midrule
+MetaMix, learned $m$ & JS & 46.16 & 36.43 & 86.65 & 79.83 \\
+MetaMix, learned $m$ & InfoNCE & 45.48 & 35.26 & 86.51 & 79.14 \\
+DER++ + AugMix & $1\times$ JS & 48.99 & 39.68 & 87.92 & 81.81 \\
+DER++ + AugMix & $12\times$ JS & 45.94 & 40.00 & 88.33 & 84.15 \\
+\bottomrule
+\end{tabular}
+\caption{Reference methods with learned or sampled original-image weight. Entries are three-seed mean accuracies (\%).}\label{tab:reference}
+\end{table*}

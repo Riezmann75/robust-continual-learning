@@ -1,5 +1,5 @@
 Compile main.tex with bash build.sh, or run latexmk -pdf main.tex in this folder.
-The manuscript includes the six-row batch-32 comparison and both per-corruption tables across seeds 17, 23 and 43.
-Tables are transcribed from the README at GitHub revision 4e7a34f. The historical
-generate_assets.py, figure, manifest and tables/ describe the previous study and
-are not inputs to this manuscript. The author field remains a placeholder.
+The manuscript inputs tables/sweep.tex, objective.tex, references.tex, diagnostics.tex
+and sweep_sd.tex. These use reported batch-32 summaries for seeds 17, 23 and 43.
+The appendix retains the original six-configuration per-corruption breakdown.
+The historical generate_assets.py is not used for these sweep tables.
