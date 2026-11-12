@@ -3,7 +3,7 @@
 % Use [review] instead of [pagenumbers] only after anonymizing the draft.
 \documentclass[10pt,twocolumn,letterpaper]{article}
 \usepackage[pagenumbers]{cvpr}
-\usepackage{amsmath,amssymb,booktabs,graphicx,microtype}
+\usepackage{amsmath,amssymb,booktabs,graphicx,microtype,float}
 
 
 \usepackage[breaklinks,colorlinks,allcolors=cvprblue]{hyperref}
@@ -34,27 +34,56 @@ We compare the two controllers at matched original-image weights $m\in\{0.1,0.3,
 \input{tables/sweep}
 
 \section{One-Step Mixing}
-Let $\theta$ denote classifier parameters and $\phi$ mixer parameters. At each batch we divide the augmentation operations into disjoint sets $S$ and $U$. Both pools transform the same current and replay examples. For each image $x$, pool $P$ and view $v\in\{1,2\}$, the mixed input is
+Following MetaMix~\cite{wang2023metamix}, we concatenate the current batch $(x_t,y_t)$ and a labeled replay batch $(x_r,y_r)$ into $(x_b,y_b)$. At step $t$, the pseudo-seen pool $S_t$ produces two mixed views $x'_{b1},x'_{b2}$ of this batch; the disjoint pseudo-unseen pool $U_t$ produces $\hat x_{b1},\hat x_{b2}$. For either pool, a mixed view of one image $x$ has the form
 \begin{equation}
- x^P_v=m x+(1-m)\sum_{k=1}^3w^P_{vk}a^P_{vk}(x),
+ \tilde x=m x+(1-m)\sum_{k=1}^3 w_k a_k(x),
+ \qquad \sum_{k=1}^3 w_k=1,
 \end{equation}
-where $a^P_{vk}$ is a sampled chain and the nonnegative chain weights sum to one. The coefficient $m$ gives the original image's share of the blend.
+where $m$ is the original-image weight, $a_k$ is a sampled chain, and $w_k\geq 0$ is its weight. We write $\theta$ for classifier parameters and $\phi$ for mixer parameters.
 
 \paragraph{What the controller observes.}
 The MetaMix baseline uses an LSTM conditioned on current and replay features, replay loss and gradient alignment. For a given example it shares the three chain weights across views and pools. One variant also learns $m$ and the other uses the prescribed sweep value. Resampling chains at fixed learner context leaves its weights unchanged.
 
-The chain-aware controller uses the prescribed $m$ for both operation pools. For each seen chain it concatenates the change in pooled features with the change in class probabilities relative to the clean input. A shared scorer combines this detached descriptor with the recurrent state, then a softmax over the three scores supplies weights separately for each example and seen view. For each pseudo-unseen view we draw $w^U_v\sim\mathrm{Dirichlet}(1,1,1)$ independently of the controller and keep the draw fixed throughout the batch's mixer updates.
+The chain-aware controller uses the prescribed $m$ for both operation pools. For each seen chain it concatenates the change in pooled features with the change in class probabilities relative to the clean input. A shared scorer combines this detached descriptor with the recurrent state, then a softmax over the three scores supplies weights separately for each example and seen view. For each pseudo-unseen view we draw $w\sim\mathrm{Dirichlet}(1,1,1)$ independently of the controller and keep the draw fixed throughout the batch's mixer updates.
 
 \paragraph{What the classifier learns.}
-The support loss $L_S$ combines current clean cross-entropy, replay cross-entropy with weight 0.5, and mean squared error against stored replay logits with weight 0.2, following DER++~\cite{buzzega2020dark}. An independent replay sample supplies the logit targets. For both learned mixers, classifier consistency has coefficient one. JS averages the KL divergences from the clean and two seen-view prediction distributions to their mean. Class-aware InfoNCE uses normalized pooled features at temperature 0.1. For each anchor, the two other views of the same batch entry are positives. Only different-class entries contribute negatives.
+Write $\ell_\theta(x,y)=\CE(f_\theta(x),y)$ for mean batch cross-entropy, where $f_\theta$ returns logits. A separate replay draw $(x_d,z_d)$ supplies stored logits for distillation. Our DER++ loss~\cite{buzzega2020dark} is
+\begin{align}
+ L_{\rm DER++}(\theta)
+ &=\ell_\theta(x_t,y_t)+0.5\,\ell_\theta(x_r,y_r)\notag\\
+ &\quad+0.2\,\mathrm{MSE}(f_\theta(x_d),z_d).
+\end{align}
+MSE averages over examples and logit coordinates. Replay terms are zero when memory is empty. The classifier objective is
+\begin{equation}
+ L_S(\theta,\phi)=L_{\rm DER++}(\theta)
+       + C_\theta(x_b,x'_{b1},x'_{b2}).
+ \label{eq:support}
+\end{equation}
+Here $C_\theta$ is either JS or class-aware InfoNCE; the latter also uses the labels $y_b$. The dependence on $\phi$ enters through the mixed views.
+
+For three aligned batches $v_0,v_1,v_2$ of size $n$, let $p_{ij}$ denote the classifier's probability vector for example $i$ in view $v_j$, and let $\bar p_i=(p_{i0}+p_{i1}+p_{i2})/3$. We use
+\begin{equation}
+ \mathcal{L}_{\mathrm{JS},\theta}(v_0,v_1,v_2)
+ =\frac{1}{3n}\sum_{i=1}^n\sum_{j=0}^2\KL(p_{ij}\,\|\,\bar p_i).
+ \label{eq:three-js}
+\end{equation}
+For InfoNCE, index the $3n$ views by $a$ and let $u_a$ be the normalized pooled feature. The positive set $P_a$ contains the other two views of the same batch entry; $N_a$ contains all views with a different class label. At temperature $\tau=0.1$,
+\begin{equation}
+ \mathcal{L}_{\mathrm{NCE},\theta}=-\frac{1}{3n}\sum_a\frac{1}{2}\sum_{b\in P_a}
+ \log\frac{\exp(u_a^\top u_b/\tau)}
+ {\sum_{c\in P_a\cup N_a}\exp(u_a^\top u_c/\tau)}.
+ \label{eq:seen-nce}
+\end{equation}
 
 \paragraph{How the outer loss reaches the mixer.}
-With classifier learning rate $\alpha$, each mixer update evaluates
+After one virtual classifier step of size $\alpha$, we evaluate clean classification and pseudo-unseen consistency on the same batch:
 \begin{align}
-  \theta^+(\phi)&=\theta-\alpha\nabla_\theta L_S(\theta,\phi),\\
-  J(\phi)&=L_U(\theta^+(\phi),\phi).
+ \theta^+(\phi)&=\theta-\alpha\nabla_\theta L_S(\theta,\phi),\label{eq:virtual-step}\\
+ L_U(\theta^+,\phi)&=\ell_{\theta^+}(x_b,y_b)
+    +\mathcal{L}_{\mathrm{JS},\theta^+}(x_b,\hat x_{b1},\hat x_{b2}).\label{eq:outer}
 \end{align}
-The outer loss $L_U$ adds clean cross-entropy on the current and replay examples to JS on their clean and two pseudo-unseen predictions. Holding the sampled batch, incoming state and outer BatchNorm buffers fixed, the chain rule gives
+The mixer minimizes $J(\phi)=L_U(\theta^+(\phi),\phi)$.
+Holding the sampled batch, incoming state and outer BatchNorm buffers fixed, the chain rule gives
 \begin{equation}
  \nabla_\phi J=(D_\phi\theta^+)^\top\nabla_{\theta^+}L_U
                 +\partial_\phi L_U .

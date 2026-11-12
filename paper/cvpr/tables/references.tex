@@ -1,14 +1,16 @@
-\begin{table*}[t]
-\centering\small
+\begin{table}[H]
+\centering\footnotesize\setlength{\tabcolsep}{3pt}
 \begin{tabular}{llrrrr}
 \toprule
-Mixer & Loss & Clean class-IL & Corrupt class-IL & Clean task-IL & Corrupt task-IL \\
+ & & \multicolumn{2}{c}{Class-IL} & \multicolumn{2}{c}{Task-IL} \\
+\cmidrule(lr){3-4}\cmidrule(lr){5-6}
+Mixer & Loss & Clean & Corrupt & Clean & Corrupt \\
 \midrule
 MetaMix, learned $m$ & JS & 46.16 & 36.43 & 86.65 & 79.83 \\
 MetaMix, learned $m$ & InfoNCE & 45.48 & 35.26 & 86.51 & 79.14 \\
-DER++ + AugMix & $1\times$ JS & 48.99 & 39.68 & 87.92 & 81.81 \\
-DER++ + AugMix & $12\times$ JS & 45.94 & 40.00 & 88.33 & 84.15 \\
+DER++ + AugMix & $1\times$ JS & \textbf{48.99} & 39.68 & 87.92 & 81.81 \\
+DER++ + AugMix & $12\times$ JS & 45.94 & \textbf{40.00} & \textbf{88.33} & \textbf{84.15} \\
 \bottomrule
 \end{tabular}
-\caption{Reference methods with learned or sampled original-image weight. Entries are three-seed mean accuracies (\%).}\label{tab:reference}
-\end{table*}
+\caption{Reference methods with learned or sampled original-image weight. Entries are three-seed mean accuracies (\%). Bold marks the highest mean in each metric among these reference methods.}\label{tab:reference}
+\end{table}

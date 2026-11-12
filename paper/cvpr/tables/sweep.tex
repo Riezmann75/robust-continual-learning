@@ -5,18 +5,18 @@
 Loss & $m$ & \multicolumn{2}{c}{Clean class-IL} & \multicolumn{2}{c}{Corrupt class-IL} & \multicolumn{2}{c}{Clean task-IL} & \multicolumn{2}{c}{Corrupt task-IL} \\
  &  & CA & MM & CA & MM & CA & MM & CA & MM \\
 \midrule
-JS & 0.1 & 43.99 & 45.69 & 38.20 & 39.23 & 86.05 & 86.56 & 80.48 & 80.88 \\
- & 0.3 & 42.61 & 40.78 & 36.33 & 34.31 & 87.56 & 86.61 & 81.29 & 79.82 \\
- & 0.5 & 44.59 & 43.51 & 36.56 & 36.38 & 86.26 & 86.89 & 79.14 & 80.05 \\
- & 0.7 & 42.94 & 41.69 & 34.96 & 34.26 & 86.65 & 86.12 & 79.63 & 79.07 \\
- & 0.9 & 42.87 & 45.60 & 33.41 & 36.34 & 85.58 & 86.55 & 77.64 & 78.88 \\
+JS & 0.1 & 43.99 & \textbf{45.69} & 38.20 & \textbf{39.23} & 86.05 & \textbf{86.56} & 80.48 & \textbf{80.88} \\
+ & 0.3 & \textbf{42.61} & 40.78 & \textbf{36.33} & 34.31 & \textbf{87.56} & 86.61 & \textbf{81.29} & 79.82 \\
+ & 0.5 & \textbf{44.59} & 43.51 & \textbf{36.56} & 36.38 & 86.26 & \textbf{86.89} & 79.14 & \textbf{80.05} \\
+ & 0.7 & \textbf{42.94} & 41.69 & \textbf{34.96} & 34.26 & \textbf{86.65} & 86.12 & \textbf{79.63} & 79.07 \\
+ & 0.9 & 42.87 & \textbf{45.60} & 33.41 & \textbf{36.34} & 85.58 & \textbf{86.55} & 77.64 & \textbf{78.88} \\
 \midrule
-InfoNCE & 0.1 & 51.87 & 49.25 & 43.89 & 41.66 & 88.46 & 87.74 & 83.24 & 82.17 \\
- & 0.3 & 50.27 & 50.14 & 42.28 & 42.51 & 87.87 & 87.43 & 81.94 & 81.85 \\
- & 0.5 & 46.26 & 45.71 & 37.49 & 37.27 & 87.12 & 87.12 & 80.92 & 81.01 \\
- & 0.7 & 46.08 & 45.63 & 36.72 & 36.20 & 86.96 & 87.07 & 79.64 & 79.59 \\
- & 0.9 & 43.33 & 44.01 & 34.18 & 34.60 & 86.55 & 86.53 & 79.43 & 79.19 \\
+InfoNCE & 0.1 & \textbf{51.87} & 49.25 & \textbf{43.89} & 41.66 & \textbf{88.46} & 87.74 & \textbf{83.24} & 82.17 \\
+ & 0.3 & \textbf{50.27} & 50.14 & 42.28 & \textbf{42.51} & \textbf{87.87} & 87.43 & \textbf{81.94} & 81.85 \\
+ & 0.5 & \textbf{46.26} & 45.71 & \textbf{37.49} & 37.27 & \textbf{87.12} & \textbf{87.12} & 80.92 & \textbf{81.01} \\
+ & 0.7 & \textbf{46.08} & 45.63 & \textbf{36.72} & 36.20 & 86.96 & \textbf{87.07} & \textbf{79.64} & 79.59 \\
+ & 0.9 & 43.33 & \textbf{44.01} & 34.18 & \textbf{34.60} & \textbf{86.55} & 86.53 & \textbf{79.43} & 79.19 \\
 \bottomrule
 \end{tabular}
-\caption{Mean final accuracy (\%) over seeds 17, 23, and 43. Column pairs compare chain-aware (CA) and MetaMix (MM) at the same original-image weight and classifier consistency loss.}\label{tab:main}
+\caption{Mean final accuracy (\%) over seeds 17, 23, and 43. Column pairs compare chain-aware (CA) and MetaMix (MM) at the same original-image weight and classifier consistency loss. For each loss and $m$, bold marks the higher CA or MM mean within each metric pair. Ties at the displayed precision are both bold.}\label{tab:main}
 \end{table*}
