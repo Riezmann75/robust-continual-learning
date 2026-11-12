@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "projectId": "faeb13c7-853e-4807-a466-6eb5daf4183a",
+  "name": "cvpr",
+  "rootDocuments": [
+    {
+      "path": "main.tex",
+      "name": "main",
+      "isDefault": true
+    }
+  ],
+  "primaryBibliography": "references.bib",
+  "trusted": false,
+  "engine": "pdf",
+  "venue": "neurips",
+  "wordBudget": null,
+  "pageBudget": 9,
+  "spellingWords": [
+    "softmax"
+  ]
+}

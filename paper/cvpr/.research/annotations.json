@@ -1,0 +1,156 @@
+{
+  "schemaVersion": 2,
+  "annotations": [
+    {
+      "id": "407309be-64a2-4fe5-b2b1-8fad688fac89",
+      "number": 1,
+      "path": "main.tex",
+      "from": 4731,
+      "to": 5065,
+      "quote": "We compare the two controllers at matched original-image weights $m\\in\\{0.1,0.3,0.5,0.7,0.9\\}$. At each weight we cross controller choice with classifier consistency. Table~\\ref{tab:main} reports all four evaluation metrics so the reader can compare controllers within a row and follow each controller as augmentation strength changes",
+      "prefix": " its choice of training views.\n\n",
+      "suffix": ".\n\\input{tables/sweep}\n\n\\section",
+      "body": "I think we can move this to the experimental setup",
+      "pdf": {
+        "page": 1,
+        "rects": [
+          {
+            "x": 0.5379,
+            "y": 0.7125,
+            "width": 0.3694,
+            "height": 0.0148
+          },
+          {
+            "x": 0.5184,
+            "y": 0.7276,
+            "width": 0.3854,
+            "height": 0.0148
+          },
+          {
+            "x": 0.5178,
+            "y": 0.7427,
+            "width": 0.3891,
+            "height": 0.0148
+          },
+          {
+            "x": 0.5184,
+            "y": 0.7578,
+            "width": 0.3858,
+            "height": 0.0148
+          },
+          {
+            "x": 0.5184,
+            "y": 0.7729,
+            "width": 0.3858,
+            "height": 0.0148
+          },
+          {
+            "x": 0.5184,
+            "y": 0.788,
+            "width": 0.22,
+            "height": 0.0148
+          }
+        ],
+        "text": "We compare the two controllers at matched originalimage weights m ∈ {0.1, 0.3, 0.5, 0.7, 0.9}. At each weight we cross controller choice with classifier consistency. Table 1 reports all four evaluation metrics so the reader can compare controllers within a row and follow each controller as augmentation strength changes"
+      },
+      "authorId": "9262fc11-327d-42ab-9718-6d354d1ad71b",
+      "authorName": "riezmann",
+      "resolved": true,
+      "replies": [],
+      "createdAt": "2026-11-12T08:11:44.938Z",
+      "updatedAt": "2026-11-12T08:11:59.871Z"
+    },
+    {
+      "id": "09569421-f26e-4348-97c6-d873bf477ca1",
+      "number": 2,
+      "path": "main.tex",
+      "from": 4731,
+      "to": 5065,
+      "quote": "We compare the two controllers at matched original-image weights $m\\in\\{0.1,0.3,0.5,0.7,0.9\\}$. At each weight we cross controller choice with classifier consistency. Table~\\ref{tab:main} reports all four evaluation metrics so the reader can compare controllers within a row and follow each controller as augmentation strength changes",
+      "prefix": " its choice of training views.\n\n",
+      "suffix": ".\n\\input{tables/sweep}\n\n\\section",
+      "body": "I think we should move this to the experimental set",
+      "pdf": {
+        "page": 1,
+        "rects": [
+          {
+            "x": 0.5379,
+            "y": 0.7125,
+            "width": 0.3694,
+            "height": 0.0148
+          },
+          {
+            "x": 0.5184,
+            "y": 0.7276,
+            "width": 0.3854,
+            "height": 0.0148
+          },
+          {
+            "x": 0.5178,
+            "y": 0.7427,
+            "width": 0.3891,
+            "height": 0.0148
+          },
+          {
+            "x": 0.5184,
+            "y": 0.7578,
+            "width": 0.3858,
+            "height": 0.0148
+          },
+          {
+            "x": 0.5184,
+            "y": 0.7729,
+            "width": 0.3858,
+            "height": 0.0148
+          },
+          {
+            "x": 0.5184,
+            "y": 0.788,
+            "width": 0.2225,
+            "height": 0.0148
+          }
+        ],
+        "text": "We compare the two controllers at matched originalimage weights m ∈ {0.1, 0.3, 0.5, 0.7, 0.9}. At each weight we cross controller choice with classifier consistency. Table 1 reports all four evaluation metrics so the reader can compare controllers within a row and follow each controller as augmentation strength changes."
+      },
+      "revision": {
+        "round": 3,
+        "state": "accepted",
+        "original": "We compare the two controllers at matched original-image weights $m\\in\\{0.1,0.3,0.5,0.7,0.9\\}$. At each weight we cross controller choice with classifier consistency. Table~\\ref{tab:main} reports all four evaluation metrics so the reader can compare controllers within a row and follow each controller as augmentation strength changes",
+        "text": "\\section{Experiments}\n\\subsection{Experimental Setup}\nWe compare the two controllers at matched original-image weights $m\\in\\{0.1,0.3,0.5,0.7,0.9\\}$. At each weight we cross controller choice with classifier consistency. Table~\\ref{tab:main} reports all four evaluation metrics so the reader can compare controllers within a row and follow each controller as augmentation strength changes",
+        "reason": "Places the comparison in an Experimental Setup subsection while leaving the table input in place."
+      },
+      "authorId": "9262fc11-327d-42ab-9718-6d354d1ad71b",
+      "authorName": "riezmann",
+      "resolved": true,
+      "replies": [],
+      "createdAt": "2026-11-12T08:12:19.198Z",
+      "updatedAt": "2026-11-12T08:15:58.570Z"
+    }
+  ],
+  "rounds": [
+    {
+      "number": 1,
+      "startedAt": "2026-11-12T08:12:19.200Z",
+      "settledAt": "2026-11-12T08:12:42.716Z",
+      "outcomes": {
+        "09569421-f26e-4348-97c6-d873bf477ca1": "asked"
+      }
+    },
+    {
+      "number": 2,
+      "startedAt": "2026-11-12T08:13:03.345Z",
+      "settledAt": "2026-11-12T08:13:26.345Z",
+      "outcomes": {
+        "09569421-f26e-4348-97c6-d873bf477ca1": "asked"
+      }
+    },
+    {
+      "number": 3,
+      "startedAt": "2026-11-12T08:14:23.641Z",
+      "settledAt": "2026-11-12T08:15:58.596Z",
+      "outcomes": {
+        "09569421-f26e-4348-97c6-d873bf477ca1": "accepted"
+      }
+    }
+  ]
+}

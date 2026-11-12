@@ -1,0 +1,437 @@
+diff --git a/libs/loss.py b/libs/loss.py
+index c0347df..fd10c10 100644
+--- a/libs/loss.py
++++ b/libs/loss.py
+@@ -112,3 +112,16 @@ def diversity_loss(h):
+     gram = u @ u.transpose(1, 2)
+     mask = ~torch.eye(h.shape[1], device=h.device, dtype=torch.bool)
+     return gram[:, mask].square().mean()
++
++
++def seen_unseen_feature_loss(mixed_features, target_features):
++    """Raw-feature MSE: (V,N,D) seen mixtures vs (V,K,N,D) unseen chains.
++
++    Every seen view matches all K independently sampled targets for that view.
++    Mean reduction covers views, targets, examples and feature coordinates.
++    """
++    if (mixed_features.ndim != 3 or target_features.ndim != 4
++            or target_features.shape[0] != mixed_features.shape[0]
++            or target_features.shape[2:] != mixed_features.shape[1:]):
++        raise ValueError('Expected mixed (V,N,D) and targets (V,K,N,D)')
++    return (mixed_features[:, None] - target_features.detach()).square().mean()
+diff --git a/libs/trainer.py b/libs/trainer.py
+index 6c2e423..1c612d7 100644
+--- a/libs/trainer.py
++++ b/libs/trainer.py
+@@ -620,8 +620,8 @@ class BiLevelTrainer:
+     def update_chain_aware_mixing(model,controller,optimizer,mixer_optimizer,memory,state,raw,labels,device,j=3,debug=False,mixer='learned',kind='infonce',temperature=.1, *, outer_kind='js', active_slots, candidate_descriptors, chains, clone_buffers, consistency_loss, context_for, forward, mixed_views, ops, outer_objective, tensor):
+         if mixer!='learned' or kind not in ('infonce','js'):
+             raise ValueError('This variant requires a learned mixer and seen InfoNCE or JS')
+-        if outer_kind not in ('infonce','js'):
+-            raise ValueError('Outer consistency must be InfoNCE or JS')
++        if outer_kind not in ('infonce','js','feature_match'):
++            raise ValueError('Outer objective must be InfoNCE, JS, or feature_match')
+         x=tensor(raw,device);y=torch.as_tensor(labels,device=device)
+         ce_raw=memory.sample(32,device,raw=True) if memory.size else None
+         replay=(tensor(ce_raw[0],device),ce_raw[1],ce_raw[2]) if ce_raw is not None else None
+@@ -656,11 +656,24 @@ class BiLevelTrainer:
+         if not torch.isfinite(loss) or not all(p.grad is None or torch.isfinite(p.grad).all() for p in model.parameters()):raise RuntimeError('Nonfinite classifier loss/gradient')
+         optimizer.step();optimizer.zero_grad(set_to_none=True)
+         model.eval();params={k:v.detach() for k,v in model.named_parameters()};buffers=clone_buffers(model)
+-        unseen_candidates=candidate_descriptors(model,xa,unseen)
++        if outer_kind == 'feature_match':
++            # Score seen candidates with the updated classifier. Unseen chains
++            # are independent, unmixed targets and never enter the controller.
++            outer_branches = seen
++            outer_candidates = candidate_descriptors(model, xa, seen)
++            with torch.no_grad():
++                target_images = torch.cat([chain for view in unseen for chain in view])
++                target_features = forward(model, target_images, params, buffers)[1]
++                target_features = target_features.reshape(2, 3, len(xa), -1).detach()
++            outer_options = dict(target_features=target_features)
++        else:
++            outer_branches = unseen
++            outer_candidates = candidate_descriptors(model, xa, unseen)
++            outer_options = {}
+         outer_rows=[]
+         for _ in range(j):
+             mixer_optimizer.zero_grad(set_to_none=True)
+-            outer_loss,outer_penalty,om,ow,outer_ce=outer_objective(model,controller,context,incoming,xa,unseen,params,buffers,ya,outer_kind,temperature,candidates=unseen_candidates)
++            outer_loss,outer_penalty,om,ow,outer_ce=outer_objective(model,controller,context,incoming,xa,outer_branches,params,buffers,ya,outer_kind,temperature,candidates=outer_candidates,**outer_options)
+             outer_loss.backward()
+             grads=[p.grad for p in controller.parameters() if p.grad is not None]
+             if not torch.isfinite(outer_loss) or not grads or not all(torch.isfinite(g).all() for g in grads):raise RuntimeError('Nonfinite mixer loss/gradient')
+@@ -668,7 +681,7 @@ class BiLevelTrainer:
+             outer_rows.append(dict(m=om.mean().item(),m_per_example=om.detach().cpu().tolist(),w=ow.detach().cpu().tolist(),consistency_loss=outer_penalty.item(),grad_norm=grad_norm))
+             mixer_optimizer.step()
+         with torch.no_grad():
+-            _,after_penalty,after_m,after_w,_=outer_objective(model,controller,context,incoming,xa,unseen,params,buffers,ya,outer_kind,temperature,candidates=unseen_candidates)
++            _,after_penalty,after_m,after_w,_=outer_objective(model,controller,context,incoming,xa,outer_branches,params,buffers,ya,outer_kind,temperature,candidates=outer_candidates,**outer_options)
+         memory.add(raw,labels,old_logits)
+         row=dict(m_before=m.mean().item(),m_after=after_m.mean().item(),
+             m_before_per_example=m.flatten().cpu().tolist(),m_after_per_example=after_m.flatten().cpu().tolist(),
+@@ -682,6 +695,10 @@ class BiLevelTrainer:
+             current_ce=ce.item(),replay_ce=replay_ce.item(),replay_mse=replay_mse.item(),classifier_loss=loss.item(),
+             outer_ce=outer_ce.item(),mixer_updates=outer_rows,q=q,batch_size=b,replay_batch=r,augmented_batch=b+r,
+             memory_size=memory.size,presentations=memory.seen)
++        if outer_kind == 'feature_match':
++            row['feature_match_after'] = after_penalty.item()
++            for update in outer_rows:
++                update['feature_match'] = update['consistency_loss']
+         if debug:return next_state,row,dict(stored=old_logits,m=m,w=w,context=context,seen_candidates=seen_candidates)
+         return next_state,row
+ 
+diff --git a/reproduce/chain_aware_mixing.py b/reproduce/chain_aware_mixing.py
+index fcb94ee..f487692 100644
+--- a/reproduce/chain_aware_mixing.py
++++ b/reproduce/chain_aware_mixing.py
+@@ -84,7 +84,7 @@ from libs.loss import contrastive_scores
+ from libs.loss import infonce_loss
+ 
+ 
+-from libs.loss import consistency_loss
++from libs.loss import consistency_loss, seen_unseen_feature_loss
+ 
+ # Extra random mixture draws never consume the historical shuffle/operator RNG.
+ MIXTURE_RNG = np.random.default_rng(170501)
+@@ -155,7 +155,7 @@ def initial_state(device):
+ def active_slots(b,r,device):
+     return torch.cat((torch.arange(b,device=device),32+torch.arange(r,device=device)))
+ 
+-def outer_objective(model,controller,context,incoming,x,branches,params,buffers,labels,kind='js',temperature=.1,candidates=None):
++def outer_objective(model,controller,context,incoming,x,branches,params,buffers,labels,kind='js',temperature=.1,candidates=None,target_features=None):
+     assert not model.training
+     om,ow,_=controller(context,incoming,candidates)
+     joined=torch.cat((x,*mixed_views(x,branches,om,ow)))
+@@ -163,6 +163,11 @@ def outer_objective(model,controller,context,incoming,x,branches,params,buffers,
+     zs=list(z.chunk(3));hs=list(h.chunk(3))
+     zs[0]=zs[0].detach();hs[0]=hs[0].detach()
+     ce=F.cross_entropy(zs[0],labels)
++    if kind == 'feature_match':
++        if target_features is None:
++            raise ValueError('feature_match requires independent unseen targets')
++        penalty = seen_unseen_feature_loss(torch.stack(hs[1:]), target_features)
++        return penalty,penalty,om,ow,ce
+     penalty=consistency_loss(zs,hs,labels,kind,temperature)
+     return ce+penalty,penalty,om,ow,ce
+ 
+@@ -250,7 +255,7 @@ def main():
+     p = argparse.ArgumentParser()
+     p.add_argument('--mixer',choices=['learned'],default='learned')
+     p.add_argument('--consistency',choices=['infonce','js'],default='infonce')
+-    p.add_argument('--outer-consistency',choices=['infonce','js'],default='js')
++    p.add_argument('--outer-consistency',choices=['infonce','js','feature_match'],default='js')
+     p.add_argument('--temperature',type=float,default=.1)
+     p.add_argument('--device', choices=['cuda'], default='cuda')
+     p.add_argument('--root', type=Path, default=Path('experiments/metamix_cifar10/data'))
+@@ -291,6 +296,15 @@ def main():
+         torch=torch.__version__, torchvision=torchvision.__version__, numpy=np.__version__,
+         pillow=PIL.__version__, cuda=torch.version.cuda, cudnn=torch.backends.cudnn.version(),
+         threads=4, deterministic_cudnn=True, tf32=False, root=str(a.root.resolve()))
++    if a.outer_consistency == 'feature_match':
++        config.update(
++            method=f'Chain-aware fixed-m mixer: seen {classifier_objective} + seen-to-unseen feature MSE + DER++',
++            mixer_objective='seen-to-unseen raw pooled feature MSE',
++            target_policy='six unmixed unseen chains; each seen view matches its three unseen targets; detached; reused for J steps',
++            feature_match_coefficient=1., old_unseen_consistency_coefficient=0.,
++            matching_limit='feature matching may average incompatible targets; fixed m=.5 restricts reachability; no robustness guarantee',
++            solver='fixed updated classifier; gradients through seen mixtures only; no hypergradient; no outer clean CE term',
++            bn='classifier joint clean+seen train; outer eval; seen descriptors recomputed after classifier update; six unseen target features cached without gradients')
+     config.update(backbone_metadata(a.backbone))
+     config['candidate_features'] = f"{config['feature_dimension']} raw feature deltas and 10 softmax probability deltas; detached eval joint7N forward"
+     config['scorer'] = f"shared Linear({5 + config['feature_dimension'] + 10},32),ReLU,Linear(32,1); zero final layer; softmax per image/view"
+diff --git a/reproduce/report_chain_aware.py b/reproduce/report_chain_aware.py
+index f9a2ec7..44b630a 100644
+--- a/reproduce/report_chain_aware.py
++++ b/reproduce/report_chain_aware.py
+@@ -47,6 +47,10 @@ def report(output, committed_updates):
+                   classifier_consistency=consistency,
+                   outer_consistency=outer_consistency,
+                   caveat=f"New chain-aware method; seen {consistency}, unseen {outer_consistency}, fixed m=.5; direct consistency minimization is not a retention hypergradient or a guarantee of robustness.")
++    if outer_consistency == 'feature_match':
++        result['caveat'] = 'Seen mixtures match detached unmixed unseen target features; fixed m=.5; no hypergradient or robustness guarantee.'
++        for epoch in epochs:
++            epoch['feature_match_after_mean'] = epoch['outer_consistency_after_mean']
+     temp = output/'progress.json.tmp'
+     temp.write_text(json.dumps(result, indent=2))
+     os.replace(temp, output/'progress.json')
+diff --git a/configs/seen_unseen_feature_match.json b/configs/seen_unseen_feature_match.json
+new file mode 100644
+index 0000000..42681eb
+--- /dev/null
++++ b/configs/seen_unseen_feature_match.json
+@@ -0,0 +1,13 @@
++{
++  "runner": "chain_aware_mixing.py",
++  "args": {
++    "device": "cuda",
++    "backbone": "smallcnn",
++    "epochs_per_task": 10,
++    "consistency": "infonce",
++    "outer_consistency": "feature_match",
++    "temperature": 0.1,
++    "root": "experiments/metamix_cifar10/data",
++    "output": "experiments/seen_unseen_feature_match_smallcnn/seed17"
++  }
++}
+diff --git a/tests/test_seen_unseen_feature_match.py b/tests/test_seen_unseen_feature_match.py
+new file mode 100644
+index 0000000..0806d98
+--- /dev/null
++++ b/tests/test_seen_unseen_feature_match.py
+@@ -0,0 +1,111 @@
++"""CPU gradient contracts and end-to-end steps; CUDA selected when available."""
++import copy
++import sys
++import unittest
++from pathlib import Path
++from unittest.mock import patch
++import numpy as np
++import torch
++
++ROOT = Path(__file__).resolve().parents[1]
++sys.path.insert(0, str(ROOT / 'reproduce'))
++import chain_aware_mixing as m
++from libs.loss import seen_unseen_feature_loss
++
++
++class FeatureMatchTests(unittest.TestCase):
++    def setUp(self):
++        torch.set_num_threads(2)
++        torch.manual_seed(17)
++        np.random.seed(17)
++        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
++
++    def test_formula_detaches_targets(self):
++        mixed = torch.randn(2, 4, 8, requires_grad=True)
++        target = torch.randn(2, 3, 4, 8, requires_grad=True)
++        loss = seen_unseen_feature_loss(mixed, target)
++        expected = torch.stack([(mixed[v] - target[v, k].detach()).square().mean()
++                                for v in range(2) for k in range(3)]).mean()
++        torch.testing.assert_close(loss, expected)
++        loss.backward()
++        self.assertGreater(mixed.grad.norm().item(), 0)
++        self.assertIsNone(target.grad)
++        with self.assertRaises(ValueError):
++            seen_unseen_feature_loss(mixed, target[:, :, :2])
++
++    def test_outer_formula_and_frozen_classifier(self):
++        net = m.SmallCNN().to(self.device).eval()
++        ctl = m.Controller().to(self.device)
++        x = torch.rand(3, 3, 32, 32, device=self.device)
++        branches = [torch.stack((x*.2, x.flip(-1), x*.8)),
++                    torch.stack((x*.7, x.flip(-2), x*.1))]
++        desc = m.candidate_descriptors(net, x, branches)
++        context = torch.randn(3, 258, device=self.device)
++        state = tuple(v[:3] for v in m.initial_state(self.device))
++        params = {k: v.detach() for k, v in net.named_parameters()}
++        buffers = m.clone_buffers(net)
++        targets = torch.randn(2, 3, 3, 128, device=self.device, requires_grad=True)
++        before = copy.deepcopy(net.state_dict())
++        loss, penalty, mm, w, ce = m.outer_objective(
++            net, ctl, context, state, x, branches, params, buffers,
++            torch.zeros(3, dtype=torch.long, device=self.device), 'feature_match',
++            candidates=desc, target_features=targets)
++        _, h = m.forward(net, torch.cat(m.mixed_views(x, branches, mm, w)), params, buffers)
++        torch.testing.assert_close(loss, seen_unseen_feature_loss(h.reshape(2, 3, 128), targets))
++        torch.testing.assert_close(loss, penalty)
++        self.assertFalse(ce.requires_grad)
++        loss.backward()
++        self.assertIsNone(targets.grad)
++        self.assertTrue(all(p.grad is None for p in net.parameters()))
++        self.assertGreater(sum(p.grad.square().sum().item() for p in ctl.parameters()
++                               if p.grad is not None), 0)
++        for key, value in before.items():
++            torch.testing.assert_close(net.state_dict()[key], value, rtol=0, atol=0)
++
++    def test_training_step_seen_only_outer_and_replay(self):
++        net = m.SmallCNN(backbone=getattr(self, 'backbone', 'smallcnn')).to(self.device)
++        ctl = m.Controller(feature_dimension=net.feature_dimension).to(self.device)
++        opt = torch.optim.SGD(net.parameters(), lr=.03)
++        mo = torch.optim.SGD(ctl.parameters(), lr=.05)
++        memory = m.Reservoir()
++        state = m.initial_state(self.device)
++        raw = np.random.randint(0, 256, (4, 32, 32, 3), dtype=np.uint8)
++        labels = np.array([0, 1, 0, 1])
++        original_chains, original_outer = m.chains, m.outer_objective
++        sampled, outer_calls = [], []
++        def sample(*args):
++            value = original_chains(*args)
++            sampled.append(value)
++            return value
++        def outer(*args, **kwargs):
++            self.assertIs(args[5], sampled[0])  # seen, never unseen
++            targets = kwargs['target_features']
++            self.assertFalse(targets.requires_grad)
++            self.assertEqual(targets.shape[:2], (2, 3))
++            if outer_calls:
++                self.assertIs(targets, outer_calls[0])  # cached over J steps
++            outer_calls.append(targets)
++            return original_outer(*args, **kwargs)
++        for n in (4, 2):  # empty replay, then populated replay with short current batch
++            sampled.clear(); outer_calls.clear()
++            before = copy.deepcopy(ctl.state_dict())
++            with patch.object(m, 'chains', sample), patch.object(m, 'outer_objective', outer):
++                state, row = m.step(net, ctl, opt, mo, memory, state, raw[:n], labels[:n],
++                                    self.device, outer_kind='feature_match')
++            self.assertEqual(len(outer_calls), 4)
++            self.assertEqual(len(row['mixer_updates']), 3)
++            self.assertEqual(row['m_after'], .5)
++            self.assertTrue(np.isfinite(row['feature_match_after']))
++            self.assertTrue(all(u['grad_norm'] > 0 for u in row['mixer_updates']))
++            self.assertTrue(any(not torch.equal(v, before[k]) for k, v in ctl.state_dict().items()))
++            self.assertTrue(all(p.grad is None for p in net.parameters()))
++        self.assertEqual(memory.seen, 6)
++        self.assertEqual(row['replay_batch'], 4)
++
++    def test_resnet18_feature_matching_step(self):
++        self.backbone = 'resnet18'
++        self.test_training_step_seen_only_outer_and_replay()
++
++
++if __name__ == '__main__':
++    unittest.main()
+diff --git a/docs/seen_unseen_feature_match_gpu.md b/docs/seen_unseen_feature_match_gpu.md
+new file mode 100644
+index 0000000..bddf3ee
+--- /dev/null
++++ b/docs/seen_unseen_feature_match_gpu.md
+@@ -0,0 +1,138 @@
++# Seen-to-unseen feature matching: GPU handoff
++
++Run commands from the root of **robust-continual-learning**, not the separate
++ce7554-ai-image-classification repository. This is a new experiment; use a fresh
++output directory. Historical JS/InfoNCE modes retain their original objectives.
++
++## Objective and update order
++
++Use the chain-aware controller with fixed original-image weight m=0.5 and three
++learned chain weights per image and view. Each batch splits the nine AugMix
++operations into disjoint seen (5–7) and unseen (2–4) pools, resampled next batch.
++Both pools operate on current training images plus replay-CE images, never test data.
++
++1. Sample two views of three seen chains and two views of three unseen chains.
++2. Train the classifier using original-image current CE + 0.5 replay CE + 0.2
++   stored-logit MSE + seen-view consistency. The supplied configuration uses
++   class-aware InfoNCE at temperature 0.1; JS is also supported.
++3. Fix the updated classifier in evaluation mode. Recompute detached descriptors
++   of the **seen** chains for the controller. Extract and detach features of all
++   six **unmixed unseen chains**, without passing them through the mixer.
++4. Perform three mixer SGD updates at learning rate 0.05. Reuse sampled chains,
++   target features, clean context and incoming recurrent state across these steps.
++   Each update recomputes seen-chain weights and mixed-image features.
++
++For seen mixed image s[v,i] = 0.5*x[i] + 0.5*sum_k w[v,i,k]*a_seen[v,k](x[i]),
++the outer loss is exactly:
++
++    L_match = mean_(v,k,i,d) (h_theta(s[v,i])[d] - stopgrad(h_theta(u[v,k,i]))[d])**2
++
++Here v=1,2 and k=1,2,3. h is the classifier's raw penultimate pooled feature,
++128 dimensions for SmallCNN or 512 for ResNet18. The coefficient is 1. Features
++are not normalized. Gradients flow through the fixed classifier into the seen
++mixing weights only. There is no derivative through the classifier optimizer step.
++There is no old unseen JS/InfoNCE term and no outer CE term in this mode.
++
++The classifier continues to train on seen mixtures. Since its update precedes the
++mixer update, new mixer parameters affect subsequent batches. Persistent recurrent
++state advances using the pre-mixer-update transition, as in existing experiments.
++
++The mean loss matches every seen view to three targets, which can encourage an
++average representation when targets conflict. Fixed m and the convex seen-chain
++mixture limit what can be matched. This is a starting experiment, not a claim of
++pixel similarity or improved robustness.
++
++## Transfer these changes first
++
++Changes are local until you commit/push or copy them. Cloning the existing GitHub
++main branch alone does not include this new mode. Transfer the updated repository,
++or copy these six files into the same paths in your clone:
++
++- libs/loss.py
++- libs/trainer.py
++- reproduce/chain_aware_mixing.py
++- reproduce/report_chain_aware.py
++- configs/seen_unseen_feature_match.json
++- tests/test_seen_unseen_feature_match.py
++
++Also copy this instruction file. A portable `seen_unseen_feature_match.patch`
++accompanies the handoff; on a matching checkout, apply it with:
++
++```sh
++git apply --check seen_unseen_feature_match.patch
++git apply seen_unseen_feature_match.patch
++```
++
++If the check fails, use the updated files from this checkout rather than forcing
++the patch over a different code version.
++
++## Environment (NVIDIA CUDA)
++
++Use Python 3.12 or 3.13 and an NVIDIA driver compatible with the CUDA wheel.
++The following matches the repository's pinned PyTorch 2.10 / torchvision 0.25
++CUDA 12.8 setup. On Linux:
++
++```sh
++python3.12 -m venv .venv
++source .venv/bin/activate
++python -m pip install --upgrade pip
++python -m pip install torch==2.10.0 torchvision==0.25.0 --index-url https://download.pytorch.org/whl/cu128
++python -m pip install -r requirements.txt
++python -c "import torch; assert torch.cuda.is_available(); print(torch.__version__, torch.cuda.get_device_name(0))"
++```
++
++On Windows PowerShell, create the environment with `py -3.12 -m venv .venv` and
++activate it with `.\.venv\Scripts\Activate.ps1`; the subsequent Python commands
++are the same. Training explicitly requires CUDA and does not fall back to CPU.
++
++## Verify before a full run
++
++```sh
++python -m unittest discover -s tests -p test_seen_unseen_feature_match.py -v
++python reproduce/chain_aware_mixing.py --pipeline-test --outer-consistency feature_match --consistency infonce --backbone smallcnn --output experiments/feature_match_smallcnn_smoke/seed17
++```
++
++The synthetic smoke test runs five tiny tasks and evaluation without a dataset
++download. It checks execution, not accuracy. Use a fresh smoke output path after
++changing code. The unit tests check the formula, detached targets, frozen
++classifier, nonzero mixer gradients, seen-only outer mixing, and replay/short batches.
++
++## Download and train
++
++```sh
++python reproduce/download_cifar10_benchmark.py
++python scripts/run_experiment.py configs/seen_unseen_feature_match.json
++python scripts/run_experiment.py configs/seen_unseen_feature_match.json --run
++```
++
++The second command prints the full command without running it. The supplied
++configuration trains the small six-convolution CNN **from scratch** (288,746
++parameters, 128-dimensional features), seed 17, ten epochs
++per task over five tasks. It uses all 50,000 training images, batch 32, replay 32,
++a 500-image reservoir, classifier SGD 0.03 and mixer SGD 0.05. Training ends with
++clean and CIFAR-10-C evaluation. Test data do not select checkpoints.
++
++To reuse verified data:
++
++```sh
++python scripts/run_experiment.py configs/seen_unseen_feature_match.json --data-root /path/to/data --run
++```
++
++For a single GPU selection, Linux supports `CUDA_VISIBLE_DEVICES=0` before the
++training command. In PowerShell set `$env:CUDA_VISIBLE_DEVICES="0"` first.
++
++## Outputs and resume
++
++The default full-run directory is
++`experiments/seen_unseen_feature_match_smallcnn/seed17`.
++Inspect `trace.jsonl`, `progress.json`, `weights_progress.png`, and finally
++`evaluation.json` and `complete.json`. New metrics include `feature_match_after`
++and each mixer update's `feature_match`; the generic outer-consistency fields
++also contain feature MSE when `outer_consistency` is `feature_match`.
++
++Rerun the identical training command to resume from the latest completed epoch.
++Partial-epoch trace rows are discarded. The checkpoint is
++`MetaMix/checkpoint.pt` under the run directory. Keep source, configuration,
++dataset path, software and GPU unchanged for exact configuration matching;
++changing these may be rejected. Do not resume a historical JS/InfoNCE checkpoint
++with the new loss. Use a new output directory when changing loss or backbone.

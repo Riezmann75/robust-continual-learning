@@ -17,8 +17,11 @@
 \newcommand{\JS}{\mathcal{L}_{\mathrm{JS}}}
 
 \title{Learning Augmentation Weights Through One Classifier Update\\in Corruption-Robust Continual Learning}
-\author{Research draft\\Author information to be supplied}
+\author{Cao Gia Bao - G2610271C \\ 
+Chong Chun Ho - \\ Liong Hong Xiang - \\ Wang Jun Wei Serena - \\ {\tt\small \{giabao005, chunho001, hliong002, wang2552\}@e.ntu.edu.sg}}
 \begin{document}
+% Keep natural heading spacing instead of stretching gaps to align column bottoms.
+\raggedbottom
 \maketitle
 \begin{abstract}
 How does the share of the original image in an augmented view affect corruption robustness in continual learning? We compare chain-aware mixing and a recurrent MetaMix baseline at five original-image weights on Split-CIFAR-10. Across three seeds, classifier InfoNCE improves mean corrupted class-incremental accuracy over Jensen--Shannon (JS) consistency at all five weights for chain-aware mixing and at four for MetaMix. At the strongest tested augmentation ($m=0.1$), the two InfoNCE classifiers reach 43.89\% and 41.66\%, respectively. At $m=0.3$ their order reverses (42.28\% and 42.51\%). The AugMix reference leads on corrupted task-incremental accuracy at 84.15\%. The results link classifier consistency to mixture strength and show why conclusions about mixer design depend on which metric and strength are compared.
@@ -26,25 +29,42 @@ How does the share of the original image in an augmented view affect corruption 
 \end{abstract}
 
 \section{Introduction}
-An augmentation controller can reduce disagreement between a clean image and its transformed views by assigning more weight to the original. At the extreme, all views coincide. This presents a difficulty when prediction consistency is used to train the controller: a smaller loss can reflect an easier view even when the classifier has learned little about corruptions. In continual learning, the choice of views also affects the update shared by current examples and examples replayed from earlier tasks.
+An augmentation mixer can reduce disagreement between a clean image and its transformed views by assigning more weight to the original. At the extreme, all views coincide. This presents a difficulty when prediction consistency is used to train the mixer: a smaller loss can reflect an easier view even when the classifier has learned little about corruptions. In continual learning, the choice of views also affects the update shared by current examples and examples replayed from earlier tasks.
 
-AugMix draws and blends short stochastic augmentation chains~\cite{hendrycks2020augmix}. MetaMix adapts mixture weights using a recurrent summary of the learner and splits training operations into pseudo-seen and pseudo-unseen pools~\cite{wang2023metamix}. We study a modification with two linked choices. First, the mixer observes how each sampled seen chain changes the image's representation and prediction. Second, independent random weights determine the pseudo-unseen views on which the classifier update is scored. This design lets the mixer influence the outer loss only through its choice of training views.
-
-We compare the two controllers at matched original-image weights $m\in\{0.1,0.3,0.5,0.7,0.9\}$. At each weight we cross controller choice with classifier consistency. Table~\ref{tab:main} reports all four evaluation metrics so the reader can compare controllers within a row and follow each controller as augmentation strength changes.
-\input{tables/sweep}
-
-\section{One-Step Mixing}
-Following MetaMix~\cite{wang2023metamix}, we concatenate the current batch $(x_t,y_t)$ and a labeled replay batch $(x_r,y_r)$ into $(x_b,y_b)$. At step $t$, the pseudo-seen pool $S_t$ produces two mixed views $x'_{b1},x'_{b2}$ of this batch; the disjoint pseudo-unseen pool $U_t$ produces $\hat x_{b1},\hat x_{b2}$. For either pool, a mixed view of one image $x$ has the form
+AugMix draws and blends short stochastic augmentation chains~\cite{hendrycks2020augmix}. MetaMix adapts mixture weights using a recurrent summary of the learner and splits training operations into pseudo-seen and pseudo-unseen pools~\cite{wang2023metamix}. Specifically, MetaMix baseline uses an LSTM $\phi$ conditioned on current and replay features, replay loss and gradient alignment. Given the current task's mini batch $(x_t,y_t)$ at time step $t$, and a labeled replay batch $(x_r,y_r)$, we combine them into $(x_b,y_b)$. From the set of training augmentations, to simulate the real scenario in which we are not accessible to the test augmentations, we construct two disjoint set of augmentations: pseudo-seen pool $S_t$ and pseudo-unseen pool $U_t$. $S_t$ produces two mixed views $x'_{b1},x'_{b2}$ of this batch; the disjoint pseudo-unseen pool $U_t$ produces $\hat x_{b1},\hat x_{b2}$. For either pool, a mixed view of one image $x$ has the form
 \begin{equation}
  \tilde x=m x+(1-m)\sum_{k=1}^3 w_k a_k(x),
  \qquad \sum_{k=1}^3 w_k=1,
 \end{equation}
-where $m$ is the original-image weight, $a_k$ is a sampled chain, and $w_k\geq 0$ is its weight. We write $\theta$ for classifier parameters and $\phi$ for mixer parameters.
+where $m$ is the original-image weight, $a_k$ is a sampled chain from $S_t$ or $U_t$, and $w_k\geq 0$ is its weight. We write $\theta$ for classifier parameters and $\phi$ for LSTM (aka mixer) parameters. The paper aims to learn a mixer $\phi$ that can guide the classifier to give similar representation between $x$ and $\tilde{x}$.
 
-\paragraph{What the controller observes.}
-The MetaMix baseline uses an LSTM conditioned on current and replay features, replay loss and gradient alignment. For a given example it shares the three chain weights across views and pools. One variant also learns $m$ and the other uses the prescribed sweep value. Resampling chains at fixed learner context leaves its weights unchanged.
+However, since $m$ is a learnable parameter, we empirically verified that during training $m$ approaches 1 which consequently make the mixed image $\tilde{x}$ more similar the original image. Also, as the mixer doesn't receive any information about the current pseudo-seen chains sampled from $S_t$, the mixer will treat every chain equally and overlook the chains that benefits the current task training.
 
-The chain-aware controller uses the prescribed $m$ for both operation pools. For each seen chain it concatenates the change in pooled features with the change in class probabilities relative to the clean input. A shared scorer combines this detached descriptor with the recurrent state, then a softmax over the three scores supplies weights separately for each example and seen view. For each pseudo-unseen view we draw $w\sim\mathrm{Dirichlet}(1,1,1)$ independently of the controller and keep the draw fixed throughout the batch's mixer updates.
+Based on this we study a modification with two linked choices. First, the mixer observes how each sampled pseudo-seen chain changes the image's representation and prediction. Next, since the mixer can observe the effect of the augmentations to select chain, instead of using LSTM to mix the unseen chains as in the previous work, we generate independent random weights to mix pseudo-unseen views on which the classifier update is scored. This design lets the mixer influence the outer loss only through its choice of training views.
+
+
+
+
+Our contributions are:
+\begin{itemize}
+\item We introduce a chain-aware mixer that combines temporal learner context with each sampled chain's feature and prediction changes to assign weights separately for each image and pseudo-seen view.
+\item We train the mixer through one differentiable classifier update, using independently sampled pseudo-unseen mixture weights. This makes the mixer's outer-loss gradient depend entirely on how its training mixtures affect the classifier update.
+\item We compare mixer design, classifier consistency, and augmentation strength on Split-CIFAR-10 across five fixed original-image weights and three seeds, including MetaMix and AugMix baselines. The results show that the relative performance of learned mixing depends on mixture strength and evaluation metric.
+\end{itemize}
+
+\section{Training Objective Design}
+\paragraph{What the mixer observes.}
+
+Before the classifier update, we compute mean cross-entropy on the clean current batch and the clean labeled replay batch. Let $g_t$ and $g_r$ be their gradients with respect to the classifier parameters, and let $L_r$ be the replay cross-entropy. Each LSTM input concatenates these batch statistics with individual pooled features:
+\begin{equation}
+ I_i=[g_t^\top g_r,\;L_r,\;e_{r,i},\;e_{t,i}]
+ \in\mathbb{R}^{258}.
+\end{equation}
+Here $e_{t,i}$ and $e_{r,i}$ are 128-dimensional features from clean current and replay images. The gradient dot product measures whether their batch losses favor locally compatible updates: a positive value indicates that a sufficiently small step along the negative current gradient would decrease replay loss to first order, whereas a negative value indicates conflict. Replay loss summarizes how well the classifier currently fits remembered examples, and the feature vectors provide image-specific context.
+
+The MetaMix baseline maps the LSTM hidden state to three chain weights shared across views and operation pools for each example. One variant also learns $m$, while the other uses the prescribed sweep value. Because the LSTM context contains no sampled-chain information, resampling chains at fixed context and recurrent state leaves these weights unchanged.
+
+The chain-aware mixer uses the same LSTM context and the prescribed $m$. For each seen chain, it concatenates the change in pooled features with the change in class probabilities relative to the clean input. We then concatenate this augmentation descriptor with LSTM hidden state from the previous step and mapped to a scalar. A softmax over 3 scores (correspond to 3 sampled chains) supplies weights separately for each example and seen view. For each pseudo-unseen view we draw $w\sim\mathrm{Dirichlet}(1,1,1)$ independently of the mixer and keep the draw fixed throughout the batch's mixer updates. 
 
 \paragraph{What the classifier learns.}
 Write $\ell_\theta(x,y)=\CE(f_\theta(x),y)$ for mean batch cross-entropy, where $f_\theta$ returns logits. A separate replay draw $(x_d,z_d)$ supplies stored logits for distillation. Our DER++ loss~\cite{buzzega2020dark} is
@@ -59,7 +79,7 @@ MSE averages over examples and logit coordinates. Replay terms are zero when mem
        + C_\theta(x_b,x'_{b1},x'_{b2}).
  \label{eq:support}
 \end{equation}
-Here $C_\theta$ is either JS or class-aware InfoNCE; the latter also uses the labels $y_b$. The dependence on $\phi$ enters through the mixed views.
+Here $C_\theta$ is either Jensen-Shannon divergence or class-aware InfoNCE; the latter also uses the labels $y_b$. The dependence on $\phi$ enters through the mixed views.
 
 For three aligned batches $v_0,v_1,v_2$ of size $n$, let $p_{ij}$ denote the classifier's probability vector for example $i$ in view $v_j$, and let $\bar p_i=(p_{i0}+p_{i1}+p_{i2})/3$. We use
 \begin{equation}
@@ -67,7 +87,8 @@ For three aligned batches $v_0,v_1,v_2$ of size $n$, let $p_{ij}$ denote the cla
  =\frac{1}{3n}\sum_{i=1}^n\sum_{j=0}^2\KL(p_{ij}\,\|\,\bar p_i).
  \label{eq:three-js}
 \end{equation}
-For InfoNCE, index the $3n$ views by $a$ and let $u_a$ be the normalized pooled feature. The positive set $P_a$ contains the other two views of the same batch entry; $N_a$ contains all views with a different class label. At temperature $\tau=0.1$,
+
+Beside JS divergence which encourage the consistency in the probability distributions, we also try InfoNCE which is a stronger regularization that directly constraints the feature similarities. Each image contributes three views: the original image and its two pseudo-seen augmented mixtures. We treat each view in turn as an anchor and use the other two views of that same image as positive examples. Index the $3n$ views by $a$ and let $u_a$ be the normalized pooled feature. The positive set $P_a$ contains these two same-image views, while the negative set $N_a$ contains all views of images with different class labels. The anchor itself and views of other images with the same class label are excluded from both sets. At temperature $\tau=0.1$,
 \begin{equation}
  \mathcal{L}_{\mathrm{NCE},\theta}=-\frac{1}{3n}\sum_a\frac{1}{2}\sum_{b\in P_a}
  \log\frac{\exp(u_a^\top u_b/\tau)}
@@ -75,25 +96,33 @@ For InfoNCE, index the $3n$ views by $a$ and let $u_a$ be the normalized pooled 
  \label{eq:seen-nce}
 \end{equation}
 
-\paragraph{How the outer loss reaches the mixer.}
-After one virtual classifier step of size $\alpha$, we evaluate clean classification and pseudo-unseen consistency on the same batch:
+\paragraph{How the mixer guides representation learning.}
+The mixer chooses the pseudo-seen training views, which determine the consistency gradient used to update the classifier. We train the mixer by asking whether that update improves classification and prediction consistency on independently constructed pseudo-unseen views. After one virtual classifier step of size $\alpha$, we evaluate
 \begin{align}
  \theta^+(\phi)&=\theta-\alpha\nabla_\theta L_S(\theta,\phi),\label{eq:virtual-step}\\
  L_U(\theta^+,\phi)&=\ell_{\theta^+}(x_b,y_b)
     +\mathcal{L}_{\mathrm{JS},\theta^+}(x_b,\hat x_{b1},\hat x_{b2}).\label{eq:outer}
 \end{align}
-The mixer minimizes $J(\phi)=L_U(\theta^+(\phi),\phi)$.
+Clean cross-entropy rewards retaining class-discriminative information, while pseudo-unseen JS rewards predictions that remain consistent under transformations outside the current pseudo-seen pool. The mixer minimizes their sum after the classifier step, $J(\phi)=L_U(\theta^+(\phi),\phi)$, so its feedback concerns the effect of its mixtures on learning.
+
 Holding the sampled batch, incoming state and outer BatchNorm buffers fixed, the chain rule gives
 \begin{equation}
  \nabla_\phi J=(D_\phi\theta^+)^\top\nabla_{\theta^+}L_U
                 +\partial_\phi L_U .
 \end{equation}
-The partial derivative holds the virtual classifier fixed. For chain-aware mixing the outer images are independent of $\phi$, so this term vanishes. For MetaMix the pseudo-unseen images depend on learned chain weights even when $m$ is fixed, so a direct JS gradient can remain. Clean cross-entropy reaches either mixer through the classifier update. At $m=1$ the three inputs coincide and their JS is zero under deterministic evaluation. This identity describes the consistency term alone.
-
-Three mixer updates recompute the virtual classifier from the same starting parameters. The classifier commits the step computed with the incoming mixer once per batch. This is the full derivative of one SGD step. The MetaMix baseline uses the project's interpretation of the published solver.
+The first term links a change in mixture weights to a change in the classifier update and, through that update, to the outer loss. The second term measures how the mixer changes the outer views while holding the virtual classifier fixed. For our chain-aware mixer, the pseudo-unseen mixture weights are sampled independently of $\phi$ and $m$ is prescribed, so the second term vanishes. Consequently, the mixer can lower the outer loss only by changing the classifier step taken on its pseudo-seen mixtures. A direction $\delta\phi$ is locally favorable when
+\begin{equation}
+ \left\langle\nabla_{\theta^+}L_U,
+                 (D_\phi\theta^+)\delta\phi\right\rangle<0.
+\end{equation}
+This expresses the intended guidance: favor changes in the training mixtures whose resulting classifier update reduces the combined classification and pseudo-unseen consistency loss.
 
 \section{Experimental Protocol}
-The 288,746-parameter SmallCNN learns five successive CIFAR-10 class pairs, $(0,1)$ through $(8,9)$, with ten epochs per task and a 500-example reservoir. Each batch has up to 32 current examples and up to 32 labeled replay examples. The classifier and mixer use constant SGD learning rates of 0.003 and 0.005. Each run processes 500,000 current-image presentations in 15,650 classifier updates.
+
+We compare the two mixers at matched original-image weights $m\in\{0.1,0.3,0.5,0.7,0.9\}$. At each weight we cross mixer choice with classifier consistency. Table~\ref{tab:main} reports all four evaluation metrics so the reader can compare mixers within a row and follow each mixer as augmentation strength changes.
+\input{tables/sweep}
+
+The 288,746-parameter SmallCNN learns five successive CIFAR-10 class pairs, $(0,1)$ through $(8,9)$, with ten epochs per task and a 500-example reservoir. Each batch has up to 32 current examples and up to 32 labeled replay examples. The classifier and mixer use constant SGD learning rates of 0.003 and 0.005. Learned mixers receive three SGD updates per mini-batch, while the classifier receives one committed update; the random AugMix references have no mixer updates. Each run processes 500,000 current-image presentations in 15,650 classifier updates.
 
 Final evaluation uses 10,000 clean test images and 15 CIFAR-10-C corruptions at five severities~\cite{hendrycks2019benchmarking}. Each corruption and severity receives equal weight. Class-IL predicts among all ten outputs. Task-IL restricts prediction to the true class pair. The pseudo-unseen operations used in training are sampled training transformations. CIFAR-10-C supplies only the test measurements.
 
@@ -112,14 +141,14 @@ Table~\ref{tab:delta} holds the mixer and mixture strength fixed when comparing 
 \input{tables/objective}
 
 \paragraph{Learned and random mixture strength.}
-Tables~\ref{tab:main} and~\ref{tab:reference} show how the fixed settings compare with learned $m$ and random AugMix. Within MetaMix with classifier InfoNCE, corrupted class-IL is 35.26\% with learned $m$, 42.51\% at fixed $m=0.3$, and 34.60\% at fixed $m=0.9$. Thus the value chosen matters even when $m$ is fixed. AugMix with its original JS coefficient reaches the highest corrupted task-IL mean (84.15\%). Reducing that coefficient to one raises clean class-IL from 45.94\% to 48.99\%, while corrupted class-IL changes from 40.00\% to 39.68\%. At the matched coefficient AugMix exceeds both controllers' best observed JS means on corrupted class-IL.
+Tables~\ref{tab:main} and~\ref{tab:reference} show how the fixed settings compare with learned $m$ and random AugMix. Within MetaMix with classifier InfoNCE, corrupted class-IL is 35.26\% with learned $m$, 42.51\% at fixed $m=0.3$, and 34.60\% at fixed $m=0.9$. Thus the value chosen matters even when $m$ is fixed. AugMix with its original JS coefficient reaches the highest corrupted task-IL mean (84.15\%). Reducing that coefficient to one raises clean class-IL from 45.94\% to 48.99\%, while corrupted class-IL changes from 40.00\% to 39.68\%. At the matched coefficient AugMix exceeds both mixers' best observed JS means on corrupted class-IL.
 \input{tables/references}
 
 \paragraph{Which corruptions account for the differences?}
 Tables~\ref{tab:class-detail} and~\ref{tab:task-detail} give the results for each corruption. With InfoNCE and $m=0.5$, chain-aware mixing exceeds MetaMix on 13 of 15 class-IL corruption means. The largest advantage is on pixelation (39.74\% versus 39.10\%). MetaMix leads on impulse noise and contrast. Changing the classifier loss within the chain-aware mixer produces larger differences: switching from JS to InfoNCE raises impulse-noise class-IL by 6.63 points but lowers fog class-IL by 3.57 points. When the true task is supplied, the same switch raises accuracy on 14 corruptions, with motion blur the exception (82.33\% with JS and 81.72\% with InfoNCE).
 
 \paragraph{How concentrated are the learned weights?}
-At $m=0.1$ the chains supply 90\% of each mixed image. For InfoNCE, the most heavily weighted chain receives 38.24\% of that share on average with chain-aware mixing and 34.37\% with MetaMix (Table~\ref{tab:weights}). The lower entropy for chain-aware mixing likewise indicates a more uneven allocation. These final-epoch measurements establish a difference in weighting behavior at this strength. They do not identify which chains improved learning.
+At $m=0.1$, the augmentation chains contribute 90\% to the mixed images $\tilde{x}$. For InfoNCE, the most heavily weighted chain receives 38.24\% of that share on average with chain-aware mixing and 34.37\% with MetaMix (Table~\ref{tab:weights}).
 \input{tables/diagnostics}
 
 \section{Limitations and Conclusion}
