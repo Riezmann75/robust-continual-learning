@@ -1,14 +1,16 @@
 \begin{table}[H]
 \centering\small
-\begin{tabular}{llrr}
+\begin{tabular}{lrrrr}
 \toprule
-Mixer & Loss & Max. weight \\
+ & \multicolumn{2}{c}{Chain-aware} & \multicolumn{2}{c}{MetaMix} \\
+$m$ & JS & InfoNCE & JS & InfoNCE \\
 \midrule
-Chain-aware & JS & .3603 \\
-Chain-aware & InfoNCE & .3824 \\
-MetaMix & JS & .3463 \\
-MetaMix & InfoNCE & .3437 \\
+0.1 & 0.3604 & 0.3824 & 0.3463 & 0.3437 \\
+0.3 & 0.3448 & 0.3672 & 0.3371 & 0.3446 \\
+0.5 & 0.3399 & 0.3426 & 0.3360 & 0.3414 \\
+0.7 & 0.3372 & 0.3358 & 0.3345 & 0.3356 \\
+0.9 & 0.3338 & 0.3343 & 0.3337 & 0.3342 \\
 \bottomrule
 \end{tabular}
-\caption{Final-epoch weights at $m=0.1$, averaged across seeds. The largest of the three weights is taken before averaging. Uniform weights give a maximum of $1/3$ and entropy $\ln 3$.}\label{tab:weights}
+\caption{Final-epoch mean maximum chain weight, averaged equally over seeds 17, 23, and 43. We take the maximum across the three chains before averaging. Equal weights give $1/3$; the weights divide the augmented share $1-m$.}\label{tab:weights}
 \end{table}

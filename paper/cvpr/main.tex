@@ -163,7 +163,7 @@ The repository includes the \href{https://github.com/Riezmann75/robust-continual
 Tables~\ref{tab:class-detail} and~\ref{tab:task-detail} give the results for each corruption. With InfoNCE and $m=0.5$, chain-aware mixing exceeds MetaMix on 13 of 15 class-IL corruption means. The largest advantage is on pixelation (39.74\% versus 39.10\%). MetaMix leads on impulse noise and contrast. Changing the classifier loss within the chain-aware mixer produces larger differences: switching from JS to InfoNCE raises impulse-noise class-IL by 6.63 points but lowers fog class-IL by 3.57 points. When the true task is supplied, the same switch raises accuracy on 14 corruptions, with motion blur the exception (82.33\% with JS and 81.72\% with InfoNCE).
 
 \paragraph{How concentrated are the learned weights?}
-At $m=0.1$, the augmentation chains contribute 90\% to the mixed images $\tilde{x}$. For InfoNCE, the most heavily weighted chain receives 38.24\% of that share on average with chain-aware mixing and 34.37\% with MetaMix (Table~\ref{tab:weights}).
+For each matched loss and $m$, the chain-aware mixer's average maximum weight exceeds that of MetaMix (Table~\ref{tab:weights}). The largest gap occurs with InfoNCE at $m=0.1$: the leading chain receives 38.24\% of the augmented share under chain-aware mixing and 34.37\% under MetaMix. With the same loss at $m=0.9$, the values are 33.43\% and 33.42\%, close to the equal-weight value of 33.33\%. This concentration statistic describes how strongly a mixer favors a chain; it does not identify the chain or its contribution to accuracy.
 \input{tables/diagnostics}
 
 
