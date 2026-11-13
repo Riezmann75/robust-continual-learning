@@ -56,7 +56,7 @@ Our contributions are:
 \begin{figure*}[t]
 \centering
 \includegraphics[width=\textwidth]{figures/mixer_comparison.pdf}
-\caption{Comparison of the MetaMix baseline mixer and our chain-aware mixer in the SmallCNN implementation. Both use the same 258-dimensional learner context and a five-dimensional LSTM hidden state. MetaMix predicts chain weights from this state and shares them across views and operation pools. Our mixer scores each pseudo-seen chain using its detached descriptor and the current LSTM hidden state, while pseudo-unseen weights are sampled independently. Cell arrays are schematic, with dimensions indicated; the original-image mixing branch is omitted for clarity. The original-image weight $m$ is prescribed in our mixer and in the fixed-$m$ MetaMix comparison.}
+\caption{MetaMix and our chain-aware mixer. Colors and symbols identify modules in the legend; cell arrays are schematic. Both mixers encode learner context $I_i$ with an LSTM. MetaMix predicts weights shared across views and operation pools. Our shared scorer independently maps each pair $(h_t,d_k)$ to a scalar $s_k$; softmax then combines the three scores into weights for each seen view. The detached descriptor $d_k=[\Delta e_k,\Delta p_k]$ records changes in pooled features and class probabilities relative to the clean image. Pseudo-unseen weights are sampled independently. The original-image mixing branch is omitted.}
 \label{fig:mixer-comparison}
 \end{figure*}
 Figure~\ref{fig:mixer-comparison} summarizes the inputs and weighting rules of the two mixers.
