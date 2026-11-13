@@ -1,10 +1,19 @@
-import copy,json,sys,tempfile,subprocess,unittest
+import copy
+import json
 from pathlib import Path
+import subprocess
+import sys
+import tempfile
+import unittest
+
 import numpy as np
 import torch
+
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'reproduce'))
 import metamix_jointbn as m
+
+
 class RevisedTests(unittest.TestCase):
     def build(self):
         m.setup(17,'cuda');net=m.SmallCNN().cuda();ctl=m.Controller().cuda()

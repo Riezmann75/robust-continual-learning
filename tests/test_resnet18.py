@@ -1,20 +1,25 @@
 """Scratch initialization and real continual-learning updates with ResNet18."""
-import sys
 import copy
-import unittest
 from pathlib import Path
+import sys
+import unittest
 from unittest.mock import patch
+
 import numpy as np
 import torch
 from torchvision.models import resnet18
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'reproduce'))
 import augce_cifar10 as augce
-from libs.models import SmallCNN, Controller, ChainAwareController, backbone_metadata
+import chain_aware_mixing as chain
+import matched_mixing as mixing
+from libs.models import backbone_metadata, ChainAwareController, Controller, SmallCNN
+
 
 class ResNet18Tests(unittest.TestCase):
     def test_scratch_shapes_and_metadata_rng(self):
         torch.set_num_threads(2)
-        with patch('torchvision.models.resnet18', wraps=resnet18) as factory:
+        with patch('libs.models.resnet18', wraps=resnet18) as factory:
             model = SmallCNN(backbone='resnet18')
         factory.assert_called_once_with(weights=None)
         logits, features = model(torch.rand(2, 3, 32, 32))
@@ -37,8 +42,6 @@ class ResNet18Tests(unittest.TestCase):
             self.assertTrue(all(p.grad is not None for p in controller.parameters()))
 
     def test_bilevel_update_with_native_features(self):
-        import matched_mixing as mixing
-        import chain_aware_mixing as chain
         torch.set_num_threads(2)
         for module in (mixing, chain):
             torch.manual_seed(17)

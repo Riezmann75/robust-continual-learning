@@ -1,6 +1,9 @@
 """Aggregate already completed CIFAR-10-C evaluations; no training or inference."""
-import json,math,re
+import json
+import math
 from pathlib import Path
+import re
+
 ROOT=Path(__file__).resolve().parents[1]
 BASE=ROOT/'results/corrected_mixing_seed17'
 GROUPS={

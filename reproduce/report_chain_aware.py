@@ -2,10 +2,13 @@
 import json
 import os
 from pathlib import Path
-import numpy as np
+
 import matplotlib
+import numpy as np
+
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+
 
 def report(output, committed_updates):
     output = Path(output)

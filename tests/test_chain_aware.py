@@ -1,10 +1,19 @@
-import copy,json,sys,tempfile,subprocess,unittest
+import copy
+import json
 from pathlib import Path
+import subprocess
+import sys
+import tempfile
+import unittest
+
 import numpy as np
 import torch
+
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'reproduce'))
 import chain_aware_mixing as m
+from libs.loss import contrastive_scores, infonce_loss, js
+
 
 class ChainAwareTests(unittest.TestCase):
     def build(self):
@@ -35,7 +44,7 @@ class ChainAwareTests(unittest.TestCase):
         params={k:v.detach() for k,v in net.named_parameters()};buffers=m.clone_buffers(net)
         loss,penalty,om,ow,ce=m.outer_objective(net,ctl,context,incoming,x,branches,params,buffers,torch.tensor(y,device='cuda'),'js',.1,candidates=desc)
         zz,_=m.forward(net,torch.cat((x,*m.mixed_views(x,branches,om,ow))),params,buffers)
-        torch.testing.assert_close(penalty,m.js(*zz.chunk(3)))
+        torch.testing.assert_close(penalty,js(*zz.chunk(3)))
         self.assertFalse(ce.requires_grad);loss.backward()
         self.assertGreater(sum(p.grad.square().sum().item() for p in ctl.parameters() if p.grad is not None),0)
         self.assertTrue(all(p.grad is None for p in net.parameters()))
@@ -54,8 +63,8 @@ class ChainAwareTests(unittest.TestCase):
         before=copy.deepcopy(net.state_dict())
         loss,penalty,om,ow,ce=m.outer_objective(net,ctl,context,incoming,x,branches,params,buffers,labels,'infonce',.1,candidates=desc)
         _,features=m.forward(net,torch.cat((x,*m.mixed_views(x,branches,om,ow))),params,buffers)
-        torch.testing.assert_close(penalty,m.infonce_loss(*features.chunk(3),temperature=.1,labels=labels))
-        scores,positive=m.contrastive_scores(*features.chunk(3),temperature=.1,labels=labels)
+        torch.testing.assert_close(penalty,infonce_loss(*features.chunk(3),temperature=.1,labels=labels))
+        scores,positive=contrastive_scores(*features.chunk(3),temperature=.1,labels=labels)
         classes=labels.repeat(3)
         excluded=classes[:,None].eq(classes[None,:]) & ~positive
         self.assertTrue(torch.isneginf(scores[excluded]).all())
@@ -109,7 +118,7 @@ class ChainAwareTests(unittest.TestCase):
         finally:
             handle.remove()
         self.assertEqual(len(captured),1)
-        self.assertAlmostEqual(row['seen_consistency'],m.js(*captured[0].chunk(3)).item(),places=7)
+        self.assertAlmostEqual(row['seen_consistency'],js(*captured[0].chunk(3)).item(),places=7)
         self.assertAlmostEqual(row['classifier_loss'],row['current_ce']+row['seen_consistency'],places=6)
         self.assertEqual(row['consistency'],'js')
         self.assertEqual(row['outer_consistency'],'js')

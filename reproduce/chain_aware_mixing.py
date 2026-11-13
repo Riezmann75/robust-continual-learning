@@ -1,34 +1,33 @@
 """Chain-aware weights: fixed m=.5, independently selected seen/unseen consistency."""
-import sys
-from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from libs.trainer import BiLevelTrainer
-from libs import library_source_hashes, snapshot_source
 import argparse
 from functools import partial
 import hashlib
 import json
 import os
+from pathlib import Path
 import platform
 import random
+import sys
 import time
+
 import numpy as np
-from PIL import Image
 import PIL
+from PIL import Image
 import torch
-from torch import nn
-from torch.nn import functional as F
 from torch.func import functional_call
+from torch.nn import functional as F
 import torchvision
 from torchvision.datasets import CIFAR10
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import augmix_operations as ops
 from download_cifar100_benchmark import CORRUPTIONS, verify_arrays
 from report_chain_aware import report
-import shutil
+from libs import library_source_hashes, snapshot_source
+from libs.models import backbone_metadata, ChainAwareController as Controller, SmallCNN
+from libs.trainer import BiLevelTrainer
+from libs.loss import js, consistency_loss, seen_unseen_feature_loss, seen_unseen_prediction_js
 
-from libs.models import SmallCNN, backbone_metadata
-
-from libs.models import ChainAwareController as Controller
 
 @torch.no_grad()
 def candidate_descriptors(model, x, branches):
@@ -78,14 +77,7 @@ def norm(x):
     std = x.new_tensor((.2470, .2435, .2616))[None, :, None, None]
     return (x-mean)/std
 
-from libs.loss import js
 
-from libs.loss import contrastive_scores
-
-from libs.loss import infonce_loss
-
-
-from libs.loss import consistency_loss, seen_unseen_feature_loss, seen_unseen_prediction_js
 
 # Extra random mixture draws never consume the historical shuffle/operator RNG.
 MIXTURE_RNG = np.random.default_rng(170501)

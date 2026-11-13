@@ -6,11 +6,10 @@ The update_* methods also expose the original stateless batch interfaces.
 """
 import hashlib
 import time
+
 import numpy as np
 import torch
-from torch import nn
 from torch.nn import functional as F
-from torch.func import functional_call
 
 
 class SingleLevelTrainer:

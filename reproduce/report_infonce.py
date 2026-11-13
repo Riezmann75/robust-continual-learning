@@ -1,9 +1,12 @@
 """Epoch diagnostics for InfoNCE + DER++ (random AugMix views)."""
 import json
 import os
+
 import matplotlib
+
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+
 
 def report(output,epochs):
     payload=dict(method='InfoNCE + DER++ (random AugMix views)',epochs=epochs,

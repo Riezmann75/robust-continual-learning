@@ -1,5 +1,8 @@
-import hashlib,json,unittest
+import hashlib
+import json
 from pathlib import Path
+import unittest
+
 ROOT=Path(__file__).resolve().parents[1]
 class ResultProvenanceTests(unittest.TestCase):
     def test_historical_sources_and_evaluation_sizes(self):

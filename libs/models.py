@@ -1,7 +1,7 @@
 """Classifier, reconstruction, and mixing-controller architectures."""
 import torch
 from torch import nn
-from torch.nn import functional as F
+from torchvision.models import resnet18
 
 
 class SmallCNN(nn.Module):
@@ -12,7 +12,6 @@ class SmallCNN(nn.Module):
         if backbone not in ('smallcnn', 'resnet18'):
             raise ValueError(f'Unknown backbone: {backbone}')
         if backbone == 'resnet18':
-            from torchvision.models import resnet18
             encoder = resnet18(weights=None)
             # CIFAR images are 32x32: retain spatial detail in the stem.
             encoder.conv1 = nn.Conv2d(3, 64, 3, stride=1, padding=1, bias=False)

@@ -1,6 +1,13 @@
 """Local sequential experiment queue. Stop on failure; no automatic retries."""
-import argparse,fcntl,hashlib,json,os,subprocess,time
+import argparse
+import fcntl
+import hashlib
+import json
+import os
 from pathlib import Path
+import subprocess
+import time
+
 
 def write(path,data):
     tmp=path.with_suffix('.tmp');tmp.write_text(json.dumps(data,indent=2));os.replace(tmp,path)

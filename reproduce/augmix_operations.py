@@ -13,9 +13,8 @@
 # limitations under the License.
 # ==============================================================================
 """Base augmentations operators."""
-
 import numpy as np
-from PIL import Image, ImageOps, ImageEnhance
+from PIL import Image, ImageEnhance, ImageOps
 
 # ImageNet code should change this value
 IMAGE_SIZE = 32

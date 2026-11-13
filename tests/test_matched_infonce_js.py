@@ -1,12 +1,20 @@
-import copy,json,sys,tempfile,subprocess,unittest
+import copy
+import json
 from pathlib import Path
+import subprocess
+import sys
+import tempfile
+import unittest
 from unittest.mock import patch
+
 import numpy as np
 import torch
+
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'reproduce'))
 import matched_infonce_js as m
 import matched_mixing as ref
+
 
 class MixedObjectiveTests(unittest.TestCase):
     def build(self,module=m):

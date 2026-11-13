@@ -6,8 +6,11 @@ from pathlib import Path
 import shutil
 import tarfile
 import urllib.request
+
 from torchvision.datasets import CIFAR10
+
 from download_cifar100_benchmark import CORRUPTIONS, HashReader, verify_arrays
+
 
 def main():
     p = argparse.ArgumentParser()

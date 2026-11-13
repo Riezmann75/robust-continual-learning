@@ -1,35 +1,33 @@
 """Feature MSE + label-aware InfoNCE + DER++ (random AugMix views), independent of MetaMix training."""
-import sys
-from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from libs.trainer import SingleLevelTrainer
-from libs import library_source_hashes, snapshot_source
 import argparse
 from contextlib import contextmanager
 import hashlib
 import json
 import os
+from pathlib import Path
 import platform
 import random
-import shutil
+import sys
 import time
+
 import numpy as np
-from PIL import Image
 import PIL
+from PIL import Image
 import torch
-from torch import nn
-from torch.nn import functional as F
 import torchvision
 from torchvision.datasets import CIFAR10
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import augmix_operations as ops
 from download_cifar100_benchmark import CORRUPTIONS, verify_arrays
 from report_mse_infonce import report
+from libs import library_source_hashes, snapshot_source
+from libs.loss import contrastive_scores, feature_mse_loss, infonce_loss
+from libs.models import backbone_metadata, Network
+from libs.trainer import SingleLevelTrainer
 
 METHOD = 'Feature MSE + label-aware InfoNCE + DER++ (random AugMix views)'
-# Copied unchanged from SmallCNN in metamix_long.py (architecture provenance in config).
-from libs.models import SmallCNN, backbone_metadata
 
-from libs.models import Network as Network
 
 class Streams:
     names = ('insertion', 'replay_ce', 'replay_logit', 'shuffle', 'mixture')
@@ -118,13 +116,6 @@ def random_augmix_views(raw, streams):
             branch_tensor = torch.from_numpy(branches).permute(0,1,4,2,3).contiguous().float()/255.
             views.append(blend(x,branch_tensor,weights_m[view],weights_w[view]).contiguous())
     return views, weights_m, weights_w
-
-from libs.loss import contrastive_scores
-
-from libs.loss import infonce_loss
-
-
-from libs.loss import feature_mse_loss
 
 
 def step(model,optimizer,memory,streams,raw,labels,device,debug=False,lambda_nce=.5,temperature=.1,lambda_mse=.5):
@@ -350,7 +341,7 @@ def main():
                     dst.write(json.dumps(row)+'\n')
         os.replace(tmp,trace)
     atomic_json(a.output/'process.json',dict(pid=os.getpid(),started=time.time(),
-        host=platform.node(),command=' '.join(__import__('sys').argv)))
+        host=platform.node(),command=' '.join(sys.argv)))
     print(json.dumps(dict(event='start_or_resume',pid=os.getpid(),updates=updates,config=config)),flush=True)
     run_start=time.monotonic()
     per_task=config['epochs_per_task']

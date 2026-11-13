@@ -7,13 +7,15 @@ import shutil
 import tarfile
 import urllib.request
 
+import numpy as np
+from torchvision.datasets import CIFAR100
+
 CORRUPTIONS = ['gaussian_noise', 'shot_noise', 'impulse_noise', 'defocus_blur',
                'glass_blur', 'motion_blur', 'zoom_blur', 'snow', 'frost', 'fog',
                'brightness', 'contrast', 'elastic_transform', 'pixelate', 'jpeg_compression']
 
 
 def verify_arrays(target, clean_targets):
-    import numpy as np
     labels = np.load(target/'labels.npy', allow_pickle=False)
     if not np.array_equal(labels, np.tile(clean_targets, 5)):
         raise RuntimeError('Corruption labels do not match clean test ordering')
@@ -42,7 +44,6 @@ def main():
     p.add_argument('--root', type=Path, default=Path('experiments/metamix_cifar100/data'))
     args = p.parse_args()
     args.root.mkdir(parents=True, exist_ok=True)
-    from torchvision.datasets import CIFAR100
     # Official Toronto archive; torchvision checks its published MD5.
     CIFAR100(args.root, train=True, download=True)
     CIFAR100(args.root, train=False, download=True)
@@ -75,7 +76,6 @@ def main():
         raise RuntimeError(f'Integrity failure: {reader.digest.hexdigest()}, missing {names-found}')
     for name in found:
         (target/(name+'.partial')).replace(target/name)
-    import numpy as np
     clean = CIFAR100(args.root, train=False)
     labels = np.load(target/'labels.npy')
     if not np.array_equal(labels, np.tile(clean.targets,5)):

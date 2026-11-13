@@ -12,10 +12,10 @@ import torch
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / 'reproduce'))
-from libs import library_source_hashes, snapshot_source
-from libs.trainer import SingleLevelTrainer, BiLevelTrainer
 import augce_cifar10 as single
 import matched_mixing as bilevel
+from libs import library_source_hashes, snapshot_source
+from libs.trainer import BiLevelTrainer, SingleLevelTrainer
 
 
 class TrainerTests(unittest.TestCase):

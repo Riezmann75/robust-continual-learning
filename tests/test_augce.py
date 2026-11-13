@@ -6,13 +6,16 @@ import subprocess
 import sys
 import tempfile
 import unittest
+
 import numpy as np
 import torch
 from torch.nn import functional as F
+
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'reproduce'))
 import augce_cifar10 as m
 import feature_mse_cifar10 as baseline
+
 
 class AugmentedCETests(unittest.TestCase):
     @classmethod

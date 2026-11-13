@@ -1,6 +1,11 @@
 """Run an explicit configuration; defaults to printing its command."""
-import argparse,json,shlex,subprocess,sys
+import argparse
+import json
 from pathlib import Path
+import shlex
+import subprocess
+import sys
+
 ROOT=Path(__file__).resolve().parents[1]
 p=argparse.ArgumentParser()
 p.add_argument('config',type=Path)

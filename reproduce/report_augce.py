@@ -1,9 +1,12 @@
 """Epoch diagnostics for Augmented CE + DER++ (optional input reconstruction) (random AugMix views)."""
 import json
 import os
+
 import matplotlib
+
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+
 
 def report(output,epochs):
     payload=dict(method='Augmented CE + DER++ (optional input reconstruction) (random AugMix views)',epochs=epochs,

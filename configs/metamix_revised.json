@@ -1,9 +1,0 @@
-{
-  "runner": "metamix_revised.py",
-  "args": {
-    "device": "cuda",
-    "epochs_per_task": 10,
-    "root": "experiments/metamix_cifar10/data",
-    "output": "experiments/metamix_revised/seed17"
-  }
-}

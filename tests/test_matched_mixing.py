@@ -1,11 +1,21 @@
-import copy,json,sys,tempfile,subprocess,unittest
+import copy
+import json
 from pathlib import Path
+import subprocess
+import sys
+import tempfile
+import unittest
+
 import numpy as np
 import torch
+
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'reproduce'))
 import matched_mixing as m
 import metamix_jointbn as ref
+from libs.loss import contrastive_scores, infonce_loss
+
+
 class MatchedTests(unittest.TestCase):
     def build(self,module):
         module.setup(17,'cuda');net=module.SmallCNN().cuda();ctl=module.Controller().cuda()
@@ -42,9 +52,9 @@ class MatchedTests(unittest.TestCase):
     def test_mask_and_resume(self):
         raw,y=self.data()
         h=[torch.randn(4,128,device='cuda',requires_grad=True) for _ in range(3)];labels=torch.tensor(y,device='cuda')
-        scores,pos=m.contrastive_scores(*h,labels=labels)
+        scores,pos=contrastive_scores(*h,labels=labels)
         self.assertTrue(torch.isneginf(scores[0,2]));self.assertTrue(torch.isfinite(scores[0,1]));self.assertTrue(pos[0,4])
-        loss=m.infonce_loss(*h,labels=labels);loss.backward()
+        loss=infonce_loss(*h,labels=labels);loss.backward()
         for v in h:self.assertGreater(v.grad.norm().item(),0)
         for mixer in ('random','learned'):
             net,ctl,opt,mo,mem,state=self.build(m)

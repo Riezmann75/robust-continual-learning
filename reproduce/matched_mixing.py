@@ -1,33 +1,32 @@
 """Matched joint-view JS/InfoNCE and random/learned mixing experiments."""
-import sys
-from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from libs.trainer import BiLevelTrainer
-from libs import library_source_hashes, snapshot_source
 import argparse
 import hashlib
 import json
 import os
+from pathlib import Path
 import platform
 import random
+import sys
 import time
+
 import numpy as np
-from PIL import Image
 import PIL
+from PIL import Image
 import torch
-from torch import nn
-from torch.nn import functional as F
 from torch.func import functional_call
+from torch.nn import functional as F
 import torchvision
 from torchvision.datasets import CIFAR10
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import augmix_operations as ops
 from download_cifar100_benchmark import CORRUPTIONS, verify_arrays
 from report_matched_mixing import report
-import shutil
+from libs import library_source_hashes, snapshot_source
+from libs.loss import consistency_loss
+from libs.models import backbone_metadata, Controller, SmallCNN
+from libs.trainer import BiLevelTrainer
 
-from libs.models import SmallCNN, backbone_metadata
-
-from libs.models import Controller as Controller
 
 class Reservoir:
     def __init__(self, capacity=500, seed=18):
@@ -62,14 +61,6 @@ def norm(x):
     std = x.new_tensor((.2470, .2435, .2616))[None, :, None, None]
     return (x-mean)/std
 
-from libs.loss import js
-
-from libs.loss import contrastive_scores
-
-from libs.loss import infonce_loss
-
-
-from libs.loss import consistency_loss
 
 # Extra random mixture draws never consume the historical shuffle/operator RNG.
 MIXTURE_RNG = np.random.default_rng(170501)
@@ -349,7 +340,7 @@ def main():
     print(json.dumps(dict(event='start_or_resume', pid=os.getpid(), next_task=next_task,
         next_epoch=next_epoch, updates=updates, config=config)), flush=True)
     atomic_json(a.output/'process.json', dict(pid=os.getpid(), host=platform.node(),
-        started=time.time(), command=' '.join(__import__('sys').argv)))
+        started=time.time(), command=' '.join(sys.argv)))
     trainer = BiLevelTrainer(model, controller, optimizer, mixer_optimizer, memory, state, a.device, update=step)
     for task in range(next_task, 5):
         first = next_epoch if task == next_task else 0

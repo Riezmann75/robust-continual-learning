@@ -1,6 +1,7 @@
 """Print completed held-out results; no training or evaluation is launched."""
 import json
 from pathlib import Path
+
 root=Path(__file__).resolve().parents[1]/'results'
 print('| Run | Clean class-IL | C10-C class-IL | Clean task-IL | C10-C task-IL |')
 print('|---|---:|---:|---:|---:|')
