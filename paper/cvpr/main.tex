@@ -16,7 +16,7 @@
 \newcommand{\NCE}{\mathcal{L}_{\mathrm{NCE}}}
 \newcommand{\JS}{\mathcal{L}_{\mathrm{JS}}}
 
-\title{Learning Augmentation Weights Through One Classifier Update\\in Corruption-Robust Continual Learning}
+\title{Chain-Aware Augmentation Mixing for Corruption-Robust Continual Learning}
 \author{Cao Gia Bao - G2610271C \\ 
 Chong Chun Ho - \\ Liong Hong Xiang - \\ Wang Jun Wei Serena - \\ {\tt\small \{giabao005, chunho001, hliong002, wang2552\}@e.ntu.edu.sg}}
 \begin{document}
@@ -53,6 +53,14 @@ Our contributions are:
 \end{itemize}
 
 \section{Training Objective Design}
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/mixer_comparison.pdf}
+\caption{Comparison of the MetaMix baseline mixer and our chain-aware mixer in the SmallCNN implementation. Both use the same 258-dimensional learner context and a five-dimensional LSTM hidden state. MetaMix predicts chain weights from this state and shares them across views and operation pools. Our mixer scores each pseudo-seen chain using its detached descriptor and the current LSTM hidden state, while pseudo-unseen weights are sampled independently. Cell arrays are schematic, with dimensions indicated; the original-image mixing branch is omitted for clarity. The original-image weight $m$ is prescribed in our mixer and in the fixed-$m$ MetaMix comparison.}
+\label{fig:mixer-comparison}
+\end{figure*}
+Figure~\ref{fig:mixer-comparison} summarizes the inputs and weighting rules of the two mixers.
+
 \paragraph{What the mixer observes.}
 
 Before the classifier update, we compute mean cross-entropy on the clean current batch and the clean labeled replay batch. Let $g_t$ and $g_r$ be their gradients with respect to the classifier parameters, and let $L_r$ be the replay cross-entropy. Each LSTM input concatenates these batch statistics with individual pooled features:
@@ -155,7 +163,7 @@ At $m=0.1$, the augmentation chains contribute 90\% to the mixed images $\tilde{
 The most consistent gain on corrupted class-IL is from classifier InfoNCE at stronger augmentation. Chain-aware InfoNCE attains the highest observed mean on this metric, while the advantage over MetaMix changes sign across matched strengths. The maximum is selected from five settings on the reported evaluation. With three seeds, dispersion is substantial: at $m=0.1$ the two InfoNCE corrupted class-IL means are $43.89\pm5.68$ and $41.66\pm7.68$ (sample SD). Isolating the effect of candidate descriptors would require holding outer-view sampling and per-view weight sharing fixed. The per-corruption breakdown below covers the original six configurations; the concentration measurements cover $m=0.1$.
 
 \paragraph{Reproducibility.}
-The repository includes the \href{https://github.com/Riezmann75/robust-continual-learning/blob/f56de24/scripts/summarize_fixed_m_augmix.py}{three-seed reporting script}, the one-step trainer, and the PBS jobs for the fixed-strength sweep and AugMix coefficient comparison.
+The repository includes the \href{https://github.com/Riezmann75/robust-continual-learning/blob/f56de24/scripts/summarize_fixed_m_augmix.py}{three-seed reporting script}, the one-step trainer, and the scripts for the fixed-strength sweep and AugMix coefficient comparison.
 
 {\small
 \bibliographystyle{ieeenat_fullname}
