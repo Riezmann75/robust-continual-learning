@@ -136,10 +136,11 @@ Table~\ref{tab:delta} holds the mixer and mixture strength fixed when comparing 
 
 \paragraph{How does the best chain-aware configuration compare with DER++ + AugMix?}
 Our method is able to retain more robust knowledge under both clean and corrupted settings. Chain-aware InfoNCE at $m=0.1$ leads on clean and corrupted class-IL and on clean task-IL (Table~\ref{tab:reference}). AugMix with its original JS coefficient reaches the highest corrupted task-IL mean (84.15\%). Reducing that coefficient to one raises clean class-IL from 45.94\% to 48.99\%, while corrupted class-IL changes from 40.00\% to 39.68\%.
-\input{tables/references}
 
 \paragraph{Under InfoNCE, when does fixing $m$ improve MetaMix?}
 With learned $m$, MetaMix reaches 35.26\% on corrupted class-IL. Fixing $m=0.3$ raises this mean to 42.51\%, while fixing $m=0.9$ lowers it to 34.60\% (Tables~\ref{tab:main} and~\ref{tab:reference}). Even at its best fixed $m$, MetaMix falls short of the 43.89\% reached by chain-aware InfoNCE at $m=0.1$.
+
+\input{tables/references}
 
 \section{Discussion}
 The most consistent gain on corrupted class-IL is from classifier InfoNCE at stronger augmentation. Chain-aware InfoNCE attains the highest observed mean on this metric, while the advantage over MetaMix changes sign across matched strengths. The maximum is selected from five settings on the reported evaluation. With three seeds, dispersion is substantial: at $m=0.1$ the two InfoNCE corrupted class-IL means are $43.89\pm5.68$ and $41.66\pm7.68$ (sample SD). Appendix analyses report seed variation, loss differences, chain-weight concentration, and per-corruption results.
