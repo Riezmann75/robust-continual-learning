@@ -1,0 +1,10 @@
+{
+  "pid": 27173,
+  "start_ticks": "271290",
+  "command": [
+    "bash",
+    "logs/bs128_cosine/run_queue.sh"
+  ],
+  "cwd": "/home/riezmann/dev/robust-continual-learning",
+  "started": 1794289342.8132107
+}
