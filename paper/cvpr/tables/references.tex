@@ -1,18 +1,17 @@
 \begin{table}[H]
-\centering\footnotesize\setlength{\tabcolsep}{2pt}
-\begin{tabular}{llrrrr}
-\toprule
- & & \multicolumn{2}{c}{Class-IL} & \multicolumn{2}{c}{Task-IL} \\
-\cmidrule(lr){3-4}\cmidrule(lr){5-6}
-Mixer & Loss & Clean & Corrupt & Clean & Corrupt \\
-\midrule
-MetaMix, learned $m$ & JS & 46.16 & 36.43 & 86.65 & 79.83 \\
-MetaMix, learned $m$ & InfoNCE & 45.48 & 35.26 & 86.51 & 79.14 \\
-DER++ + AugMix & $1\times$ JS & 48.99 & 39.68 & 87.92 & 81.81 \\
-DER++ + AugMix & $12\times$ JS & 45.94 & 40.00 & 88.33 & \textbf{84.15} \\
-\midrule
-Chain-aware (ours), $m=0.1$ & InfoNCE & \textbf{51.87} & \textbf{43.89} & \textbf{88.46} & 83.24 \\
-\bottomrule
-\end{tabular}
-\caption{Three-seed mean accuracy (\%) for MetaMix, DER++ with AugMix, and our best-performing chain-aware configuration from the fixed-$m$ sweep (Table~\ref{tab:main}). Bold marks the highest mean in each column.}\label{tab:reference}
+    \centering\footnotesize\setlength{\tabcolsep}{2pt}
+    \begin{tabular}{llrrrr}
+        \toprule
+        & & \multicolumn{2}{c}{Class-IL} & \multicolumn{2}{c}{Task-IL} \\
+        \cmidrule(lr){3-4}\cmidrule(lr){5-6}
+        Mixer & Loss & Clean & Corrupt & Clean & Corrupt \\
+        \midrule
+        MetaMix, learned $m$ & JS & 46.16 & 36.43 & 86.65 & 79.83 \\
+        MetaMix, learned $m$ & InfoNCE & 45.48 & 35.26 & 86.51 & 79.14 \\
+        DER++ + AugMix & $1\times$ JS & 48.99 & 39.68 & 87.92 & 81.81 \\
+        \midrule
+        Chain-aware (ours), $m=0.1$ & InfoNCE & \textbf{51.87} & \textbf{43.89} & \textbf{88.46} & 83.24 \\
+        \bottomrule
+    \end{tabular}
+    \caption{Three-seed mean accuracy (\%) for MetaMix, DER++ with AugMix, and our best-performing chain-aware configuration from the fixed-$m$ sweep (Table~\ref{tab:main}). Bold marks the highest mean in each column.}\label{tab:reference}
 \end{table}
