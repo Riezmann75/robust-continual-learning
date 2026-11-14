@@ -145,12 +145,14 @@ With learned $m$, MetaMix reaches 35.26\% on corrupted class-IL. Fixing $m=0.3$ 
 The most consistent gain on corrupted class-IL is from classifier InfoNCE at stronger augmentation. Chain-aware InfoNCE attains the highest observed mean on this metric, while the advantage over MetaMix changes sign across matched strengths. The maximum is selected from five settings on the reported evaluation. With three seeds, dispersion is substantial: at $m=0.1$ the two InfoNCE corrupted class-IL means are $43.89\pm5.68$ and $41.66\pm7.68$ (sample SD). Appendix analyses report seed variation, loss differences, chain-weight concentration, and per-corruption results.
 
 \paragraph{Reproducibility.}
-The repository includes the \href{https://github.com/Riezmann75/robust-continual-learning/blob/f56de24/scripts/summarize_fixed_m_augmix.py}{three-seed reporting script}, the one-step trainer, and the scripts for the fixed-strength sweep and AugMix coefficient comparison.
+The code for reproducibility is available at \href{https://github.com/Riezmann75/robust-continual-learning}{%
+      \raisebox{-0.1em}{\includegraphics[height=0.9em]{figures/github-mark.pdf}}%
+      \,robust-continual-learning}.
 
-      {\small
-            \bibliographystyle{ieeenat_fullname}
-            \bibliography{references}
-      }
+{\small
+\bibliographystyle{ieeenat_fullname}
+\bibliography{references}
+}
 \clearpage
 \onecolumn
 \appendix
