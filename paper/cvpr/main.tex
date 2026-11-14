@@ -31,18 +31,11 @@ How does the share of the original image in an augmented view affect corruption 
 \end{abstract}
 
 \section{Introduction}
-\SW{Experience replay mitigates catastrophic forgetting by retaining past examples, with DER++ combining replay and logit distillation~\cite{buzzega2020dark}. However, evaluations of continual-learning models, including replay-based methods, reveal substantial accuracy losses under common corruptions~\cite{wang2023metamix}. AugMix~\cite{hendrycks2020augmix} and supervised contrastive learning~\cite{khosla2020supervised} report improved common-corruption robustness in standard image classification, while MetaMix learns adaptive augmentation mixtures for continual learning~\cite{wang2023metamix}. These results motivate examining how mixture strength and classifier consistency interact in continual learning.}
+Experience replay mitigates catastrophic forgetting by retaining past examples, with DER++ combining replay and logit distillation~\cite{buzzega2020dark}. However, evaluations of continual-learning models, including replay-based methods, reveal substantial accuracy losses under common corruptions~\cite{wang2023metamix}. AugMix~\cite{hendrycks2020augmix} and supervised contrastive learning~\cite{khosla2020supervised} report improved common-corruption robustness in standard image classification, while MetaMix learns adaptive augmentation mixtures for continual learning~\cite{wang2023metamix}. These results motivate examining how mixture strength and classifier consistency interact in continual learning.
 
 Prediction consistency can be improved by weakening augmentation rather than learning robustness: if mixed views approach the original image, their disagreement vanishes. In continual learning, this choice also affects updates shared by current and replayed examples. AugMix samples augmentation mixtures~\cite{hendrycks2020augmix}; MetaMix adapts their weights from recurrent learner context~\cite{wang2023metamix}, but its weights do not depend on the sampled chains' effects.
 
 We study chain-aware mixing at fixed augmentation strengths. Our mixer scores each candidate using its feature and prediction changes, and learns through a classifier update evaluated on independently mixed pseudo-unseen views. Fixing the original-image weight prevents the mixer from reducing consistency loss simply by suppressing augmentation. Independent outer mixtures ensure that its feedback measures the effect on classifier learning.
-
-Our contributions are:
-\begin{itemize}
-\item A chain-aware mixer that combines recurrent learner context with candidate descriptors to weight chains separately for each image and seen view.
-\item A differentiable one-step training objective whose outer loss reaches the mixer exclusively through the classifier update.
-\item A three-seed comparison across five mixture strengths, showing that the benefits of mixer design and classifier consistency depend on strength and evaluation metric.
-\end{itemize}
 
 \section{Methodology}
 \begin{figure*}[t]
@@ -141,7 +134,7 @@ Table~\ref{tab:delta} holds the mixer and mixture strength fixed when comparing 
 
 
 \paragraph{Learned and random mixture strength.}
-Tables~\ref{tab:main} and~\ref{tab:reference} show how the fixed settings compare with learned $m$ and random AugMix. Within MetaMix with classifier InfoNCE, corrupted class-IL is 35.26\% with learned $m$, 42.51\% at fixed $m=0.3$, and 34.60\% at fixed $m=0.9$. \SW{It is noted that under unrestricted optimization, the learned $m$ baseline rapidly collapses toward the clean image ($m > 0.9$), yielding a $35.26\%$ corrupted Class-IL accuracy that closely mirrors the fixed $m = 0.9$ boundary ($34.60\%$) and empirically confirms the trivial consistency shortcut.} Thus the value chosen matters even when $m$ is fixed. AugMix with its original JS coefficient reaches the highest corrupted task-IL mean (84.15\%). Reducing that coefficient to one raises clean class-IL from 45.94\% to 48.99\%, while corrupted class-IL changes from 40.00\% to 39.68\%. At the matched coefficient AugMix exceeds both mixers' best observed JS means on corrupted class-IL.
+Tables~\ref{tab:main} and~\ref{tab:reference} show how the fixed settings compare with learned $m$ and random AugMix. Within MetaMix with classifier InfoNCE, corrupted class-IL is 35.26\% with learned $m$, 42.51\% at fixed $m=0.3$, and 34.60\% at fixed $m=0.9$. It is noted that under unrestricted optimization, the learned $m$ baseline rapidly collapses toward the clean image ($m > 0.9$), yielding a $35.26\%$ corrupted Class-IL accuracy that closely mirrors the fixed $m = 0.9$ boundary ($34.60\%$) and empirically confirms the trivial consistency shortcut. Thus the value chosen matters even when $m$ is fixed. AugMix with its original JS coefficient reaches the highest corrupted task-IL mean (84.15\%). Reducing that coefficient to one raises clean class-IL from 45.94\% to 48.99\%, while corrupted class-IL changes from 40.00\% to 39.68\%. At the matched coefficient AugMix exceeds both mixers' best observed JS means on corrupted class-IL.
 \input{tables/references}
 
 \section{Discussion}
