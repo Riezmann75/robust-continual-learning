@@ -117,7 +117,7 @@ Final evaluation uses 10,000 clean test images and 15 CIFAR-10-C corruptions at 
 DER++ with AugMix samples two views from the full nine-operation pool, with independent $m\sim\mathrm{Beta}(1,1)$ and chain weights drawn from $\mathrm{Dirichlet}(1,1,1)$. We evaluate its original JS coefficient of 12 and a coefficient of one matched to the JS classifiers. Both use the same replay and classifier update budgets. Each mean gives equal weight to seeds 17, 23, and 43. We report sample SD across seeds in Table~\ref{tab:sd} and compute differences from the displayed means.
 
 \subsection{Results}
-\paragraph{Mixture strength across four metrics.}
+\paragraph{How does the original-image weight $m$ affect accuracy?}
 \begin{figure}[t]
       \centering
       \includegraphics[width=\columnwidth]{figures/corrupted_class_il_vs_m.png}
@@ -127,15 +127,18 @@ DER++ with AugMix samples two views from the full nine-operation pool, with inde
 
 For chain-aware InfoNCE all four means decline as $m$ increases (Table~\ref{tab:main}, Fig.~\ref{fig:m_sweep}). The largest class-IL difference occurs on corruptions: 43.89\% at $m=0.1$ versus 34.18\% at $m=0.9$. MetaMix InfoNCE reaches its highest class-IL means at $m=0.3$ and its highest task-IL means at $m=0.1$. With JS, the highest corrupted class-IL mean occurs at $m=0.1$ for both mixers, although intermediate values give a less regular ordering.
 
-\paragraph{What the chain-aware design adds.}
+\paragraph{When does chain-aware mixing outperform MetaMix at the same $m$?}
 With classifier InfoNCE and $m=0.1$, chain-aware leads on all four metrics. At $m=0.3$ MetaMix leads on corrupted class-IL by 0.23 points, while chain-aware leads on the other three metrics. At $m=0.5$ their clean task-IL means coincide to two decimals. The comparison changes both seen-chain scoring and pseudo-unseen mixture construction.
 
-\paragraph{Interaction with classifier consistency.}
+\paragraph{How much does each mixer gain from switching from JS to InfoNCE?}
 Table~\ref{tab:delta} holds the mixer and mixture strength fixed when comparing classifier losses. Chain-aware gains 5.69 and 5.95 points on corrupted class-IL from InfoNCE at $m=0.1$ and $0.3$, compared with 0.93 at $m=0.5$. MetaMix gains 8.20 points at $m=0.3$ but loses 1.74 at $m=0.9$. The gains also depend on task information: at $m=0.7$ the chain-aware task-IL gains are only 0.31 points clean and 0.01 corrupted.
 
 
-\paragraph{Learned and random mixture strength.}
-Tables~\ref{tab:main} and~\ref{tab:reference} show how the fixed settings compare with learned $m$ and random AugMix. Within MetaMix with classifier InfoNCE, corrupted class-IL is 35.26\% with learned $m$, 42.51\% at fixed $m=0.3$, and 34.60\% at fixed $m=0.9$. It is noted that under unrestricted optimization, the learned $m$ baseline rapidly collapses toward the clean image ($m > 0.9$), yielding a $35.26\%$ corrupted Class-IL accuracy that closely mirrors the fixed $m = 0.9$ boundary ($34.60\%$) and empirically confirms the trivial consistency shortcut. Thus the value chosen matters even when $m$ is fixed. AugMix with its original JS coefficient reaches the highest corrupted task-IL mean (84.15\%). Reducing that coefficient to one raises clean class-IL from 45.94\% to 48.99\%, while corrupted class-IL changes from 40.00\% to 39.68\%. At the matched coefficient AugMix exceeds both mixers' best observed JS means on corrupted class-IL.
+\paragraph{Does fixing $m$ improve MetaMix with InfoNCE?}
+For MetaMix with classifier InfoNCE (Tables~\ref{tab:main} and~\ref{tab:reference}), corrupted class-IL is 35.26\% with learned $m$, 42.51\% at fixed $m=0.3$, and 34.60\% at fixed $m=0.9$. It is noted that under unrestricted optimization, the learned $m$ baseline rapidly collapses toward the clean image ($m > 0.9$), yielding a $35.26\%$ corrupted Class-IL accuracy that closely mirrors the fixed $m = 0.9$ boundary ($34.60\%$) and empirically confirms the trivial consistency shortcut. Thus the value chosen matters even when $m$ is fixed.
+
+\paragraph{How does our best configuration compare with AugMix?}
+Chain-aware InfoNCE at $m=0.1$ leads on clean and corrupted class-IL and on clean task-IL (Table~\ref{tab:reference}). AugMix with its original JS coefficient reaches the highest corrupted task-IL mean (84.15\%). Reducing that coefficient to one raises clean class-IL from 45.94\% to 48.99\%, while corrupted class-IL changes from 40.00\% to 39.68\%. At the matched coefficient AugMix exceeds both mixers' best observed JS means on corrupted class-IL.
 \input{tables/references}
 
 \section{Discussion}
