@@ -57,6 +57,25 @@ where $g_t,g_r$ are clean current/replay loss gradients, $L_r$ is replay cross-e
 
 MetaMix maps the LSTM state to weights shared across views and pools; it either learns $m$ or uses a fixed value. Our mixer uses fixed $m$ and independently scores each detached descriptor $d_k=[\Delta e_k,\Delta p_k]$, containing feature and probability changes relative to the clean image. A shared scorer combines $d_k$ with the current hidden state $h_t$; softmax converts the three scalars into per-image, per-seen-view weights (Fig.~\ref{fig:mixer-comparison}). Pseudo-unseen weights are independent $\mathrm{Dirichlet}(1,1,1)$ draws, held fixed during each batch's mixer updates.
 
+\paragraph{Bilevel training objective.}
+Following MetaMix~\cite{wang2023metamix}, let $S_t$ and $U_t$ denote the pseudo-seen and pseudo-unseen operation pools sampled at step $t$. For the current batch, the bilevel objective is
+\begin{align}
+  \phi_* &\in \arg\min_{\phi}\;
+    \mathbb{E}_{U_t}\!\left[L_U(\theta_*(\phi),\phi)\right], \label{eq:outer}\\
+  \theta_*(\phi) &\in \arg\min_{\theta}\;
+    \mathbb{E}_{S_t}\!\left[L_S(\theta,\phi)\right].
+\end{align}
+Each expectation averages over the random construction of views from the indicated pool. The inner loss $L_S$ combines DER++ with classifier consistency on pseudo-seen views. The outer loss evaluates the resulting classifier on clean labels and measures prediction consistency on pseudo-unseen views:
+\begin{equation}
+  L_U(\theta,\phi)=\ell_\theta(x_b,y_b)
+    +\mathcal{L}_{\mathrm{JS},\theta}(x_b,\hat x_{b1},\hat x_{b2}).
+\end{equation}
+In training, we approximate the inner solution $\theta_*(\phi)$ by one differentiable step from the current classifier $\theta_t$. For the sampled views, the virtual classifier and the objective used to update the mixer are
+\begin{align}
+  \theta^+(\phi)&=\theta_t-\alpha\nabla_\theta L_S(\theta_t,\phi), \label{eq:virtual-step}\\
+  J(\phi)&=L_U(\theta^+(\phi),\phi).
+\end{align}
+
 \paragraph{What the classifier learns.}
 Write $\ell_\theta(x,y)=\CE(f_\theta(x),y)$ for mean batch cross-entropy, where $f_\theta$ returns logits. A separate replay draw $(x_d,z_d)$ supplies stored logits for distillation. Our DER++ loss~\cite{buzzega2020dark} is
 \begin{align}
@@ -90,14 +109,8 @@ InfoNCE instead regularizes normalized pooled features $u_a$. Each of the $3n$ v
 
 \input{tables/sweep}
 
-\paragraph{How the mixer guides representation learning.}
-A virtual classifier step evaluates whether the chosen training views improve clean classification and pseudo-unseen consistency:
-\begin{align}
-      \theta^+(\phi)     & =\theta-\alpha\nabla_\theta L_S(\theta,\phi),\label{eq:virtual-step} \\
-      L_U(\theta^+,\phi) & =\ell_{\theta^+}(x_b,y_b)
-      +\mathcal{L}_{\mathrm{JS},\theta^+}(x_b,\hat x_{b1},\hat x_{b2}).\label{eq:outer}
-\end{align}
-For $J(\phi)=L_U(\theta^+(\phi),\phi)$, holding sampled inputs, incoming state and outer BatchNorm buffers fixed gives
+\paragraph{How the mixer learns.}
+Differentiating the outer objective while holding sampled inputs, incoming state and outer BatchNorm buffers fixed gives
 \begin{equation}
       \nabla_\phi J=(D_\phi\theta^+)^\top\nabla_{\theta^+}L_U+\partial_\phi L_U.
 \end{equation}
