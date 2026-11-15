@@ -19,8 +19,7 @@
 \newcommand{\SW}[1]{\textcolor{blue}{Serena: #1}}
 
 \title{Chain-Aware Augmentation Mixing for Corruption-Robust Continual Learning}
-\author{Cao Gia Bao \\ 
-Chong Chun Ho - \\ Liong Hong Xiang - \\ Wang Jun Wei Serena - \\ {\tt\small \{giabao005, chunho001, hliong002, wang2552\}@e.ntu.edu.sg}}
+\author{Cao Gia Bao, Chong Chun Ho, Liong Hong Xiang, Wang Jun Wei, Serena \\ {\tt\small \{giabao005, chunho001, hliong002, wang2552\}@e.ntu.edu.sg}}
 \begin{document}
 % Keep natural heading spacing instead of stretching gaps to align column bottoms.
 \raggedbottom
@@ -129,10 +128,11 @@ Generally, under the same classifier loss, chain-aware mixing has higher perform
 For chain-aware InfoNCE all four means decline as $m$ increases (Table~\ref{tab:main}, Fig.~\ref{fig:m_sweep}). The largest class-IL difference occurs on corruptions: 43.89\% at $m=0.1$ versus 34.18\% at $m=0.9$. MetaMix InfoNCE reaches its highest class-IL means at $m=0.3$ and its highest task-IL means at $m=0.1$. With JS, the highest corrupted class-IL mean occurs at $m=0.1$ for both mixers, although intermediate values give a less regular ordering.
 
 \paragraph{At matched $m$ and classifier loss, when does chain-aware mixing improve on MetaMix?}
-With classifier InfoNCE and $m=0.1$, chain-aware leads on all four metrics. At $m=0.3$ MetaMix leads on corrupted class-IL by 0.23 points, while chain-aware leads on the other three metrics. At $m=0.5$ their clean task-IL means coincide to two decimals.
+From table \ref{tab:main}, we found that under matched $m$, using the chain-aware improves the results on most metrics compared to MetaMix, particularly on corrupted class-IL.
 
-\paragraph{Does chain-aware mixing gain more from InfoNCE than MetaMix does?}
-Table~\ref{tab:delta} holds the mixer and mixture strength fixed when comparing classifier losses. Chain-aware gains 5.69 and 5.95 points on corrupted class-IL from InfoNCE at $m=0.1$ and $0.3$, compared with 0.93 at $m=0.5$. MetaMix gains 2.43 points at $m=0.1$ and 8.20 points at $m=0.3$ but loses 1.74 at $m=0.9$. The gains also depend on task information: at $m=0.7$ the chain-aware task-IL gains are only 0.31 points clean and 0.01 corrupted. This may suggest that contrastive loss like InfoNCE allows model to learn robust representation under moderate augmentation strengths.
+Additionally, when using JS as the classifier loss, the improvements are less consistent, with MetaMix occasionally outperforming chain-aware on certain metrics. On the otherhand, we observe that under InfoNCE, the chain-aware consistently shows gains on corrupted class-IL across different $m$ values which motivates us to the next finding.
+
+\paragraph{Does chain-aware mixing gain more from InfoNCE than MetaMix does?} We empirically investigate this by comparing the gains from using InfoNCE over JS for both chain-aware and MetaMix mixers and observe that as the chain-aware generally benefits more from InfoNCE than MetaMix does, particularly on corrupted class-IL across different mixture strengths. This may suggest that contrastive loss like InfoNCE allows model to learn robust representation under moderate augmentation strengths. Please see details in section~\ref{sec:additional_analyses}, Table~\ref{tab:delta}.
 
 \paragraph{How does the best chain-aware configuration compare with DER++ + AugMix?}
 Our method is able to retain more robust knowledge under both clean and corrupted settings. Chain-aware InfoNCE at $m=0.1$ leads on clean and corrupted class-IL and on clean task-IL (Table~\ref{tab:reference}). AugMix with its original JS coefficient reaches the highest corrupted task-IL mean (84.15\%). Reducing that coefficient to one raises clean class-IL from 45.94\% to 48.99\%, while corrupted class-IL changes from 40.00\% to 39.68\%.
@@ -158,6 +158,7 @@ The code for reproducibility is available at \href{https://github.com/Riezmann75
 \onecolumn
 \appendix
 \section{Additional analyses}
+\label{sec:additional_analyses}
 \input{tables/objective}
 \paragraph{Which corruptions account for the differences?}
 Tables~\ref{tab:class-detail} and~\ref{tab:task-detail} give the results for each corruption. With InfoNCE and $m=0.5$, chain-aware mixing exceeds MetaMix on 13 of 15 class-IL corruption means. The largest advantage is on pixelation (39.74\% versus 39.10\%). MetaMix leads on impulse noise and contrast. Changing the classifier loss within the chain-aware mixer produces larger differences: switching from JS to InfoNCE raises impulse-noise class-IL by 6.63 points but lowers fog class-IL by 3.57 points. When the true task is supplied, the same switch raises accuracy on 14 corruptions, with motion blur the exception (82.33\% with JS and 81.72\% with InfoNCE).
